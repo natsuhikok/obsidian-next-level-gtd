@@ -1,20 +1,22 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
-import MyPlugin from './main';
+import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
+import NextLevelGtdPlugin from './main';
 import { t } from './i18n';
+import { isInbox } from './inbox';
+import { setClassification } from './frontmatter';
+import { ConfirmModal } from './ui/ConfirmModal';
 
-// TODO: rename / delete this sample — add your own settings here
-export interface MyPluginSettings {
-	sampleSetting: string;
+export interface NextLevelGtdSettings {
+	_placeholder: null;
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
-	sampleSetting: 'default',
+export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
+	_placeholder: null,
 };
 
-export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+export class NextLevelGtdSettingTab extends PluginSettingTab {
+	readonly plugin: NextLevelGtdPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: NextLevelGtdPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -23,18 +25,26 @@ export class SampleSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		// TODO: rename / delete this sample setting
 		new Setting(containerEl)
-			.setName(t('sampleSettingName'))
-			.setDesc(t('sampleSettingDesc'))
-			.addText((text) =>
-				text
-					.setPlaceholder('...')
-					.setValue(this.plugin.settings.sampleSetting)
-					.onChange(async (value) => {
-						this.plugin.settings.sampleSetting = value;
-						await this.plugin.saveSettings();
-					}),
+			.setName(t('settingInitSectionName'))
+			.setDesc(t('settingInitSectionDesc'))
+			.addButton((btn) =>
+				btn.setButtonText(t('settingInitButtonLabel')).onClick(() => {
+					const targets = this.app.vault
+						.getMarkdownFiles()
+						.filter((f) =>
+							isInbox(this.app.metadataCache.getFileCache(f)?.frontmatter ?? null),
+						);
+					const count = targets.length;
+					const message = `${count} ${t('settingInitConfirmMessage')}`;
+					new ConfirmModal(this.app, message, () => {
+						void Promise.all(
+							targets.map((f) => setClassification(this.app, f, 'Reference')),
+						).then(() => {
+							new Notice(`${count} ${t('settingInitSuccessNotice')}`);
+						});
+					}).open();
+				}),
 			);
 	}
 }

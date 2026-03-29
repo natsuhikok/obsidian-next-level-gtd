@@ -8,6 +8,7 @@
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"test": "vitest run",
+		"check": "npm run lint",
 		"lint": "eslint . && tsc -noEmit -skipLibCheck",
 		"format": "prettier --write .",
 		"format:check": "prettier --check ."

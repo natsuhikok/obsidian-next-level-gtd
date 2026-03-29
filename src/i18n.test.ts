@@ -8,22 +8,21 @@ describe('t()', () => {
 	});
 
 	it('英語ロケールで英語文字列を返す', () => {
-		expect(t('sampleCommandName')).toBe('Sample command');
-		expect(t('sampleCommandNotice')).toBe('Sample command executed!');
-		expect(t('sampleSettingName')).toBe('Sample setting');
-		expect(t('sampleSettingDesc')).toBe('A sample text setting.');
+		expect(t('openInboxViewCommand')).toBe('Open Inbox');
+		expect(t('classificationInbox')).toBe('Inbox');
+		expect(t('classificationReference')).toBe('Reference');
+		expect(t('classificationActionable')).toBe('Actionable');
 	});
 
 	it('日本語ロケールで日本語文字列を返す', () => {
 		vi.mocked(moment.locale).mockReturnValue('ja');
-		expect(t('sampleCommandName')).toBe('サンプルコマンド');
-		expect(t('sampleCommandNotice')).toBe('サンプルコマンドを実行しました');
-		expect(t('sampleSettingName')).toBe('サンプル設定');
-		expect(t('sampleSettingDesc')).toBe('サンプルのテキスト設定です。');
+		expect(t('openInboxViewCommand')).toBe('Inbox を開く');
+		expect(t('inboxViewTitle')).toBe('GTD Inbox');
+		expect(t('alertViewTitle')).toBe('GTD アラート');
 	});
 
 	it('未知のロケールは英語にフォールバックする', () => {
 		vi.mocked(moment.locale).mockReturnValue('fr');
-		expect(t('sampleCommandName')).toBe('Sample command');
+		expect(t('openInboxViewCommand')).toBe('Open Inbox');
 	});
 });
