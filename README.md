@@ -37,10 +37,3 @@ src/
 **Add a setting** — see `.github/copilot-instructions.md`.
 
 **Add styles** — create `styles.css` in the root; Obsidian loads it automatically.
-
-## Development
-
-```bash
-npm run lint      # ESLint
-npm run format    # Prettier
-```
