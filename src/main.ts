@@ -15,7 +15,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		const settingTab = new NextLevelGtdSettingTab(this.app, this);
-		
+
 		this.addSettingTab(settingTab);
 
 		this.registerView(VIEW_TYPE_INBOX, (leaf) => new InboxView(leaf, this.app));
