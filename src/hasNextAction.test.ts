@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasNextAction } from './nextAction';
+import { hasNextAction } from './hasNextAction';
 
 describe('hasNextAction', () => {
 	it('未完了チェックボックスがあれば true を返す', () => {

@@ -1,8 +1,6 @@
 import { App, SuggestModal } from 'obsidian';
-import { Status } from '../types';
+import { ALL_STATUSES, Status } from '../types';
 import { t } from '../i18n';
-
-const STATUSES: Status[] = ['進行中', '保留', '完了', '廃止'];
 
 export class StatusChangeModal extends SuggestModal<Status> {
 	private readonly onSelect: (status: Status) => void;
@@ -14,7 +12,7 @@ export class StatusChangeModal extends SuggestModal<Status> {
 	}
 
 	getSuggestions(): Status[] {
-		return STATUSES;
+		return [...ALL_STATUSES];
 	}
 
 	renderSuggestion(status: Status, el: HTMLElement) {

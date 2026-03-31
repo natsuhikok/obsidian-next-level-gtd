@@ -2,8 +2,8 @@ import { moment } from 'obsidian';
 
 interface PluginStrings {
 	// Commands
+	openInboxRibbon: string;
 	openInboxViewCommand: string;
-	openAlertViewCommand: string;
 	setStatusInProgressCommand: string;
 	setStatusOnHoldCommand: string;
 	setStatusCompletedCommand: string;
@@ -32,13 +32,16 @@ interface PluginStrings {
 	settingInitButtonLabel: string;
 	settingInitConfirmMessage: string;
 	settingInitSuccessNotice: string;
+	settingGenerateMockSectionName: string;
+	settingGenerateMockSectionDesc: string;
+	settingGenerateMockButtonLabel: string;
+	settingGenerateMockSuccessNotice: string;
 	// UI labels
 	classifyAsReference: string;
 	classifyAsActionable: string;
 	selectStatus: string;
 	noInboxItems: string;
 	noAlerts: string;
-	refresh: string;
 	openNote: string;
 	// Modals
 	confirmModalTitle: string;
@@ -49,15 +52,15 @@ interface PluginStrings {
 }
 
 const en: PluginStrings = {
+	openInboxRibbon: 'Open GTD Inbox',
 	openInboxViewCommand: 'Open Inbox',
-	openAlertViewCommand: 'Open Alerts',
 	setStatusInProgressCommand: 'Set status: In Progress',
 	setStatusOnHoldCommand: 'Set status: On Hold',
 	setStatusCompletedCommand: 'Set status: Completed',
 	setStatusAbandonedCommand: 'Set status: Abandoned',
 	changeStatusCommand: 'Change status',
-	inboxViewTitle: 'GTD Inbox',
-	alertViewTitle: 'GTD Alerts',
+	inboxViewTitle: 'Inbox',
+	alertViewTitle: 'Alerts',
 	classificationInbox: 'Inbox',
 	classificationReference: 'Reference',
 	classificationActionable: 'Actionable',
@@ -75,12 +78,16 @@ const en: PluginStrings = {
 	settingInitButtonLabel: 'Initialize',
 	settingInitConfirmMessage: 'notes have no classification. Set them all to Reference?',
 	settingInitSuccessNotice: 'notes initialized as Reference.',
+	settingGenerateMockSectionName: 'Generate Mock Data',
+	settingGenerateMockSectionDesc:
+		'Generate sample notes for manual testing. Notes are created in the GTD-Mock folder.',
+	settingGenerateMockButtonLabel: 'Generate',
+	settingGenerateMockSuccessNotice: 'mock notes generated.',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'Select status',
 	noInboxItems: 'No unclassified notes.',
 	noAlerts: 'No alerts.',
-	refresh: 'Refresh',
 	openNote: 'Open',
 	confirmModalTitle: 'Confirm',
 	confirmModalExecute: 'Execute',
@@ -90,15 +97,15 @@ const en: PluginStrings = {
 };
 
 const ja: PluginStrings = {
+	openInboxRibbon: 'GTD Inbox を開く',
 	openInboxViewCommand: 'Inbox を開く',
-	openAlertViewCommand: 'アラートを開く',
 	setStatusInProgressCommand: 'ステータスを設定: 進行中',
 	setStatusOnHoldCommand: 'ステータスを設定: 保留',
 	setStatusCompletedCommand: 'ステータスを設定: 完了',
 	setStatusAbandonedCommand: 'ステータスを設定: 廃止',
 	changeStatusCommand: 'ステータスを変更',
-	inboxViewTitle: 'GTD Inbox',
-	alertViewTitle: 'GTD アラート',
+	inboxViewTitle: 'Inbox',
+	alertViewTitle: 'Alerts',
 	classificationInbox: 'Inbox',
 	classificationReference: 'Reference',
 	classificationActionable: 'Actionable',
@@ -116,12 +123,16 @@ const ja: PluginStrings = {
 	settingInitButtonLabel: '初期化',
 	settingInitConfirmMessage: '件のノートが未分類です。すべて Reference に設定しますか？',
 	settingInitSuccessNotice: '件のノートを Reference に初期化しました。',
+	settingGenerateMockSectionName: 'モックデータの生成',
+	settingGenerateMockSectionDesc:
+		'手動テスト用のサンプルノートを生成します。ノートは GTD-Mock フォルダに作成されます。',
+	settingGenerateMockButtonLabel: '生成',
+	settingGenerateMockSuccessNotice: '件のモックノートを生成しました。',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'ステータスを選択',
 	noInboxItems: '未分類のノートはありません。',
 	noAlerts: 'アラートはありません。',
-	refresh: '更新',
 	openNote: '開く',
 	confirmModalTitle: '確認',
 	confirmModalExecute: '実行',
