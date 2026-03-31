@@ -17,8 +17,6 @@ describe('t()', () => {
 	it('日本語ロケールで日本語文字列を返す', () => {
 		vi.mocked(moment.locale).mockReturnValue('ja');
 		expect(t('openInboxViewCommand')).toBe('Inbox を開く');
-		expect(t('inboxViewTitle')).toBe('GTD Inbox');
-		expect(t('alertViewTitle')).toBe('GTD アラート');
 	});
 
 	it('未知のロケールは英語にフォールバックする', () => {

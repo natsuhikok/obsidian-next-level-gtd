@@ -1,28 +1,29 @@
 import { Plugin, TFile } from 'obsidian';
 import { DEFAULT_SETTINGS, NextLevelGtdSettings, NextLevelGtdSettingTab } from './settings';
 import { t } from './i18n';
-import { AlertView, VIEW_TYPE_ALERT } from './ui/AlertView';
 import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
-import { StatusBar, renderBannerForActiveView, updateBanner } from './ui/StatusBar';
+import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
-import { setStatus } from './frontmatter';
+import { setNoteState } from './setNoteState';
 import { Status } from './types';
 
 export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
-	private statusBar: StatusBar;
+	private bannerRenderer: BannerRenderer;
+	private editorChangeTimer: ReturnType<typeof setTimeout> | null = null;
 
 	async onload() {
 		await this.loadSettings();
+		this.bannerRenderer = new BannerRenderer(this.app);
 		const settingTab = new NextLevelGtdSettingTab(this.app, this);
 
 		this.addSettingTab(settingTab);
 
-		this.registerView(VIEW_TYPE_INBOX, (leaf) => new InboxView(leaf, this.app));
-		this.registerView(VIEW_TYPE_ALERT, (leaf) => new AlertView(leaf, this.app));
+		this.registerView(VIEW_TYPE_INBOX, (leaf) => new InboxView(leaf));
 
-		const statusBarItem = this.addStatusBarItem();
-		this.statusBar = new StatusBar(this.app, statusBarItem);
+		this.addRibbonIcon('inbox', t('openInboxRibbon'), () => {
+			this.activateView(VIEW_TYPE_INBOX).catch(console.error);
+		});
 
 		this.addCommand({
 			id: 'open-inbox-view',
@@ -33,23 +34,14 @@ export default class NextLevelGtdPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'open-alert-view',
-			name: t('openAlertViewCommand'),
-			callback: () => {
-				this.activateView(VIEW_TYPE_ALERT).catch(console.error);
-			},
-		});
-
-		this.addCommand({
 			id: 'change-status',
 			name: t('changeStatusCommand'),
 			callback: () => {
 				const file = this.app.workspace.getActiveFile();
 				if (file == null) return;
 				new StatusChangeModal(this.app, (status: Status) => {
-					void setStatus(this.app, file, status).then(() => {
-						this.statusBar.update(file);
-						updateBanner(this.app, file);
+					void setNoteState(this.app, file, status).then(() => {
+						this.bannerRenderer.update(file);
 					});
 				}).open();
 			},
@@ -73,9 +65,8 @@ export default class NextLevelGtdPlugin extends Plugin {
 				callback: () => {
 					const file = this.app.workspace.getActiveFile();
 					if (file == null) return;
-					void setStatus(this.app, file, status).then(() => {
-						this.statusBar.update(file);
-						updateBanner(this.app, file);
+					void setNoteState(this.app, file, status).then(() => {
+						this.bannerRenderer.update(file);
 					});
 				},
 			});
@@ -83,9 +74,13 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {
-				const file = this.app.workspace.getActiveFile();
-				this.statusBar.update(file);
-				renderBannerForActiveView(this.app);
+				this.bannerRenderer.renderForActiveView();
+			}),
+		);
+
+		this.registerEvent(
+			this.app.workspace.on('layout-change', () => {
+				this.bannerRenderer.renderForActiveView();
 			}),
 		);
 
@@ -93,17 +88,28 @@ export default class NextLevelGtdPlugin extends Plugin {
 			this.app.metadataCache.on('changed', (changedFile) => {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile?.path === changedFile.path) {
-					this.statusBar.update(changedFile);
-					updateBanner(this.app, changedFile);
+					this.bannerRenderer.update(changedFile);
 				}
-				this.notifyAlertView(changedFile);
+				this.notifyInboxView(changedFile);
+			}),
+		);
+
+		this.registerEvent(
+			this.app.workspace.on('editor-change', () => {
+				if (this.editorChangeTimer != null) {
+					clearTimeout(this.editorChangeTimer);
+				}
+				this.editorChangeTimer = setTimeout(() => {
+					this.bannerRenderer.renderForActiveView();
+					this.editorChangeTimer = null;
+				}, 300);
 			}),
 		);
 
 		this.registerEvent(
 			this.app.vault.on('modify', (abstractFile) => {
 				if (abstractFile instanceof TFile) {
-					this.notifyAlertView(abstractFile);
+					this.notifyInboxView(abstractFile);
 				}
 			}),
 		);
@@ -133,10 +139,10 @@ export default class NextLevelGtdPlugin extends Plugin {
 		await workspace.revealLeaf(leaf);
 	}
 
-	private notifyAlertView(file: TFile): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_ALERT)) {
+	private notifyInboxView(file: TFile): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_INBOX)) {
 			const view = leaf.view;
-			if (view instanceof AlertView) {
+			if (view instanceof InboxView) {
 				view.onFileChange(file).catch(console.error);
 			}
 		}

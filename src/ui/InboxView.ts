@@ -1,17 +1,16 @@
-import { App, ItemView, TFile, WorkspaceLeaf } from 'obsidian';
-import { setClassification, setClassificationAndStatus } from '../frontmatter';
+import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf } from 'obsidian';
+import { GTDNote } from '../GTDNote';
 import { t } from '../i18n';
-import { isInbox } from '../inbox';
-import { Status } from '../types';
-import { ClassifyModal } from './ClassifyModal';
 
 export const VIEW_TYPE_INBOX = 'gtd-inbox';
 
+type Tab = 'inbox' | 'alert';
+
 export class InboxView extends ItemView {
-	constructor(
-		leaf: WorkspaceLeaf,
-		private readonly pluginApp: App,
-	) {
+	private tab: Tab = 'inbox';
+	private noteCache: Record<string, GTDNote> = {};
+
+	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
 	}
 
@@ -28,78 +27,144 @@ export class InboxView extends ItemView {
 	}
 
 	async onOpen() {
-		await this.render();
+		await this.fullScan();
+		this.render();
+		this.registerEvent(
+			this.app.workspace.on('active-leaf-change', (leaf) => {
+				if (leaf !== this.leaf) this.render();
+			}),
+		);
 	}
 
 	async onClose() {
 		this.contentEl.empty();
 	}
 
-	private async render() {
+	async onFileChange(file: TFile) {
+		const note = await GTDNote.load(this.app, file);
+		this.noteCache = { ...this.noteCache, [file.path]: note };
+		this.render();
+	}
+
+	private openNote(filePath: string) {
+		const leaves = this.app.workspace.getLeavesOfType('markdown');
+		const existing = leaves.find((leaf) => (leaf.view as MarkdownView).file?.path === filePath);
+		if (existing) {
+			void this.app.workspace.revealLeaf(existing);
+		} else {
+			void this.app.workspace.openLinkText(filePath, '', leaves.length > 0);
+		}
+	}
+
+	private async fullScan() {
+		const files = this.app.vault.getMarkdownFiles();
+		const notes = await Promise.all(files.map((file) => GTDNote.load(this.app, file)));
+		this.noteCache = notes.reduce<Record<string, GTDNote>>(
+			(acc, note) => ({ ...acc, [note.file.path]: note }),
+			{},
+		);
+	}
+
+	private render() {
 		const { contentEl } = this;
 		contentEl.empty();
 
+		const notes = Object.values(this.noteCache);
+		const inboxNotes = notes.filter((n) => n.isInbox);
+		const alertNotes = notes.filter((n) => n.alerts.length > 0);
+		const activeFilePath = this.app.workspace.getActiveFile()?.path;
+
 		const header = contentEl.createDiv({ cls: 'nav-header' });
-		header.createEl('span', { text: t('inboxViewTitle'), cls: 'nav-header-title' });
-		const refreshBtn = header.createEl('button', { text: t('refresh') });
-		refreshBtn.addEventListener('click', () => {
-			void this.render();
+
+		const tabBar = header.createDiv({ cls: 'gtd-tab-bar' });
+		const inboxBtn = tabBar.createEl('button', {
+			cls: `gtd-tab${this.tab === 'inbox' ? ' is-active' : ''}`,
+		});
+		inboxBtn.createSpan({ text: t('inboxViewTitle') });
+		if (inboxNotes.length > 0) {
+			inboxBtn.createSpan({ text: String(inboxNotes.length), cls: 'gtd-tab-badge' });
+		}
+		inboxBtn.addEventListener('click', (event) => {
+			this.tab = 'inbox';
+			this.render();
+			if (Keymap.isModEvent(event)) {
+				Object.values(this.noteCache)
+					.filter((n) => n.isInbox)
+					.forEach((note) => {
+						this.openNote(note.file.path);
+					});
+			}
 		});
 
-		const inboxFiles = this.pluginApp.vault
-			.getMarkdownFiles()
-			.filter((f) =>
-				isInbox(this.pluginApp.metadataCache.getFileCache(f)?.frontmatter ?? null),
-			);
+		const alertBtn = tabBar.createEl('button', {
+			cls: `gtd-tab${this.tab === 'alert' ? ' is-active' : ''}`,
+		});
+		alertBtn.createSpan({ text: t('alertViewTitle') });
+		if (alertNotes.length > 0) {
+			alertBtn.createSpan({ text: String(alertNotes.length), cls: 'gtd-tab-badge' });
+		}
+		alertBtn.addEventListener('click', (event) => {
+			this.tab = 'alert';
+			this.render();
+			if (Keymap.isModEvent(event)) {
+				Object.values(this.noteCache)
+					.filter((n) => n.alerts.length > 0)
+					.forEach((note) => {
+						this.openNote(note.file.path);
+					});
+			}
+		});
 
-		if (inboxFiles.length === 0) {
+		if (this.tab === 'inbox') {
+			this.renderInbox(contentEl, inboxNotes, activeFilePath);
+		} else {
+			this.renderAlerts(contentEl, alertNotes, activeFilePath);
+		}
+	}
+
+	private renderInbox(
+		contentEl: HTMLElement,
+		inboxNotes: GTDNote[],
+		activeFilePath: string | undefined,
+	) {
+		if (inboxNotes.length === 0) {
 			contentEl.createEl('p', { text: t('noInboxItems'), cls: 'gtd-empty' });
 			return;
 		}
 
-		const list = contentEl.createEl('ul', { cls: 'gtd-inbox-list' });
-		inboxFiles.forEach((file) => {
-			const item = list.createEl('li', { cls: 'gtd-inbox-item' });
-
-			const nameBtn = item.createEl('button', {
-				text: file.basename,
-				cls: 'gtd-note-name',
+		const container = contentEl.createDiv({ cls: 'nav-files-container' });
+		inboxNotes.forEach((note) => {
+			const isActive = note.file.path === activeFilePath;
+			const title = container.createDiv({ cls: 'nav-file' }).createDiv({
+				cls: `nav-file-title${isActive ? ' is-active' : ''}`,
 			});
-			nameBtn.addEventListener('click', () => {
-				void this.app.workspace.openLinkText(file.path, '', false);
-			});
-
-			const refBtn = item.createEl('button', {
-				text: t('classifyAsReference'),
-				cls: 'gtd-classify-btn',
-			});
-			refBtn.addEventListener('click', () => {
-				void this.classify(file, { classification: 'Reference' });
-			});
-
-			const actBtn = item.createEl('button', {
-				text: t('classifyAsActionable'),
-				cls: 'gtd-classify-btn mod-cta',
-			});
-			actBtn.addEventListener('click', () => {
-				new ClassifyModal(this.app, (result) => {
-					void this.classify(file, result);
-				}).open();
+			title.createSpan({ text: note.file.basename, cls: 'nav-file-title-content' });
+			title.addEventListener('click', () => {
+				this.openNote(note.file.path);
 			});
 		});
 	}
 
-	private async classify(
-		file: TFile,
-		result:
-			| { readonly classification: 'Reference' }
-			| { readonly classification: 'Actionable'; readonly status: Status },
+	private renderAlerts(
+		contentEl: HTMLElement,
+		alertNotes: GTDNote[],
+		activeFilePath: string | undefined,
 	) {
-		if ('status' in result) {
-			await setClassificationAndStatus(this.pluginApp, file, 'Actionable', result.status);
-		} else {
-			await setClassification(this.pluginApp, file, result.classification);
+		if (alertNotes.length === 0) {
+			contentEl.createEl('p', { text: t('noAlerts'), cls: 'gtd-empty' });
+			return;
 		}
-		await this.render();
+
+		const container = contentEl.createDiv({ cls: 'nav-files-container' });
+		alertNotes.forEach((note) => {
+			const isActive = note.file.path === activeFilePath;
+			const title = container.createDiv({ cls: 'nav-file' }).createDiv({
+				cls: `nav-file-title${isActive ? ' is-active' : ''}`,
+			});
+			title.createSpan({ text: note.file.basename, cls: 'nav-file-title-content' });
+			title.addEventListener('click', () => {
+				this.openNote(note.file.path);
+			});
+		});
 	}
 }
