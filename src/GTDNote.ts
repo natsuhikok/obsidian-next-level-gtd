@@ -1,6 +1,6 @@
 import { App, moment, TFile } from 'obsidian';
 import { detectNoteAlerts } from './detectNoteAlerts';
-import { NextActionCollection } from './NextActionCollection';
+import { NextAction, NextActionCollection } from './NextActionCollection';
 import { NoteState } from './NoteState';
 import { AlertType } from './types';
 
@@ -8,6 +8,7 @@ export class GTDNote {
 	readonly file: TFile;
 	readonly state: NoteState;
 	readonly hasNextAction: boolean;
+	readonly availableActions: readonly NextAction<TFile>[];
 	readonly alerts: readonly AlertType[];
 
 	get isInbox() {
@@ -17,10 +18,12 @@ export class GTDNote {
 	private constructor(file: TFile, fm: Record<string, unknown> | null, content: string) {
 		this.file = file;
 		this.state = NoteState.parse(fm);
-		this.hasNextAction = new NextActionCollection(
+		const collection = new NextActionCollection(
 			[{ source: file, content }],
 			moment().format('YYYY-MM-DD'),
-		).hasNextAction;
+		);
+		this.hasNextAction = collection.hasNextAction;
+		this.availableActions = collection.availableActions;
 		this.alerts = detectNoteAlerts(this.state, this.hasNextAction);
 	}
 
