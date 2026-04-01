@@ -1,39 +1,138 @@
-# obsidian-plugin-dev
+# Next Level GTD
 
-Boilerplate for building an [Obsidian](https://obsidian.md) community plugin with TypeScript.
+Obsidian で GTD (Getting Things Done) を実践するためのプラグインです。Vault 内のすべてのノートを **Inbox / Reference / Actionable** の3種類に分類し、next action の有無を自動検出することで、タスク管理の見通しを改善します。
 
-Includes: i18n (en/ja), a settings tab, and a sample command — all thin and meant to be renamed or deleted.
+---
 
-## Quick start
+## ノートの分類
 
-```bash
-npm install
-npm run dev   # watch mode
-# or
-npm run build # production build
+各ノートは frontmatter の `classification` / `status` フィールドで状態を管理します。
+
+| 種別           | frontmatter                             | 意味                       |
+| -------------- | --------------------------------------- | -------------------------- |
+| **Inbox**      | 未設定                                  | まだ分類されていないノート |
+| **Reference**  | `classification: Reference`             | 参考情報。タスクを持たない |
+| **Actionable** | `classification: Actionable` + `status` | 行動が必要なノート         |
+
+Actionable のステータスは4種類です。
+
+| ステータス | 意味               |
+| ---------- | ------------------ |
+| 進行中     | 現在取り組んでいる |
+| 保留       | いったん止めている |
+| 完了       | 完了した           |
+| 廃止       | 取りやめた         |
+
+---
+
+## Next Action の書き方
+
+ノート内の **未チェックのチェックボックス** が next action として認識されます。
+
+```markdown
+- [ ] レポートを書く
+- [x] 資料を集める ← 完了済み（対象外）
+- [-] 会議を設定する ← キャンセル済み（対象外）
 ```
 
-Copy `main.js` and `manifest.json` to `<Vault>/.obsidian/plugins/<your-plugin-id>/`, reload Obsidian, and enable the plugin under **Settings → Community plugins**.
+### ネスト・ブロック
 
-## File structure
+チェックボックスを入れ子にすると、親タスクが子タスクをブロックします。
+
+```markdown
+- [ ] 企画書を作る
+    - [ ] 構成を考える ← 親がある限りブロックされる
+    - [ ] 下書きを書く
+```
+
+**順序付きリスト**を使うと、前のアイテムが未完了の場合に後続アイテムがブロックされます。
+
+```markdown
+1. [ ] 調査する
+2. [ ] 草稿を書く ← 「調査する」が終わるまでブロック
+3. [ ] レビューを依頼する
+```
+
+### 日付指定
+
+| 絵文字 | 意味                                            | 例              |
+| ------ | ----------------------------------------------- | --------------- |
+| ⏳     | スケジュール日（その日以降に available になる） | `⏳ 2025-06-01` |
+| 📅     | 期限日                                          | `📅 2025-06-30` |
+
+```markdown
+- [ ] 月次レポートを提出する ⏳ 2025-06-01 📅 2025-06-30
+```
+
+### 一時的な除外
+
+`#temp` タグを付けると next action の検出から除外されます。
+
+```markdown
+- [ ] あとで考える #temp
+```
+
+---
+
+## バナー（ノート上部の操作パネル）
+
+Markdown ノートを開くと、編集エリアの上部に **分類トグル** が表示されます。
 
 ```
-src/
-  main.ts       — Plugin entry point. MyPlugin class.
-  settings.ts   — MyPluginSettings, DEFAULT_SETTINGS, SampleSettingTab.
-  i18n.ts       — Localization. All user-facing strings go through t().
+[ Reference ]  [ 進行中 ]  [ 保留 ]  [ 完了 ]  [ 廃止 ]
 ```
 
-## Customization
+現在の状態がハイライトされ、他のボタンをクリックするだけで frontmatter を書き換えて分類を変更できます。
 
-**Rename the plugin**
+アラートがある場合はバナーの下に警告が表示されます（詳細は後述）。
 
-1. Update `id`, `name`, `description` in `manifest.json`.
-2. Update `name` in `package.json`.
-3. Rename `MyPlugin`, `MyPluginSettings`, `SampleSettingTab` in `src/`.
+---
 
-**Add a command** — see `.github/copilot-instructions.md`.
+## Inbox ビュー
 
-**Add a setting** — see `.github/copilot-instructions.md`.
+左サイドバーのリボンアイコン（Inbox）またはコマンドから開けます。
 
-**Add styles** — create `styles.css` in the root; Obsidian loads it automatically.
+### Inbox タブ
+
+`classification` が未設定のノート一覧です。新しいノートはここに現れます。ノート名をクリックすると開きます。
+
+### Alerts タブ
+
+GTD ルールに違反しているノートの一覧です。以下の4種類のアラートを検出します。
+
+| アラート                                  | 原因                                                        |
+| ----------------------------------------- | ----------------------------------------------------------- |
+| Invalid frontmatter                       | `classification` / `status` の値が不正                      |
+| Reference note has next action            | Reference ノートにチェックボックスがある                    |
+| In-progress Actionable has no next action | ステータスが「進行中」なのに next action がない             |
+| Done/Abandoned Actionable has next action | ステータスが「完了」「廃止」なのに next action が残っている |
+
+---
+
+## コマンド
+
+コマンドパレット（`Cmd/Ctrl + P`）から実行できます。
+
+| コマンド                    | 説明                                                                     |
+| --------------------------- | ------------------------------------------------------------------------ |
+| **Open Inbox**              | Inbox ビューを開く                                                       |
+| **Change status**           | モーダルでステータスを選択して変更                                       |
+| **Set status: In Progress** | アクティブノートを「進行中」に設定                                       |
+| **Set status: On Hold**     | アクティブノートを「保留」に設定                                         |
+| **Set status: Completed**   | アクティブノートを「完了」に設定                                         |
+| **Set status: Abandoned**   | アクティブノートを「廃止」に設定                                         |
+| **Cancel all next actions** | アクティブノート内の未チェックボックスをすべて `[-]`（キャンセル）に変換 |
+
+「Cancel all next actions」はファイルの右クリックメニューからも実行できます。
+
+---
+
+## 設定
+
+### 除外フォルダ
+
+Inbox ビューや初期化の対象から外したいフォルダを指定します。テンプレートフォルダや一時フォルダなどを追加してください。
+
+### Vault の初期化
+
+`classification` が未設定のノートをまとめて `Reference` に設定します。既存の Vault を初めてこのプラグインで使い始めるときに便利です（除外フォルダ内のノートはスキップされます）。
