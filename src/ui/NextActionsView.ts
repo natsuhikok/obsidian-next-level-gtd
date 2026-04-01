@@ -64,6 +64,14 @@ export class NextActionsView extends ItemView {
 		this.render();
 	}
 
+	onFileDelete(path: string) {
+		if (!(path in this.noteCache)) return;
+		this.noteCache = Object.fromEntries(
+			Object.entries(this.noteCache).filter(([key]) => key !== path),
+		);
+		this.render();
+	}
+
 	private isExcluded(file: TFile): boolean {
 		return this.plugin.settings.excludedFolders.some((ef) => file.path.startsWith(ef + '/'));
 	}

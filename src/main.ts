@@ -157,6 +157,26 @@ export default class NextLevelGtdPlugin extends Plugin {
 				}
 			}),
 		);
+
+		this.registerEvent(
+			this.app.vault.on('delete', (abstractFile) => {
+				if (abstractFile instanceof TFile) {
+					this.notifyInboxViewDelete(abstractFile.path);
+					this.notifyNextActionsViewDelete(abstractFile.path);
+				}
+			}),
+		);
+
+		this.registerEvent(
+			this.app.vault.on('rename', (abstractFile, oldPath) => {
+				if (abstractFile instanceof TFile) {
+					this.notifyInboxViewDelete(oldPath);
+					this.notifyNextActionsViewDelete(oldPath);
+					this.notifyInboxView(abstractFile);
+					this.notifyNextActionsView(abstractFile);
+				}
+			}),
+		);
 	}
 
 	onunload() {}
@@ -197,6 +217,24 @@ export default class NextLevelGtdPlugin extends Plugin {
 			const view = leaf.view;
 			if (view instanceof NextActionsView) {
 				view.onFileChange(file).catch(console.error);
+			}
+		}
+	}
+
+	private notifyInboxViewDelete(path: string): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_INBOX)) {
+			const view = leaf.view;
+			if (view instanceof InboxView) {
+				view.onFileDelete(path);
+			}
+		}
+	}
+
+	private notifyNextActionsViewDelete(path: string): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_NEXT_ACTIONS)) {
+			const view = leaf.view;
+			if (view instanceof NextActionsView) {
+				view.onFileDelete(path);
 			}
 		}
 	}
