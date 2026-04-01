@@ -1,6 +1,7 @@
 import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf } from 'obsidian';
 import { GTDNote } from '../GTDNote';
 import { t } from '../i18n';
+import type NextLevelGtdPlugin from '../main';
 
 export const VIEW_TYPE_INBOX = 'gtd-inbox';
 
@@ -10,7 +11,10 @@ export class InboxView extends ItemView {
 	private tab: Tab = 'inbox';
 	private noteCache: Record<string, GTDNote> = {};
 
-	constructor(leaf: WorkspaceLeaf) {
+	constructor(
+		leaf: WorkspaceLeaf,
+		private readonly plugin: NextLevelGtdPlugin,
+	) {
 		super(leaf);
 	}
 
@@ -41,9 +45,25 @@ export class InboxView extends ItemView {
 	}
 
 	async onFileChange(file: TFile) {
+		if (this.isExcluded(file)) {
+			this.noteCache = Object.fromEntries(
+				Object.entries(this.noteCache).filter(([key]) => key !== file.path),
+			);
+			this.render();
+			return;
+		}
 		const note = await GTDNote.load(this.app, file);
 		this.noteCache = { ...this.noteCache, [file.path]: note };
 		this.render();
+	}
+
+	async refresh() {
+		await this.fullScan();
+		this.render();
+	}
+
+	private isExcluded(file: TFile): boolean {
+		return this.plugin.settings.excludedFolders.some((ef) => file.path.startsWith(ef + '/'));
 	}
 
 	private openNote(filePath: string) {
@@ -57,7 +77,10 @@ export class InboxView extends ItemView {
 	}
 
 	private async fullScan() {
-		const files = this.app.vault.getMarkdownFiles();
+		const { excludedFolders } = this.plugin.settings;
+		const files = this.app.vault
+			.getMarkdownFiles()
+			.filter((file) => !excludedFolders.some((ef) => file.path.startsWith(ef + '/')));
 		const notes = await Promise.all(files.map((file) => GTDNote.load(this.app, file)));
 		this.noteCache = notes.reduce<Record<string, GTDNote>>(
 			(acc, note) => ({ ...acc, [note.file.path]: note }),

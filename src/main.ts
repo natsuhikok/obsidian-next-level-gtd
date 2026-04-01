@@ -19,7 +19,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 		this.addSettingTab(settingTab);
 
-		this.registerView(VIEW_TYPE_INBOX, (leaf) => new InboxView(leaf));
+		this.registerView(VIEW_TYPE_INBOX, (leaf) => new InboxView(leaf, this));
 
 		this.addRibbonIcon('inbox', t('openInboxRibbon'), () => {
 			this.activateView(VIEW_TYPE_INBOX).catch(console.error);
