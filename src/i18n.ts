@@ -32,10 +32,17 @@ interface PluginStrings {
 	settingInitButtonLabel: string;
 	settingInitConfirmMessage: string;
 	settingInitSuccessNotice: string;
+	settingDevHeading: string;
 	settingGenerateMockSectionName: string;
 	settingGenerateMockSectionDesc: string;
 	settingGenerateMockButtonLabel: string;
 	settingGenerateMockSuccessNotice: string;
+	// Excluded folders settings
+	settingExcludedFoldersSectionName: string;
+	settingExcludedFoldersSectionDesc: string;
+	settingExcludedFoldersPlaceholder: string;
+	settingExcludedFoldersAddButton: string;
+	settingExcludedFoldersRemoveButton: string;
 	// UI labels
 	classifyAsReference: string;
 	classifyAsActionable: string;
@@ -74,15 +81,22 @@ const en: PluginStrings = {
 	alertFrontmatterInvalid: 'Invalid frontmatter (classification or status)',
 	settingInitSectionName: 'Initialize Vault',
 	settingInitSectionDesc:
-		'Set classification: Reference on all notes that have no classification.',
+		'Set classification: Reference on all notes that have no classification. Notes in excluded folders are skipped.',
 	settingInitButtonLabel: 'Initialize',
 	settingInitConfirmMessage: 'notes have no classification. Set them all to Reference?',
 	settingInitSuccessNotice: 'notes initialized as Reference.',
+	settingDevHeading: 'Development',
 	settingGenerateMockSectionName: 'Generate Mock Data',
 	settingGenerateMockSectionDesc:
 		'Generate sample notes for manual testing. Notes are created in the GTD-Mock folder.',
 	settingGenerateMockButtonLabel: 'Generate',
 	settingGenerateMockSuccessNotice: 'mock notes generated.',
+	settingExcludedFoldersSectionName: 'Excluded Folders',
+	settingExcludedFoldersSectionDesc:
+		'Notes in these folders are ignored by Inbox view and Initialize.',
+	settingExcludedFoldersPlaceholder: 'Folder path',
+	settingExcludedFoldersAddButton: 'Add',
+	settingExcludedFoldersRemoveButton: 'Remove',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'Select status',
@@ -119,15 +133,22 @@ const ja: PluginStrings = {
 	alertFrontmatterInvalid: 'frontmatter の分類または状態が不正です',
 	settingInitSectionName: 'Vault の初期化',
 	settingInitSectionDesc:
-		'classification が未設定のノートすべてに classification: Reference を付与します。',
+		'classification が未設定のノートすべてに classification: Reference を付与します。除外フォルダ内のノートはスキップします。',
 	settingInitButtonLabel: '初期化',
 	settingInitConfirmMessage: '件のノートが未分類です。すべて Reference に設定しますか？',
 	settingInitSuccessNotice: '件のノートを Reference に初期化しました。',
+	settingDevHeading: '開発用',
 	settingGenerateMockSectionName: 'モックデータの生成',
 	settingGenerateMockSectionDesc:
 		'手動テスト用のサンプルノートを生成します。ノートは GTD-Mock フォルダに作成されます。',
 	settingGenerateMockButtonLabel: '生成',
 	settingGenerateMockSuccessNotice: '件のモックノートを生成しました。',
+	settingExcludedFoldersSectionName: '除外フォルダ',
+	settingExcludedFoldersSectionDesc:
+		'これらのフォルダ内のノートは Inbox ビューと初期化の対象から除外されます。',
+	settingExcludedFoldersPlaceholder: 'フォルダパス',
+	settingExcludedFoldersAddButton: '追加',
+	settingExcludedFoldersRemoveButton: '削除',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'ステータスを選択',
