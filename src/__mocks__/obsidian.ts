@@ -1,8 +1,11 @@
 import { vi } from 'vitest';
 
-export const moment = {
-	locale: vi.fn(() => 'en'),
-};
+export const moment = Object.assign(
+	vi.fn(() => ({ format: vi.fn(() => '2026-04-01') })),
+	{
+		locale: vi.fn(() => 'en'),
+	},
+);
 
 export class TFile {
 	declare path: string;

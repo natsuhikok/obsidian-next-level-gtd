@@ -1,6 +1,6 @@
-import { App, TFile } from 'obsidian';
+import { App, moment, TFile } from 'obsidian';
 import { detectNoteAlerts } from './detectNoteAlerts';
-import { hasNextAction } from './hasNextAction';
+import { NextActionCollection } from './NextActionCollection';
 import { NoteState } from './NoteState';
 import { AlertType } from './types';
 
@@ -17,7 +17,10 @@ export class GTDNote {
 	private constructor(file: TFile, fm: Record<string, unknown> | null, content: string) {
 		this.file = file;
 		this.state = NoteState.parse(fm);
-		this.hasNextAction = hasNextAction(content);
+		this.hasNextAction = new NextActionCollection(
+			[{ source: file, content }],
+			moment().format('YYYY-MM-DD'),
+		).hasNextAction;
 		this.alerts = detectNoteAlerts(this.state, this.hasNextAction);
 	}
 
