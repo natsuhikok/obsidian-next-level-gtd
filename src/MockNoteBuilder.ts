@@ -71,6 +71,18 @@ function buildNoteTemplates(): readonly MockNote[] {
 			path: `${MOCK_FOLDER}/alert-D-nofrontmatter-${id()}.md`,
 			content: 'No frontmatter at all.\n',
 		},
+		// E: Reference with next action only inside a fenced code block → no alert expected
+		{
+			path: `${MOCK_FOLDER}/alert-E-codeblock-task-${id()}.md`,
+			content:
+				'---\nclassification: Reference\n---\n通常テキスト（next action なし）\n\n```js\n// - [ ] これはコードブロック内なので無視される\n```\n',
+		},
+		// F: Actionable / 進行中 with multiple unchecked tasks → for cancel-all-next-actions command testing
+		{
+			path: `${MOCK_FOLDER}/cancel-all-test-${id()}.md`,
+			content:
+				'---\nclassification: Actionable\nstatus: 進行中\n---\n- [ ] タスク1\n- [ ] タスク2\n- [x] 完了済みタスク\n- [-] 中止済みタスク\n',
+		},
 	];
 }
 
