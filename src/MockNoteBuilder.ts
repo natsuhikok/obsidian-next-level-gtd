@@ -1,4 +1,6 @@
-export const MOCK_FOLDER = 'GTD-Mock';
+import { App } from 'obsidian';
+
+const MOCK_FOLDER = 'GTD-Mock';
 
 interface MockNote {
 	readonly path: string;
@@ -9,7 +11,7 @@ function randomId(): string {
 	return Math.random().toString(36).slice(2, 10);
 }
 
-export function buildMockNotes(): readonly MockNote[] {
+function buildNoteTemplates(): readonly MockNote[] {
 	const id = () => randomId();
 	return [
 		// 1. Inbox notes (no frontmatter) – for Inbox view testing
@@ -70,4 +72,21 @@ export function buildMockNotes(): readonly MockNote[] {
 			content: 'No frontmatter at all.\n',
 		},
 	];
+}
+
+export class MockNoteBuilder {
+	constructor(private readonly app: App) {}
+
+	async build(): Promise<number> {
+		const folderExists = await this.app.vault.adapter.exists(MOCK_FOLDER);
+		if (!folderExists) await this.app.vault.createFolder(MOCK_FOLDER);
+		const notes = buildNoteTemplates();
+		await Promise.all(
+			notes.map(async ({ path, content }) => {
+				const exists = await this.app.vault.adapter.exists(path);
+				if (!exists) await this.app.vault.create(path, content);
+			}),
+		);
+		return notes.length;
+	}
 }
