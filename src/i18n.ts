@@ -9,6 +9,7 @@ interface PluginStrings {
 	setStatusCompletedCommand: string;
 	setStatusAbandonedCommand: string;
 	changeStatusCommand: string;
+	cancelAllNextActionsCommand: string;
 	// View titles
 	inboxViewTitle: string;
 	alertViewTitle: string;
@@ -66,6 +67,7 @@ const en: PluginStrings = {
 	setStatusCompletedCommand: 'Set status: Completed',
 	setStatusAbandonedCommand: 'Set status: Abandoned',
 	changeStatusCommand: 'Change status',
+	cancelAllNextActionsCommand: 'Cancel all next actions',
 	inboxViewTitle: 'Inbox',
 	alertViewTitle: 'Alerts',
 	classificationInbox: 'Inbox',
@@ -118,6 +120,7 @@ const ja: PluginStrings = {
 	setStatusCompletedCommand: 'ステータスを設定: 完了',
 	setStatusAbandonedCommand: 'ステータスを設定: 廃止',
 	changeStatusCommand: 'ステータスを変更',
+	cancelAllNextActionsCommand: 'すべての next action を中止にする',
 	inboxViewTitle: 'Inbox',
 	alertViewTitle: 'Alerts',
 	classificationInbox: 'Inbox',

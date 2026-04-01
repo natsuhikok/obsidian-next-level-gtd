@@ -5,6 +5,7 @@ import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
 import { setNoteState } from './setNoteState';
+import { cancelAllNextActionsInFile } from './cancelAllNextActions';
 import { Status } from './types';
 
 export default class NextLevelGtdPlugin extends Plugin {
@@ -71,6 +72,30 @@ export default class NextLevelGtdPlugin extends Plugin {
 				},
 			});
 		});
+
+		this.addCommand({
+			id: 'cancel-all-next-actions',
+			name: t('cancelAllNextActionsCommand'),
+			callback: () => {
+				const file = this.app.workspace.getActiveFile();
+				if (file == null) return;
+				void cancelAllNextActionsInFile(this.app, file);
+			},
+		});
+
+		this.registerEvent(
+			this.app.workspace.on('file-menu', (menu, abstractFile) => {
+				if (!(abstractFile instanceof TFile)) return;
+				const file = abstractFile;
+				menu.addItem((item) => {
+					item.setTitle(t('cancelAllNextActionsCommand'))
+						.setIcon('circle-slash')
+						.onClick(() => {
+							void cancelAllNextActionsInFile(this.app, file);
+						});
+				});
+			}),
+		);
 
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {

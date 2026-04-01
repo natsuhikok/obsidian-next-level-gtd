@@ -51,4 +51,23 @@ describe('hasNextAction', () => {
 	it('空文字列は false を返す', () => {
 		expect(hasNextAction('')).toBe(false);
 	});
+
+	it('フェンスコードブロック内のチェックボックスは next action として扱わない', () => {
+		const content = '```\n- [ ] コードブロック内タスク\n```';
+		expect(hasNextAction(content)).toBe(false);
+	});
+
+	it('フェンスコードブロック外のチェックボックスは next action として扱う', () => {
+		const content = '```\n- [ ] 内側\n```\n- [ ] 外側';
+		expect(hasNextAction(content)).toBe(true);
+	});
+
+	it('~~~ フェンスコードブロック内のチェックボックスは next action として扱わない', () => {
+		const content = '~~~\n- [ ] コードブロック内タスク\n~~~';
+		expect(hasNextAction(content)).toBe(false);
+	});
+
+	it('インラインコード内のチェックボックスは next action として扱わない', () => {
+		expect(hasNextAction('説明 `- [ ] インラインコード内` テキスト')).toBe(false);
+	});
 });
