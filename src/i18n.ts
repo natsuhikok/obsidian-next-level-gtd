@@ -44,6 +44,12 @@ interface PluginStrings {
 	settingExcludedFoldersPlaceholder: string;
 	settingExcludedFoldersAddButton: string;
 	settingExcludedFoldersRemoveButton: string;
+	// Next Actions view
+	nextActionsViewTitle: string;
+	openNextActionsRibbon: string;
+	openNextActionsViewCommand: string;
+	noNextActions: string;
+	completeNextAction: string;
 	// UI labels
 	classifyAsReference: string;
 	classifyAsActionable: string;
@@ -99,6 +105,11 @@ const en: PluginStrings = {
 	settingExcludedFoldersPlaceholder: 'Folder path',
 	settingExcludedFoldersAddButton: 'Add',
 	settingExcludedFoldersRemoveButton: 'Remove',
+	nextActionsViewTitle: 'Next Actions',
+	openNextActionsRibbon: 'Open GTD Next Actions',
+	openNextActionsViewCommand: 'Open Next Actions',
+	noNextActions: 'No available next actions.',
+	completeNextAction: 'Complete',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'Select status',
@@ -152,6 +163,11 @@ const ja: PluginStrings = {
 	settingExcludedFoldersPlaceholder: 'フォルダパス',
 	settingExcludedFoldersAddButton: '追加',
 	settingExcludedFoldersRemoveButton: '削除',
+	nextActionsViewTitle: 'ネクストアクション',
+	openNextActionsRibbon: 'GTD ネクストアクションを開く',
+	openNextActionsViewCommand: 'ネクストアクションを開く',
+	noNextActions: '利用可能なネクストアクションはありません。',
+	completeNextAction: '完了',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'ステータスを選択',

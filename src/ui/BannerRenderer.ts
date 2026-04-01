@@ -34,10 +34,10 @@ export class BannerRenderer {
 		this.render(view, file);
 	}
 
-	private render(view: MarkdownView, file: TFile) {
+	private render(view: MarkdownView, file: TFile, content?: string) {
 		const fm = this.app.metadataCache.getFileCache(file)?.frontmatter ?? null;
-		const content = view.getViewData();
-		const note = GTDNote.from(file, fm, content);
+		const data = content ?? view.getViewData();
+		const note = GTDNote.from(file, fm, data);
 
 		const wrapper = view.containerEl.createDiv();
 		wrapper.id = BANNER_ID;
@@ -68,5 +68,16 @@ export class BannerRenderer {
 		}
 
 		view.contentEl.before(wrapper);
+	}
+
+	async updateAllViewsForFile(file: TFile): Promise<void> {
+		const content = await this.app.vault.cachedRead(file);
+		this.app.workspace.getLeavesOfType('markdown').forEach((leaf) => {
+			const view = leaf.view;
+			if (!(view instanceof MarkdownView)) return;
+			if (view.file?.path !== file.path) return;
+			view.containerEl.querySelector(`#${BANNER_ID}`)?.remove();
+			this.render(view, file, content);
+		});
 	}
 }

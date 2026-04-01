@@ -129,3 +129,120 @@
 	font-weight: 600;
 	cursor: default;
 }
+
+/* ── Next Actions View ───────────────────────────────────────────── */
+
+.workspace-leaf-content[data-type='gtd-next-actions'] .view-content {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.workspace-leaf-content[data-type='gtd-next-actions'] .nav-files-container {
+	padding: 0;
+}
+
+.gtd-next-action-item {
+	display: flex;
+	align-content: center;
+	padding: 0 10px 0 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+	cursor: pointer;
+}
+
+.gtd-next-action-item:last-child {
+	border-bottom: none;
+}
+
+.gtd-next-action-item:hover {
+	background-color: var(--nav-item-background-hover);
+}
+
+.gtd-next-action-complete {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 40px;
+	margin: 0;
+	padding: 0;
+	opacity: 0.2;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	color: var(--text-faint);
+	cursor: pointer;
+	border-radius: var(--radius-s);
+	/* background-color: red !important; */
+}
+
+.gtd-next-action-complete:hover {
+	color: var(--color-accent);
+	opacity: 1;
+}
+
+.gtd-next-action-complete .svg-icon {
+	width: 19px;
+	height: 19px;
+}
+
+.gtd-next-action-body {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+	overflow: hidden;
+}
+
+.gtd-next-action-text {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--nav-item-size);
+	color: var(--nav-item-color);
+	line-height: var(--line-height-tight);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.gtd-next-action-meta {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+}
+
+.gtd-next-action-date {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+.gtd-next-action-date.is-overdue {
+	color: var(--color-red);
+	font-weight: 600;
+}
+
+.gtd-next-action-date.is-today {
+	color: var(--color-orange);
+	font-weight: 600;
+}
+
+.gtd-next-action-project {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+	max-width: 80px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.gtd-empty {
+	padding: 12px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	text-align: center;
+}

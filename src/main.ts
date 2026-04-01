@@ -2,6 +2,7 @@ import { Plugin, TFile } from 'obsidian';
 import { DEFAULT_SETTINGS, NextLevelGtdSettings, NextLevelGtdSettingTab } from './settings';
 import { t } from './i18n';
 import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
+import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
 import { setNoteState } from './setNoteState';
@@ -21,9 +22,14 @@ export default class NextLevelGtdPlugin extends Plugin {
 		this.addSettingTab(settingTab);
 
 		this.registerView(VIEW_TYPE_INBOX, (leaf) => new InboxView(leaf, this));
+		this.registerView(VIEW_TYPE_NEXT_ACTIONS, (leaf) => new NextActionsView(leaf, this));
 
 		this.addRibbonIcon('inbox', t('openInboxRibbon'), () => {
 			this.activateView(VIEW_TYPE_INBOX).catch(console.error);
+		});
+
+		this.addRibbonIcon('list-checks', t('openNextActionsRibbon'), () => {
+			this.activateView(VIEW_TYPE_NEXT_ACTIONS).catch(console.error);
 		});
 
 		this.addCommand({
@@ -31,6 +37,14 @@ export default class NextLevelGtdPlugin extends Plugin {
 			name: t('openInboxViewCommand'),
 			callback: () => {
 				this.activateView(VIEW_TYPE_INBOX).catch(console.error);
+			},
+		});
+
+		this.addCommand({
+			id: 'open-next-actions-view',
+			name: t('openNextActionsViewCommand'),
+			callback: () => {
+				this.activateView(VIEW_TYPE_NEXT_ACTIONS).catch(console.error);
 			},
 		});
 
@@ -116,6 +130,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 					this.bannerRenderer.update(changedFile);
 				}
 				this.notifyInboxView(changedFile);
+				this.notifyNextActionsView(changedFile);
 			}),
 		);
 
@@ -126,6 +141,8 @@ export default class NextLevelGtdPlugin extends Plugin {
 				}
 				this.editorChangeTimer = setTimeout(() => {
 					this.bannerRenderer.renderForActiveView();
+					const activeFile = this.app.workspace.getActiveFile();
+					if (activeFile != null) this.notifyNextActionsView(activeFile);
 					this.editorChangeTimer = null;
 				}, 300);
 			}),
@@ -135,6 +152,8 @@ export default class NextLevelGtdPlugin extends Plugin {
 			this.app.vault.on('modify', (abstractFile) => {
 				if (abstractFile instanceof TFile) {
 					this.notifyInboxView(abstractFile);
+					this.notifyNextActionsView(abstractFile);
+					this.bannerRenderer.updateAllViewsForFile(abstractFile).catch(console.error);
 				}
 			}),
 		);
@@ -168,6 +187,15 @@ export default class NextLevelGtdPlugin extends Plugin {
 		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_INBOX)) {
 			const view = leaf.view;
 			if (view instanceof InboxView) {
+				view.onFileChange(file).catch(console.error);
+			}
+		}
+	}
+
+	private notifyNextActionsView(file: TFile): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_NEXT_ACTIONS)) {
+			const view = leaf.view;
+			if (view instanceof NextActionsView) {
 				view.onFileChange(file).catch(console.error);
 			}
 		}
