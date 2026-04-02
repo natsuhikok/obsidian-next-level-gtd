@@ -45,6 +45,7 @@ export class InboxView extends ItemView {
 	}
 
 	async onFileChange(file: TFile) {
+		if (file.extension !== 'md') return;
 		if (this.isExcluded(file)) {
 			this.noteCache = Object.fromEntries(
 				Object.entries(this.noteCache).filter(([key]) => key !== file.path),
