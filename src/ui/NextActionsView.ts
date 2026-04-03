@@ -9,6 +9,7 @@ export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
 
 export class NextActionsView extends ItemView {
 	private noteCache: Record<string, GTDNote> = {};
+	private selectedContexts: readonly string[] = [''];
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -140,7 +141,37 @@ export class NextActionsView extends ItemView {
 
 		const today = moment().format('YYYY-MM-DD');
 
-		const sorted = [...allActions].sort((a, b) => {
+		const allContexts = allActions
+			.flatMap((a) => a.context)
+			.filter((ctx, i, arr) => arr.indexOf(ctx) === i)
+			.sort();
+
+		const filterBar = contentEl.createDiv({ cls: 'gtd-context-filter' });
+		const addChip = (label: string, value: string) => {
+			const active = this.selectedContexts.includes(value);
+			const chip = filterBar.createEl('button', {
+				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
+				text: label,
+			});
+			chip.addEventListener('click', () => {
+				this.selectedContexts = this.selectedContexts.includes(value)
+					? this.selectedContexts.filter((c) => c !== value)
+					: [...this.selectedContexts, value];
+				this.render();
+			});
+		};
+		addChip(t('contextFilterNoContext'), '');
+		allContexts.forEach((ctx) => addChip('#' + ctx, ctx));
+
+		const filteredActions = allActions.filter((action) =>
+			this.selectedContexts.some((ctx) =>
+				ctx === '' ? action.context.length === 0 : action.context.includes(ctx),
+			),
+		);
+
+		if (filteredActions.length === 0) return;
+
+		const sorted = [...filteredActions].sort((a, b) => {
 			const da = a.due ?? a.scheduled ?? '9999-99-99';
 			const db = b.due ?? b.scheduled ?? '9999-99-99';
 			return da.localeCompare(db);
@@ -192,6 +223,11 @@ export class NextActionsView extends ItemView {
 				e.stopPropagation();
 				this.openNote(action.source.path, e, action.text);
 			});
+		});
+
+		contentEl.createDiv({
+			cls: 'gtd-next-action-count',
+			text: `${String(sorted.length)} actions`,
 		});
 	}
 

@@ -411,4 +411,36 @@ describe('NextActionCollection', () => {
 			expect(c.nextActions.every((a) => !a.blocked)).toBe(true);
 		});
 	});
+
+	describe('context (タグ抽出)', () => {
+		it('タグがない場合は空配列になる', () => {
+			const c = new NextActionCollection([entry('- [ ] タスク')], TODAY);
+			expect(c.nextActions[0]!.context).toEqual([]);
+		});
+
+		it('タグを context として抽出する', () => {
+			const c = new NextActionCollection([entry('- [ ] タスク #仕事')], TODAY);
+			expect(c.nextActions[0]!.context).toEqual(['仕事']);
+		});
+
+		it('複数タグをすべて抽出する', () => {
+			const c = new NextActionCollection([entry('- [ ] タスク #仕事 #電話')], TODAY);
+			expect(c.nextActions[0]!.context).toEqual(['仕事', '電話']);
+		});
+
+		it('#temp タグは context に含まれない', () => {
+			const c = new NextActionCollection([entry('- [ ] タスク #仕事 #temporary')], TODAY);
+			expect(c.nextActions[0]!.context).not.toContain('temp');
+		});
+
+		it('#temporary は #temp とは別なので context に含まれる', () => {
+			const c = new NextActionCollection([entry('- [ ] タスク #temporary')], TODAY);
+			expect(c.nextActions[0]!.context).toEqual(['temporary']);
+		});
+
+		it('日付記法の絵文字に続くタグも抽出する', () => {
+			const c = new NextActionCollection([entry('- [ ] タスク ⏳ 2026-04-05 #仕事')], TODAY);
+			expect(c.nextActions[0]!.context).toEqual(['仕事']);
+		});
+	});
 });

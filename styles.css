@@ -135,6 +135,7 @@
 .workspace-leaf-content[data-type='gtd-next-actions'] .view-content {
 	padding-left: 0;
 	padding-right: 0;
+	padding-top: 0;
 }
 
 .workspace-leaf-content[data-type='gtd-next-actions'] .nav-files-container {
@@ -144,7 +145,7 @@
 .gtd-next-action-item {
 	display: flex;
 	align-content: center;
-	padding: 0 10px 0 0;
+	padding: 0 4px 0 0;
 	border-bottom: 1px solid var(--background-modifier-border);
 	cursor: pointer;
 }
@@ -173,7 +174,6 @@
 	color: var(--text-faint);
 	cursor: pointer;
 	border-radius: var(--radius-s);
-	/* background-color: red !important; */
 }
 
 .gtd-next-action-complete:hover {
@@ -245,4 +245,44 @@
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 	text-align: center;
+}
+
+.gtd-context-filter {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px;
+	padding: 0px 4px 10px 4px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.gtd-context-chip {
+	padding: 1px 8px;
+	border-radius: 100px;
+	border: 1px solid var(--background-modifier-border) !important;
+	box-shadow: none !important;
+	background: transparent !important;
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: var(--font-ui-smaller);
+	transition:
+		background 0.15s,
+		color 0.15s;
+}
+
+.gtd-context-chip.is-active {
+	background: var(--interactive-accent) !important;
+	border-color: var(--interactive-accent) !important;
+	color: var(--text-on-accent);
+}
+
+.gtd-next-action-count {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	display: flex;
+	justify-content: flex-end;
+	padding: 4px 10px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+	background: var(--background-primary);
 }

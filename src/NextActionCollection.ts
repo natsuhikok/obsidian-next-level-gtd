@@ -5,6 +5,7 @@ export interface NextAction<T> {
 	readonly scheduled: string | null;
 	readonly due: string | null;
 	readonly available: boolean;
+	readonly context: readonly string[];
 }
 
 interface ListItem {
@@ -105,6 +106,12 @@ function isBlockedByPriorSibling(node: TreeNode, siblings: readonly TreeNode[]):
 	return false;
 }
 
+const TAG_RE = /#([^\s#][^\s]*)/g;
+
+function extractContexts(body: string): readonly string[] {
+	return [...body.matchAll(TAG_RE)].map((m) => m[1]!).filter((tag) => tag !== 'temp');
+}
+
 function extractDates(body: string): { scheduled: string | null; due: string | null } {
 	const scheduledMatch = SCHEDULED_RE.exec(body);
 	const dueMatch = DUE_RE.exec(body);
@@ -128,11 +135,12 @@ function collectFromNodes<T>(
 		const blocked = blockedByChildren || blockedBySibling;
 
 		const { scheduled, due } = extractDates(node.item.body);
+		const context = extractContexts(node.item.body);
 
 		const available = !blocked && (scheduled !== null ? scheduled <= today : true);
 
 		return [
-			{ source, text: node.item.body, blocked, scheduled, due, available },
+			{ source, text: node.item.body, blocked, scheduled, due, available, context },
 			...childActions,
 		];
 	});
