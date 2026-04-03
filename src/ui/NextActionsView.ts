@@ -10,6 +10,7 @@ export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
 export class NextActionsView extends ItemView {
 	private noteCache: Record<string, GTDNote> = {};
 	private selectedContexts: readonly string[] = [''];
+	private showScheduledOnly = false;
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -154,6 +155,7 @@ export class NextActionsView extends ItemView {
 				text: label,
 			});
 			chip.addEventListener('click', () => {
+				this.showScheduledOnly = false;
 				this.selectedContexts = this.selectedContexts.includes(value)
 					? this.selectedContexts.filter((c) => c !== value)
 					: [...this.selectedContexts, value];
@@ -163,11 +165,31 @@ export class NextActionsView extends ItemView {
 		addChip(t('contextFilterNoContext'), '');
 		allContexts.forEach((ctx) => addChip('#' + ctx, ctx));
 
-		const filteredActions = allActions.filter((action) =>
-			this.selectedContexts.some((ctx) =>
-				ctx === '' ? action.context.length === 0 : action.context.includes(ctx),
-			),
-		);
+		filterBar.createDiv({ cls: 'gtd-context-filter-sep' });
+
+		const scheduledChip = filterBar.createEl('button', {
+			cls: 'gtd-context-chip' + (this.showScheduledOnly ? ' is-active' : ''),
+			text: t('contextFilterScheduledOnly'),
+		});
+		scheduledChip.addEventListener('click', () => {
+			this.showScheduledOnly = !this.showScheduledOnly;
+			if (this.showScheduledOnly) {
+				this.selectedContexts = [];
+			} else {
+				this.selectedContexts = [''];
+			}
+			this.render();
+		});
+
+		const filteredActions = this.showScheduledOnly
+			? Object.values(this.noteCache)
+					.flatMap((note) => [...note.nextActions])
+					.filter((action) => !action.blocked && action.scheduled !== null)
+			: allActions.filter((action) =>
+					this.selectedContexts.some((ctx) =>
+						ctx === '' ? action.context.length === 0 : action.context.includes(ctx),
+					),
+				);
 
 		if (filteredActions.length === 0) return;
 

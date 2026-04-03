@@ -105,6 +105,28 @@ function buildNoteTemplates(): readonly MockNote[] {
 			content:
 				'---\nclassification: Actionable\nstatus: 進行中\n---\n- [ ] context なしのタスクA\n- [ ] context なしのタスクB\n',
 		},
+
+		// H: Scheduled filter testing – tasks with ⏳ scheduled dates
+		{
+			path: `${MOCK_FOLDER}/scheduled-past-${id()}.md`,
+			content:
+				'---\nclassification: Actionable\nstatus: 進行中\n---\n- [ ] 過去にスケジュールされたタスク ⏳ 2026-03-15 #office\n- [ ] スケジュールなしのタスク #office\n',
+		},
+		{
+			path: `${MOCK_FOLDER}/scheduled-today-${id()}.md`,
+			content:
+				'---\nclassification: Actionable\nstatus: 進行中\n---\n- [ ] 今日のタスク ⏳ 2026-04-03\n- [ ] 別の今日のタスク ⏳ 2026-04-03 #home\n',
+		},
+		{
+			path: `${MOCK_FOLDER}/scheduled-future-${id()}.md`,
+			content:
+				'---\nclassification: Actionable\nstatus: 進行中\n---\n- [ ] 来週のタスク ⏳ 2026-04-10 #仕事\n- [ ] 来月のタスク ⏳ 2026-05-01\n',
+		},
+		{
+			path: `${MOCK_FOLDER}/due-date-${id()}.md`,
+			content:
+				'---\nclassification: Actionable\nstatus: 進行中\n---\n- [ ] 期限付きタスク 📅 2026-04-05 #office\n- [ ] 別の期限付きタスク 📅 2026-04-20\n',
+		},
 	];
 }
 

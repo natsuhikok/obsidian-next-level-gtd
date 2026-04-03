@@ -51,6 +51,7 @@ interface PluginStrings {
 	noNextActions: string;
 	completeNextAction: string;
 	contextFilterNoContext: string;
+	contextFilterScheduledOnly: string;
 	// UI labels
 	classifyAsReference: string;
 	classifyAsActionable: string;
@@ -112,6 +113,7 @@ const en: PluginStrings = {
 	noNextActions: 'No available next actions.',
 	completeNextAction: 'Complete',
 	contextFilterNoContext: 'No context',
+	contextFilterScheduledOnly: '⏳ only',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'Select status',
@@ -171,6 +173,7 @@ const ja: PluginStrings = {
 	noNextActions: '利用可能なネクストアクションはありません。',
 	completeNextAction: '完了',
 	contextFilterNoContext: 'context なし',
+	contextFilterScheduledOnly: '⏳ only',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'ステータスを選択',

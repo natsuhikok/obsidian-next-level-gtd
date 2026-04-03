@@ -8,6 +8,7 @@ export class GTDNote {
 	readonly file: TFile;
 	readonly state: NoteState;
 	readonly hasNextAction: boolean;
+	readonly nextActions: readonly NextAction<TFile>[];
 	readonly availableActions: readonly NextAction<TFile>[];
 	readonly alerts: readonly AlertType[];
 
@@ -23,6 +24,7 @@ export class GTDNote {
 			moment().format('YYYY-MM-DD'),
 		);
 		this.hasNextAction = collection.hasNextAction;
+		this.nextActions = collection.nextActions;
 		this.availableActions = collection.availableActions;
 		this.alerts = detectNoteAlerts(this.state, this.hasNextAction);
 	}
