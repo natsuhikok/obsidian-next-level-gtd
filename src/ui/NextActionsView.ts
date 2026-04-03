@@ -259,7 +259,15 @@ export class NextActionsView extends ItemView {
 }
 
 const TASK_METADATA_RE = /[📅⏳🛫➕✅❌]\s*\d{4}-\d{2}-\d{2}|🔁\S*|[🔺⏫🔼🔽]/gu;
+const WIKILINK_RE = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+const MDLINK_RE = /\[([^\]]*)\]\([^)]*\)/g;
+const TAG_DISPLAY_RE = /#\S+/g;
 
 function stripTaskMetadata(text: string): string {
-	return text.replace(TASK_METADATA_RE, '').trim();
+	return text
+		.replace(TASK_METADATA_RE, '')
+		.replace(WIKILINK_RE, '$1')
+		.replace(MDLINK_RE, '$1')
+		.replace(TAG_DISPLAY_RE, '')
+		.trim();
 }
