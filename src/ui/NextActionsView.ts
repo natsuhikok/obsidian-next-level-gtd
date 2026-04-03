@@ -9,6 +9,8 @@ export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
 
 export class NextActionsView extends ItemView {
 	private noteCache: Record<string, GTDNote> = {};
+	private selectedContexts: readonly string[] = [''];
+	private showScheduledOnly = false;
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -140,7 +142,58 @@ export class NextActionsView extends ItemView {
 
 		const today = moment().format('YYYY-MM-DD');
 
-		const sorted = [...allActions].sort((a, b) => {
+		const allContexts = allActions
+			.flatMap((a) => a.context)
+			.filter((ctx, i, arr) => arr.indexOf(ctx) === i)
+			.sort();
+
+		const filterBar = contentEl.createDiv({ cls: 'gtd-context-filter' });
+		const addChip = (label: string, value: string) => {
+			const active = this.selectedContexts.includes(value);
+			const chip = filterBar.createEl('button', {
+				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
+				text: label,
+			});
+			chip.addEventListener('click', () => {
+				this.showScheduledOnly = false;
+				this.selectedContexts = this.selectedContexts.includes(value)
+					? this.selectedContexts.filter((c) => c !== value)
+					: [...this.selectedContexts, value];
+				this.render();
+			});
+		};
+		addChip(t('contextFilterNoContext'), '');
+		allContexts.forEach((ctx) => addChip('#' + ctx, ctx));
+
+		filterBar.createDiv({ cls: 'gtd-context-filter-sep' });
+
+		const scheduledChip = filterBar.createEl('button', {
+			cls: 'gtd-context-chip' + (this.showScheduledOnly ? ' is-active' : ''),
+			text: t('contextFilterScheduledOnly'),
+		});
+		scheduledChip.addEventListener('click', () => {
+			this.showScheduledOnly = !this.showScheduledOnly;
+			if (this.showScheduledOnly) {
+				this.selectedContexts = [];
+			} else {
+				this.selectedContexts = [''];
+			}
+			this.render();
+		});
+
+		const filteredActions = this.showScheduledOnly
+			? Object.values(this.noteCache)
+					.flatMap((note) => [...note.nextActions])
+					.filter((action) => !action.blocked && action.scheduled !== null)
+			: allActions.filter((action) =>
+					this.selectedContexts.some((ctx) =>
+						ctx === '' ? action.context.length === 0 : action.context.includes(ctx),
+					),
+				);
+
+		if (filteredActions.length === 0) return;
+
+		const sorted = [...filteredActions].sort((a, b) => {
 			const da = a.due ?? a.scheduled ?? '9999-99-99';
 			const db = b.due ?? b.scheduled ?? '9999-99-99';
 			return da.localeCompare(db);
@@ -193,6 +246,11 @@ export class NextActionsView extends ItemView {
 				this.openNote(action.source.path, e, action.text);
 			});
 		});
+
+		contentEl.createDiv({
+			cls: 'gtd-next-action-count',
+			text: `${String(sorted.length)} actions`,
+		});
 	}
 
 	private completeAction(action: NextAction<TFile>) {
@@ -201,7 +259,15 @@ export class NextActionsView extends ItemView {
 }
 
 const TASK_METADATA_RE = /[📅⏳🛫➕✅❌]\s*\d{4}-\d{2}-\d{2}|🔁\S*|[🔺⏫🔼🔽]/gu;
+const WIKILINK_RE = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+const MDLINK_RE = /\[([^\]]*)\]\([^)]*\)/g;
+const TAG_DISPLAY_RE = /#\S+/g;
 
 function stripTaskMetadata(text: string): string {
-	return text.replace(TASK_METADATA_RE, '').trim();
+	return text
+		.replace(TASK_METADATA_RE, '')
+		.replace(WIKILINK_RE, '$1')
+		.replace(MDLINK_RE, '$1')
+		.replace(TAG_DISPLAY_RE, '')
+		.trim();
 }
