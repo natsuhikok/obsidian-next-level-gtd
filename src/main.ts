@@ -183,7 +183,18 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 	async loadSettings() {
 		const data = (await this.loadData()) as Partial<NextLevelGtdSettings> | null;
-		this.settings = { ...DEFAULT_SETTINGS, ...data };
+		const merged = { ...DEFAULT_SETTINGS, ...data };
+		const first = merged.excludedFolders[0];
+		if (first !== undefined && typeof (first as unknown) === 'string') {
+			this.settings = {
+				...merged,
+				excludedFolders: (merged.excludedFolders as unknown as readonly string[]).map(
+					(path) => ({ path, showAlert: true }),
+				),
+			};
+		} else {
+			this.settings = merged;
+		}
 	}
 
 	async saveSettings() {

@@ -7,10 +7,11 @@ import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian'
 import { ConfirmModal } from 'ui/ConfirmModal';
 import { FolderSuggest } from 'ui/FolderSuggest';
 import { InboxView, VIEW_TYPE_INBOX } from 'ui/InboxView';
+import { ExcludedFolder } from 'types';
 
 export interface NextLevelGtdSettings {
 	_placeholder: null;
-	excludedFolders: readonly string[];
+	excludedFolders: readonly ExcludedFolder[];
 }
 
 export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
@@ -42,7 +43,7 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 				btn.setButtonText(t('settingInitButtonLabel')).onClick(() => {
 					const initializer = new InboxInitializer(
 						this.app,
-						this.plugin.settings.excludedFolders,
+						this.plugin.settings.excludedFolders.map((ef) => ef.path),
 					);
 					const targets = initializer.findTargets();
 					const count = targets.length;
@@ -62,16 +63,27 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 
 		const manager = new ExcludedFoldersManager(this.plugin);
 		for (const folder of manager.getAll()) {
-			new Setting(containerEl).setName(folder).addExtraButton((btn) =>
-				btn
-					.setIcon('trash')
-					.setTooltip(t('settingExcludedFoldersRemoveButton'))
-					.onClick(async () => {
-						await manager.remove(folder);
-						this.refreshInboxView();
-						this.display();
-					}),
-			);
+			new Setting(containerEl)
+				.setName(folder.path)
+				.addToggle((toggle) =>
+					toggle
+						.setValue(folder.showAlert)
+						.setTooltip(t('settingExcludedFoldersShowAlert'))
+						.onChange(async (value) => {
+							await manager.setShowAlert(folder.path, value);
+							this.refreshInboxView();
+						}),
+				)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon('trash')
+						.setTooltip(t('settingExcludedFoldersRemoveButton'))
+						.onClick(async () => {
+							await manager.remove(folder.path);
+							this.refreshInboxView();
+							this.display();
+						}),
+				);
 		}
 
 		let inputText: TextComponent;

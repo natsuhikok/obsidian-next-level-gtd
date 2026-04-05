@@ -75,7 +75,9 @@ export class NextActionsView extends ItemView {
 	}
 
 	private isExcluded(file: TFile): boolean {
-		return this.plugin.settings.excludedFolders.some((ef) => file.path.startsWith(ef + '/'));
+		return this.plugin.settings.excludedFolders.some((ef) =>
+			file.path.startsWith(ef.path + '/'),
+		);
 	}
 
 	private openNote(filePath: string, event: MouseEvent, actionText?: string) {
@@ -117,7 +119,7 @@ export class NextActionsView extends ItemView {
 		const { excludedFolders } = this.plugin.settings;
 		const files = this.app.vault
 			.getMarkdownFiles()
-			.filter((file) => !excludedFolders.some((ef) => file.path.startsWith(ef + '/')));
+			.filter((file) => !excludedFolders.some((ef) => file.path.startsWith(ef.path + '/')));
 		const notes = await Promise.all(files.map((file) => GTDNote.load(this.app, file)));
 		this.noteCache = notes.reduce<Record<string, GTDNote>>(
 			(acc, note) => ({ ...acc, [note.file.path]: note }),

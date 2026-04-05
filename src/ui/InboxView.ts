@@ -43,7 +43,7 @@ export class InboxView extends ItemView {
 
 	async onFileChange(file: TFile) {
 		if (file.extension !== 'md') return;
-		if (this.isExcluded(file)) {
+		if (this.isFullyExcluded(file)) {
 			this.noteCache = Object.fromEntries(
 				Object.entries(this.noteCache).filter(([key]) => key !== file.path),
 			);
@@ -68,8 +68,10 @@ export class InboxView extends ItemView {
 		this.render();
 	}
 
-	private isExcluded(file: TFile): boolean {
-		return this.plugin.settings.excludedFolders.some((ef) => file.path.startsWith(ef + '/'));
+	private isFullyExcluded(file: TFile): boolean {
+		return this.plugin.settings.excludedFolders.some(
+			(ef) => !ef.showAlert && file.path.startsWith(ef.path + '/'),
+		);
 	}
 
 	private openNote(filePath: string) {
@@ -84,9 +86,12 @@ export class InboxView extends ItemView {
 
 	private async fullScan() {
 		const { excludedFolders } = this.plugin.settings;
+		const fullyExcludedPaths = excludedFolders
+			.filter((ef) => !ef.showAlert)
+			.map((ef) => ef.path);
 		const files = this.app.vault
 			.getMarkdownFiles()
-			.filter((file) => !excludedFolders.some((ef) => file.path.startsWith(ef + '/')));
+			.filter((file) => !fullyExcludedPaths.some((p) => file.path.startsWith(p + '/')));
 		const notes = await Promise.all(files.map((file) => GTDNote.load(this.app, file)));
 		this.noteCache = notes.reduce<Record<string, GTDNote>>(
 			(acc, note) => ({ ...acc, [note.file.path]: note }),
@@ -98,8 +103,14 @@ export class InboxView extends ItemView {
 		const { contentEl } = this;
 		contentEl.empty();
 
+		const { excludedFolders } = this.plugin.settings;
+		const alertOnlyPaths = excludedFolders.filter((ef) => ef.showAlert).map((ef) => ef.path);
+
 		const notes = Object.values(this.noteCache);
-		const displayNotes = notes.filter((n) => n.isInbox || n.alerts.length > 0);
+		const displayNotes = notes.filter((n) => {
+			const isAlertOnly = alertOnlyPaths.some((p) => n.file.path.startsWith(p + '/'));
+			return isAlertOnly ? n.alerts.length > 0 : n.isInbox || n.alerts.length > 0;
+		});
 		const activeFilePath = this.app.workspace.getActiveFile()?.path;
 
 		if (displayNotes.length === 0) {

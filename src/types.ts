@@ -7,3 +7,5 @@ export type AlertType =
 	| 'actionableInProgressNoNextAction'
 	| 'actionableDoneHasNextAction'
 	| 'frontmatterInvalid';
+
+export type ExcludedFolder = { readonly path: string; readonly showAlert: boolean };
