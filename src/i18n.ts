@@ -58,6 +58,7 @@ interface PluginStrings {
 	selectStatus: string;
 	noInboxItems: string;
 	noAlerts: string;
+	noInboxOrAlerts: string;
 	openNote: string;
 	// Modals
 	confirmModalTitle: string;
@@ -119,6 +120,7 @@ const en: PluginStrings = {
 	selectStatus: 'Select status',
 	noInboxItems: 'No unclassified notes.',
 	noAlerts: 'No alerts.',
+	noInboxOrAlerts: 'No inbox or alert items.',
 	openNote: 'Open',
 	confirmModalTitle: 'Confirm',
 	confirmModalExecute: 'Execute',
@@ -179,6 +181,7 @@ const ja: PluginStrings = {
 	selectStatus: 'ステータスを選択',
 	noInboxItems: '未分類のノートはありません。',
 	noAlerts: 'アラートはありません。',
+	noInboxOrAlerts: 'Inbox もアラートもありません。',
 	openNote: '開く',
 	confirmModalTitle: '確認',
 	confirmModalExecute: '実行',
