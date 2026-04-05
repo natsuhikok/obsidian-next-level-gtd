@@ -7,7 +7,7 @@ import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
 import { setNoteState } from './setNoteState';
 import { cancelAllNextActionsInFile } from './cancelAllNextActions';
-import { Status } from './types';
+import { ExcludedFolder, Status } from './types';
 
 export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
@@ -16,7 +16,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		this.bannerRenderer = new BannerRenderer(this.app);
+		this.bannerRenderer = new BannerRenderer(this.app, () => this.settings.excludedFolders);
 		const settingTab = new NextLevelGtdSettingTab(this.app, this);
 
 		this.addSettingTab(settingTab);
@@ -182,8 +182,23 @@ export default class NextLevelGtdPlugin extends Plugin {
 	onunload() {}
 
 	async loadSettings() {
-		const data = (await this.loadData()) as Partial<NextLevelGtdSettings> | null;
-		this.settings = { ...DEFAULT_SETTINGS, ...data };
+		const raw = (await this.loadData()) as Record<string, unknown> | null;
+		const rawExcluded = raw?.['excludedFolders'];
+		const excludedFolders: readonly ExcludedFolder[] = Array.isArray(rawExcluded)
+			? rawExcluded.map((ef: unknown) => {
+					if (typeof ef === 'string') return { folder: ef, showAlertBanner: true };
+					const obj = ef as Record<string, unknown>;
+					return {
+						folder: obj['folder'] as string,
+						showAlertBanner: obj['showAlertBanner'] !== false,
+					};
+				})
+			: [];
+		this.settings = {
+			...DEFAULT_SETTINGS,
+			...(raw as Partial<NextLevelGtdSettings> | null),
+			excludedFolders,
+		};
 	}
 
 	async saveSettings() {

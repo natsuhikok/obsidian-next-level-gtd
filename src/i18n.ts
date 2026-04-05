@@ -44,6 +44,7 @@ interface PluginStrings {
 	settingExcludedFoldersPlaceholder: string;
 	settingExcludedFoldersAddButton: string;
 	settingExcludedFoldersRemoveButton: string;
+	settingExcludedFoldersShowAlertBannerToggle: string;
 	// Next Actions view
 	nextActionsViewTitle: string;
 	openNextActionsRibbon: string;
@@ -108,6 +109,7 @@ const en: PluginStrings = {
 	settingExcludedFoldersPlaceholder: 'Folder path',
 	settingExcludedFoldersAddButton: 'Add',
 	settingExcludedFoldersRemoveButton: 'Remove',
+	settingExcludedFoldersShowAlertBannerToggle: 'Show alert banner',
 	nextActionsViewTitle: 'Next Actions',
 	openNextActionsRibbon: 'Open GTD Next Actions',
 	openNextActionsViewCommand: 'Open Next Actions',
@@ -169,6 +171,7 @@ const ja: PluginStrings = {
 	settingExcludedFoldersPlaceholder: 'フォルダパス',
 	settingExcludedFoldersAddButton: '追加',
 	settingExcludedFoldersRemoveButton: '削除',
+	settingExcludedFoldersShowAlertBannerToggle: 'アラートバナーを表示する',
 	nextActionsViewTitle: 'ネクストアクション',
 	openNextActionsRibbon: 'GTD ネクストアクションを開く',
 	openNextActionsViewCommand: 'ネクストアクションを開く',

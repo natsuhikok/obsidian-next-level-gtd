@@ -4,13 +4,14 @@ import { InboxInitializer } from 'InboxInitializer';
 import NextLevelGtdPlugin from 'main';
 import { MockNoteBuilder } from 'MockNoteBuilder';
 import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian';
+import { ExcludedFolder } from 'types';
 import { ConfirmModal } from 'ui/ConfirmModal';
 import { FolderSuggest } from 'ui/FolderSuggest';
 import { InboxView, VIEW_TYPE_INBOX } from 'ui/InboxView';
 
 export interface NextLevelGtdSettings {
 	_placeholder: null;
-	excludedFolders: readonly string[];
+	excludedFolders: readonly ExcludedFolder[];
 }
 
 export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
@@ -42,7 +43,7 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 				btn.setButtonText(t('settingInitButtonLabel')).onClick(() => {
 					const initializer = new InboxInitializer(
 						this.app,
-						this.plugin.settings.excludedFolders,
+						this.plugin.settings.excludedFolders.map((ef) => ef.folder),
 					);
 					const targets = initializer.findTargets();
 					const count = targets.length;
@@ -61,17 +62,27 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setDesc(t('settingExcludedFoldersSectionDesc'));
 
 		const manager = new ExcludedFoldersManager(this.plugin);
-		for (const folder of manager.getAll()) {
-			new Setting(containerEl).setName(folder).addExtraButton((btn) =>
-				btn
-					.setIcon('trash')
-					.setTooltip(t('settingExcludedFoldersRemoveButton'))
-					.onClick(async () => {
-						await manager.remove(folder);
-						this.refreshInboxView();
-						this.display();
-					}),
-			);
+		for (const ef of manager.getAll()) {
+			new Setting(containerEl)
+				.setName(ef.folder)
+				.addToggle((toggle) =>
+					toggle
+						.setValue(ef.showAlertBanner)
+						.setTooltip(t('settingExcludedFoldersShowAlertBannerToggle'))
+						.onChange(async (value) => {
+							await manager.setShowAlertBanner(ef.folder, value);
+						}),
+				)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon('trash')
+						.setTooltip(t('settingExcludedFoldersRemoveButton'))
+						.onClick(async () => {
+							await manager.remove(ef.folder);
+							this.refreshInboxView();
+							this.display();
+						}),
+				);
 		}
 
 		let inputText: TextComponent;
