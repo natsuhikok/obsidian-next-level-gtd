@@ -186,7 +186,10 @@ export class NextActionsView extends ItemView {
 		const filteredActions = this.showScheduledOnly
 			? Object.values(this.noteCache)
 					.flatMap((note) => [...note.nextActions])
-					.filter((action) => !action.blocked && action.scheduled !== null)
+					.filter(
+						(action) =>
+							!action.blocked && (action.scheduled !== null || action.due !== null),
+					)
 			: allActions.filter((action) =>
 					this.selectedContexts.some((ctx) =>
 						ctx === '' ? action.context.length === 0 : action.context.includes(ctx),
@@ -196,8 +199,8 @@ export class NextActionsView extends ItemView {
 		if (filteredActions.length === 0) return;
 
 		const sorted = [...filteredActions].sort((a, b) => {
-			const da = a.due ?? a.scheduled ?? '9999-99-99';
-			const db = b.due ?? b.scheduled ?? '9999-99-99';
+			const da = a.scheduled ?? a.due ?? '9999-99-99';
+			const db = b.scheduled ?? b.due ?? '9999-99-99';
 			return da.localeCompare(db);
 		});
 
