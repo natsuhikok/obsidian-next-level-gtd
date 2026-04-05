@@ -1,14 +1,11 @@
-import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf } from 'obsidian';
+import { ItemView, MarkdownView, TFile, WorkspaceLeaf } from 'obsidian';
 import { GTDNote } from '../GTDNote';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
 
 export const VIEW_TYPE_INBOX = 'gtd-inbox';
 
-type Tab = 'inbox' | 'alert';
-
 export class InboxView extends ItemView {
-	private tab: Tab = 'inbox';
 	private noteCache: Record<string, GTDNote> = {};
 
 	constructor(
@@ -102,93 +99,16 @@ export class InboxView extends ItemView {
 		contentEl.empty();
 
 		const notes = Object.values(this.noteCache);
-		const inboxNotes = notes.filter((n) => n.isInbox);
-		const alertNotes = notes.filter((n) => n.alerts.length > 0);
+		const displayNotes = notes.filter((n) => n.isInbox || n.alerts.length > 0);
 		const activeFilePath = this.app.workspace.getActiveFile()?.path;
 
-		const header = contentEl.createDiv({ cls: 'nav-header' });
-
-		const tabBar = header.createDiv({ cls: 'gtd-tab-bar' });
-		const inboxBtn = tabBar.createEl('button', {
-			cls: `gtd-tab${this.tab === 'inbox' ? ' is-active' : ''}`,
-		});
-		inboxBtn.createSpan({ text: t('inboxViewTitle') });
-		if (inboxNotes.length > 0) {
-			inboxBtn.createSpan({ text: String(inboxNotes.length), cls: 'gtd-tab-badge' });
-		}
-		inboxBtn.addEventListener('click', (event) => {
-			this.tab = 'inbox';
-			this.render();
-			if (Keymap.isModEvent(event)) {
-				Object.values(this.noteCache)
-					.filter((n) => n.isInbox)
-					.forEach((note) => {
-						this.openNote(note.file.path);
-					});
-			}
-		});
-
-		const alertBtn = tabBar.createEl('button', {
-			cls: `gtd-tab${this.tab === 'alert' ? ' is-active' : ''}`,
-		});
-		alertBtn.createSpan({ text: t('alertViewTitle') });
-		if (alertNotes.length > 0) {
-			alertBtn.createSpan({ text: String(alertNotes.length), cls: 'gtd-tab-badge' });
-		}
-		alertBtn.addEventListener('click', (event) => {
-			this.tab = 'alert';
-			this.render();
-			if (Keymap.isModEvent(event)) {
-				Object.values(this.noteCache)
-					.filter((n) => n.alerts.length > 0)
-					.forEach((note) => {
-						this.openNote(note.file.path);
-					});
-			}
-		});
-
-		if (this.tab === 'inbox') {
-			this.renderInbox(contentEl, inboxNotes, activeFilePath);
-		} else {
-			this.renderAlerts(contentEl, alertNotes, activeFilePath);
-		}
-	}
-
-	private renderInbox(
-		contentEl: HTMLElement,
-		inboxNotes: GTDNote[],
-		activeFilePath: string | undefined,
-	) {
-		if (inboxNotes.length === 0) {
-			contentEl.createEl('p', { text: t('noInboxItems'), cls: 'gtd-empty' });
+		if (displayNotes.length === 0) {
+			contentEl.createEl('p', { text: t('noInboxOrAlerts'), cls: 'gtd-empty' });
 			return;
 		}
 
 		const container = contentEl.createDiv({ cls: 'nav-files-container' });
-		inboxNotes.forEach((note) => {
-			const isActive = note.file.path === activeFilePath;
-			const title = container.createDiv({ cls: 'nav-file' }).createDiv({
-				cls: `nav-file-title${isActive ? ' is-active' : ''}`,
-			});
-			title.createSpan({ text: note.file.basename, cls: 'nav-file-title-content' });
-			title.addEventListener('click', () => {
-				this.openNote(note.file.path);
-			});
-		});
-	}
-
-	private renderAlerts(
-		contentEl: HTMLElement,
-		alertNotes: GTDNote[],
-		activeFilePath: string | undefined,
-	) {
-		if (alertNotes.length === 0) {
-			contentEl.createEl('p', { text: t('noAlerts'), cls: 'gtd-empty' });
-			return;
-		}
-
-		const container = contentEl.createDiv({ cls: 'nav-files-container' });
-		alertNotes.forEach((note) => {
+		displayNotes.forEach((note) => {
 			const isActive = note.file.path === activeFilePath;
 			const title = container.createDiv({ cls: 'nav-file' }).createDiv({
 				cls: `nav-file-title${isActive ? ' is-active' : ''}`,
