@@ -1,13 +1,16 @@
 import { App, MarkdownView, TFile, setIcon } from 'obsidian';
 import { GTDNote } from '../GTDNote';
 import { t } from '../i18n';
-import { AlertType } from '../types';
+import { AlertType, ExcludedFolder } from '../types';
 import { renderNoteStateToggle } from './NoteStateToggle';
 
 const BANNER_ID = 'gtd-banner';
 
 export class BannerRenderer {
-	constructor(private readonly app: App) {}
+	constructor(
+		private readonly app: App,
+		private readonly getExcludedFolders: () => readonly ExcludedFolder[],
+	) {}
 
 	update(file: TFile | null) {
 		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -47,7 +50,12 @@ export class BannerRenderer {
 
 		renderNoteStateToggle(banner, note.state, this.app, file, onChanged);
 
-		if (note.alerts.length > 0) {
+		const excludedFolder = this.getExcludedFolders().find((ef) =>
+			file.path.startsWith(ef.folder + '/'),
+		);
+		const showAlertBanner = excludedFolder == null || excludedFolder.showAlertBanner;
+
+		if (showAlertBanner && note.alerts.length > 0) {
 			const alertTypeLabels: Record<AlertType, string> = {
 				frontmatterInvalid: t('alertFrontmatterInvalid'),
 				referenceHasNextAction: t('alertReferenceHasNextAction'),
