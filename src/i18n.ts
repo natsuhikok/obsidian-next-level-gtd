@@ -96,7 +96,7 @@ const en: PluginStrings = {
 	alertActionableInProgressNoNextAction: 'In-progress Actionable has no next action',
 	alertActionableDoneHasNextAction: 'Done/Abandoned Actionable has next action',
 	alertDormantNoFutureScheduledNextAction:
-		'Dormant Actionable has no future scheduled next action',
+		'Dormant Actionable has no scheduled next action for today or later',
 	alertFrontmatterInvalid: 'Invalid frontmatter (classification or status)',
 	settingInitSectionName: 'Initialize Vault',
 	settingInitSectionDesc:
@@ -162,7 +162,7 @@ const ja: PluginStrings = {
 	alertActionableInProgressNoNextAction: '進行中の Actionable に next action がありません',
 	alertActionableDoneHasNextAction: '完了/廃止の Actionable に next action があります',
 	alertDormantNoFutureScheduledNextAction:
-		'休眠中の Actionable に未来の日付の scheduled next action がありません',
+		'休眠中の Actionable に今日以降の scheduled next action がありません',
 	alertFrontmatterInvalid: 'frontmatter の分類または状態が不正です',
 	settingInitSectionName: 'Vault の初期化',
 	settingInitSectionDesc:

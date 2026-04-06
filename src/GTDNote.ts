@@ -24,13 +24,13 @@ export class GTDNote {
 		this.hasNextAction = collection.hasNextAction;
 		this.nextActions = collection.nextActions;
 		this.availableActions = collection.availableActions;
-		const hasFutureScheduledNextAction = collection.nextActions.some(
-			(a) => a.scheduled !== null && a.scheduled > today,
+		const hasTodayOrFutureScheduledNextAction = collection.nextActions.some(
+			(a) => a.scheduled !== null && a.scheduled >= today,
 		);
 		this.alerts = detectNoteAlerts(
 			this.state,
 			this.hasNextAction,
-			hasFutureScheduledNextAction,
+			hasTodayOrFutureScheduledNextAction,
 		);
 	}
 
