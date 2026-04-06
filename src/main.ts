@@ -69,6 +69,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 				status: '進行中',
 			},
 			{ id: 'set-status-on-hold', name: t('setStatusOnHoldCommand'), status: '保留' },
+			{ id: 'set-status-dormant', name: t('setStatusDormantCommand'), status: '休眠' },
 			{ id: 'set-status-completed', name: t('setStatusCompletedCommand'), status: '完了' },
 			{ id: 'set-status-abandoned', name: t('setStatusAbandonedCommand'), status: '廃止' },
 		];

@@ -61,6 +61,7 @@ export class BannerRenderer {
 				referenceHasNextAction: t('alertReferenceHasNextAction'),
 				actionableInProgressNoNextAction: t('alertActionableInProgressNoNextAction'),
 				actionableDoneHasNextAction: t('alertActionableDoneHasNextAction'),
+				dormantNoFutureScheduledNextAction: t('alertDormantNoFutureScheduledNextAction'),
 			};
 
 			note.alerts.forEach((alertType) => {

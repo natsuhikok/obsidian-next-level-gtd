@@ -1,7 +1,13 @@
 import { Status } from './types';
 
 function isValidStatus(value: unknown): value is Status {
-	return value === '進行中' || value === '保留' || value === '完了' || value === '廃止';
+	return (
+		value === '進行中' ||
+		value === '保留' ||
+		value === '休眠' ||
+		value === '完了' ||
+		value === '廃止'
+	);
 }
 
 export class NoteState {

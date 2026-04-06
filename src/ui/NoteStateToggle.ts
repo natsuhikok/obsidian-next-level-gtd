@@ -16,6 +16,7 @@ const OPTIONS: readonly ToggleOption[] = [
 const STATUS_LABELS: Record<Status, () => string> = {
 	進行中: () => t('statusInProgress'),
 	保留: () => t('statusOnHold'),
+	休眠: () => t('statusDormant'),
 	完了: () => t('statusCompleted'),
 	廃止: () => t('statusAbandoned'),
 };
