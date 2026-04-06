@@ -19,14 +19,19 @@ export class GTDNote {
 	private constructor(file: TFile, fm: Record<string, unknown> | null, content: string) {
 		this.file = file;
 		this.state = NoteState.parse(fm);
-		const collection = new NextActionCollection(
-			[{ source: file, content }],
-			moment().format('YYYY-MM-DD'),
-		);
+		const today = moment().format('YYYY-MM-DD');
+		const collection = new NextActionCollection([{ source: file, content }], today);
 		this.hasNextAction = collection.hasNextAction;
 		this.nextActions = collection.nextActions;
 		this.availableActions = collection.availableActions;
-		this.alerts = detectNoteAlerts(this.state, this.hasNextAction);
+		const hasFutureScheduledNextAction = collection.nextActions.some(
+			(a) => a.scheduled !== null && a.scheduled > today,
+		);
+		this.alerts = detectNoteAlerts(
+			this.state,
+			this.hasNextAction,
+			hasFutureScheduledNextAction,
+		);
 	}
 
 	static from(file: TFile, fm: Record<string, unknown> | null, content: string): GTDNote {
