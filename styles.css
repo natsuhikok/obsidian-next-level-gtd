@@ -295,3 +295,36 @@
 	color: var(--text-faint);
 	background: var(--background-primary);
 }
+
+.gtd-action-context-badges {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	gap: 3px;
+}
+
+.gtd-action-context-badge {
+	display: inline-block;
+	padding: 0 5px;
+	border-radius: 100px;
+	font-size: var(--font-ui-smaller);
+	line-height: 16px;
+	pointer-events: none;
+	user-select: none;
+}
+
+.gtd-action-context-badge--env {
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+}
+
+.gtd-action-context-badge--prop {
+	background: var(--background-modifier-border);
+	color: var(--text-faint);
+}
+
+.gtd-action-context-badge--anywhere {
+	background: var(--background-modifier-border);
+	color: var(--text-faint);
+	font-style: italic;
+}

@@ -194,10 +194,15 @@ export default class NextLevelGtdPlugin extends Plugin {
 					};
 				})
 			: [];
+		const rawEnvContexts = raw?.['environmentContexts'];
+		const environmentContexts: readonly string[] = Array.isArray(rawEnvContexts)
+			? rawEnvContexts.filter((v): v is string => typeof v === 'string')
+			: [];
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			...(raw as Partial<NextLevelGtdSettings> | null),
 			excludedFolders,
+			environmentContexts,
 		};
 	}
 

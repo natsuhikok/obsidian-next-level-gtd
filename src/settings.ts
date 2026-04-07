@@ -1,4 +1,5 @@
 import { ExcludedFolders } from 'ExcludedFolders';
+import { EnvironmentContexts } from 'EnvironmentContexts';
 import { t } from 'i18n';
 import { InboxInitializer } from 'InboxInitializer';
 import NextLevelGtdPlugin from 'main';
@@ -12,11 +13,13 @@ import { InboxView, VIEW_TYPE_INBOX } from 'ui/InboxView';
 export interface NextLevelGtdSettings {
 	_placeholder: null;
 	excludedFolders: readonly ExcludedFolder[];
+	environmentContexts: readonly string[];
 }
 
 export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
 	_placeholder: null,
 	excludedFolders: [],
+	environmentContexts: [],
 };
 
 export class NextLevelGtdSettingTab extends PluginSettingTab {
@@ -32,6 +35,7 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 		containerEl.empty();
 		this.renderInitSection(containerEl);
 		this.renderExcludedFoldersSection(containerEl);
+		this.renderEnvironmentContextsSection(containerEl);
 		this.renderDevSection(containerEl);
 	}
 
@@ -100,6 +104,38 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 				if (raw === '' || manager.includes(raw)) return;
 				await manager.add(raw);
 				this.refreshInboxView();
+				this.display();
+			}),
+		);
+	}
+
+	private renderEnvironmentContextsSection(containerEl: HTMLElement): void {
+		new Setting(containerEl).setName(t('settingEnvContextsSectionName')).setHeading();
+		new Setting(containerEl).setDesc(t('settingEnvContextsSectionDesc'));
+
+		const manager = new EnvironmentContexts(this.plugin);
+		for (const ctx of manager.getAll()) {
+			new Setting(containerEl).setName('#' + ctx).addExtraButton((btn) =>
+				btn
+					.setIcon('trash')
+					.setTooltip(t('settingEnvContextsRemoveButton'))
+					.onClick(async () => {
+						await manager.remove(ctx);
+						this.display();
+					}),
+			);
+		}
+
+		let inputText: TextComponent;
+		const addSetting = new Setting(containerEl).addText((text) => {
+			inputText = text;
+			text.setPlaceholder(t('settingEnvContextsPlaceholder'));
+		});
+		addSetting.addButton((btn) =>
+			btn.setButtonText(t('settingEnvContextsAddButton')).onClick(async () => {
+				const raw = inputText.getValue().trim().toLowerCase().replace(/^#/, '');
+				if (raw === '' || raw === 'anywhere' || manager.includes(raw)) return;
+				await manager.add(raw);
 				this.display();
 			}),
 		);
