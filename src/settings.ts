@@ -4,7 +4,7 @@ import { InboxInitializer } from 'InboxInitializer';
 import NextLevelGtdPlugin from 'main';
 import { MockNoteBuilder } from 'MockNoteBuilder';
 import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian';
-import { ExcludedFolder } from 'types';
+import { ExcludedFolder } from 'ExcludedFolder';
 import { ConfirmModal } from 'ui/ConfirmModal';
 import { FolderSuggest } from 'ui/FolderSuggest';
 import { InboxView, VIEW_TYPE_INBOX } from 'ui/InboxView';

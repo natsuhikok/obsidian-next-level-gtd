@@ -1,5 +1,3 @@
-import { App, TFile } from 'obsidian';
-
 const CODE_BLOCK_PATTERN = /```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`/g;
 
 function escapeRegExp(s: string): string {
@@ -34,14 +32,4 @@ export function completeNextAction(content: string, actionText: string): string 
 	const tail = content.slice(lastIndex);
 	parts.push(replaced ? tail : tail.replace(lineRe, '$1[x]$2'));
 	return parts.join('');
-}
-
-export async function completeNextActionInFile(
-	app: App,
-	file: TFile,
-	actionText: string,
-): Promise<void> {
-	const content = await app.vault.read(file);
-	const updated = completeNextAction(content, actionText);
-	await app.vault.modify(file, updated);
 }

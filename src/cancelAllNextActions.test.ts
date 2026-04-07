@@ -1,6 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { App, TFile } from 'obsidian';
-import { cancelAllNextActions, cancelAllNextActionsInFile } from './cancelAllNextActions';
+import { describe, expect, it } from 'vitest';
+import { cancelAllNextActions } from './cancelAllNextActions';
 
 describe('cancelAllNextActions', () => {
 	it('コードブロック外の未完了チェックボックスを [-] に変換する', () => {
@@ -50,18 +49,5 @@ describe('cancelAllNextActions', () => {
 
 	it('空文字列はそのまま返す', () => {
 		expect(cancelAllNextActions('')).toBe('');
-	});
-});
-
-describe('cancelAllNextActionsInFile', () => {
-	it('ファイル内容を読み込んで変換し書き戻す', async () => {
-		const readMock = vi.fn().mockResolvedValue('- [ ] タスク1\n- [ ] タスク2\n');
-		const modifyMock = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
-		const app = { vault: { read: readMock, modify: modifyMock } } as unknown as App;
-		// eslint-disable-next-line obsidianmd/no-tfile-tfolder-cast
-		const file = { path: 'test.md' } as TFile;
-		await cancelAllNextActionsInFile(app, file);
-		expect(readMock).toHaveBeenCalledWith(file);
-		expect(modifyMock).toHaveBeenCalledWith(file, '- [-] タスク1\n- [-] タスク2\n');
 	});
 });

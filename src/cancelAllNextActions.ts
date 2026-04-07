@@ -1,5 +1,3 @@
-import { App, TFile } from 'obsidian';
-
 const CODE_BLOCK_PATTERN = /```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`/g;
 
 function transformCheckboxes(text: string): string {
@@ -18,10 +16,4 @@ export function cancelAllNextActions(content: string): string {
 	}
 	parts.push(transformCheckboxes(content.slice(lastIndex)));
 	return parts.join('');
-}
-
-export async function cancelAllNextActionsInFile(app: App, file: TFile): Promise<void> {
-	const content = await app.vault.read(file);
-	const updated = cancelAllNextActions(content);
-	await app.vault.modify(file, updated);
 }

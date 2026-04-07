@@ -1,5 +1,5 @@
 import { App, TFile } from 'obsidian';
-import { Status } from './types';
+import { Status } from './Status';
 
 type NoteStateTarget = 'reference' | Status;
 

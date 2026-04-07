@@ -1,19 +1,32 @@
 import { App, moment, TFile } from 'obsidian';
-import { detectNoteAlerts } from './detectNoteAlerts';
-import { NextAction, NextActionCollection } from './NextActionCollection';
+import { NextAction } from './NextAction';
+import { NextActionCollection } from './NextActionCollection';
 import { NoteState } from './NoteState';
-import { AlertType } from './types';
+import { AlertType } from './AlertType';
 
 export class GTDNote {
 	readonly file: TFile;
 	readonly state: NoteState;
-	readonly hasNextAction: boolean;
 	readonly nextActions: readonly NextAction<TFile>[];
-	readonly availableActions: readonly NextAction<TFile>[];
-	readonly alerts: readonly AlertType[];
 
 	get isInbox() {
 		return this.state.isInbox;
+	}
+
+	get hasNextAction(): boolean {
+		return this.nextActions.length > 0;
+	}
+
+	get availableActions(): readonly NextAction<TFile>[] {
+		return this.nextActions.filter((a) => a.available);
+	}
+
+	get alerts(): readonly AlertType[] {
+		const today = moment().format('YYYY-MM-DD');
+		const hasTodayOrFutureScheduled = this.nextActions.some(
+			(a) => a.scheduled !== null && a.scheduled >= today,
+		);
+		return this.state.alerts(this.hasNextAction, hasTodayOrFutureScheduled);
 	}
 
 	private constructor(file: TFile, fm: Record<string, unknown> | null, content: string) {
@@ -21,17 +34,7 @@ export class GTDNote {
 		this.state = NoteState.parse(fm);
 		const today = moment().format('YYYY-MM-DD');
 		const collection = new NextActionCollection([{ source: file, content }], today);
-		this.hasNextAction = collection.hasNextAction;
 		this.nextActions = collection.nextActions;
-		this.availableActions = collection.availableActions;
-		const hasTodayOrFutureScheduledNextAction = collection.nextActions.some(
-			(a) => a.scheduled !== null && a.scheduled >= today,
-		);
-		this.alerts = detectNoteAlerts(
-			this.state,
-			this.hasNextAction,
-			hasTodayOrFutureScheduledNextAction,
-		);
 	}
 
 	static from(file: TFile, fm: Record<string, unknown> | null, content: string): GTDNote {

@@ -1,11 +1,8 @@
-export interface NextAction<T> {
+import { NextAction } from './NextAction';
+
+interface ContentEntry<T> {
 	readonly source: T;
-	readonly text: string;
-	readonly blocked: boolean;
-	readonly scheduled: string | null;
-	readonly due: string | null;
-	readonly available: boolean;
-	readonly context: readonly string[];
+	readonly content: string;
 }
 
 interface ListItem {
@@ -144,11 +141,6 @@ function collectFromNodes<T>(
 			...childActions,
 		];
 	});
-}
-
-export interface ContentEntry<T> {
-	readonly source: T;
-	readonly content: string;
 }
 
 export class NextActionCollection<T> {

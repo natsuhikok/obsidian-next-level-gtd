@@ -1,5 +1,5 @@
 import NextLevelGtdPlugin from 'main';
-import { ExcludedFolder } from 'types';
+import { ExcludedFolder } from 'ExcludedFolder';
 
 export class ExcludedFoldersManager {
 	constructor(private readonly plugin: NextLevelGtdPlugin) {}

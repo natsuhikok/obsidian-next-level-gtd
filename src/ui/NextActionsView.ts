@@ -1,7 +1,7 @@
 import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf, moment, setIcon } from 'obsidian';
 import { GTDNote } from '../GTDNote';
-import type { NextAction } from '../NextActionCollection';
-import { completeNextActionInFile } from '../completeNextAction';
+import type { NextAction } from '../NextAction';
+import { completeNextActionInFile } from '../completeNextActionInFile';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
 

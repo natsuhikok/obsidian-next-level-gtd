@@ -1,6 +1,8 @@
 import { App, SuggestModal } from 'obsidian';
-import { ALL_STATUSES, Status } from '../types';
+import { Status } from '../Status';
 import { t } from '../i18n';
+
+const ALL_STATUSES: readonly Status[] = ['進行中', '保留', '休眠', '完了', '廃止'];
 
 export class StatusChangeModal extends SuggestModal<Status> {
 	private readonly onSelect: (status: Status) => void;

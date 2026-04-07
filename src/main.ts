@@ -6,8 +6,9 @@ import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
 import { setNoteState } from './setNoteState';
-import { cancelAllNextActionsInFile } from './cancelAllNextActions';
-import { ExcludedFolder, Status } from './types';
+import { cancelAllNextActionsInFile } from './cancelAllNextActionsInFile';
+import { ExcludedFolder } from './ExcludedFolder';
+import { Status } from './Status';
 
 export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
