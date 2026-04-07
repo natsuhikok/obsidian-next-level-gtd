@@ -16,21 +16,21 @@ Key features:
 
 Each note is managed through frontmatter fields: `classification` and `status`.
 
-| Type           | Frontmatter                             | Meaning                     |
-| -------------- | --------------------------------------- | --------------------------- |
+| Type           | Frontmatter                             | Meaning                                 |
+| -------------- | --------------------------------------- | --------------------------------------- |
 | **Inbox**      | not set                                 | A note that has not been classified yet |
-| **Reference**  | `classification: Reference`             | Reference material with no tasks |
-| **Actionable** | `classification: Actionable` + `status` | A note that requires action |
+| **Reference**  | `classification: Reference`             | Reference material with no tasks        |
+| **Actionable** | `classification: Actionable` + `status` | A note that requires action             |
 
 Actionable notes support 5 statuses.
 
-| Status     | Meaning |
-| ---------- | ------- |
-| In Progress | Currently active |
-| On Hold    | Paused for now |
-| Dormant    | Waiting for a future scheduled action |
-| Completed  | Finished |
-| Abandoned  | Intentionally dropped |
+| Status      | Meaning                               |
+| ----------- | ------------------------------------- |
+| In Progress | Currently active                      |
+| On Hold     | Paused for now                        |
+| Dormant     | Waiting for a future scheduled action |
+| Completed   | Finished                              |
+| Abandoned   | Intentionally dropped                 |
 
 ---
 
@@ -40,8 +40,8 @@ Any **unchecked Markdown checkbox** is treated as a next action.
 
 ```markdown
 - [ ] Write the report
-- [x] Gather source material    <- already done, ignored
-- [-] Schedule the meeting     <- cancelled, ignored
+- [x] Gather source material <- already done, ignored
+- [-] Schedule the meeting <- cancelled, ignored
 ```
 
 ### Nesting and Blocking
@@ -50,7 +50,7 @@ Nested checkboxes are treated as blocked by their parent task.
 
 ```markdown
 - [ ] Prepare the proposal
-    - [ ] Draft the outline      <- blocked while the parent task exists
+    - [ ] Draft the outline <- blocked while the parent task exists
     - [ ] Write the first draft
 ```
 
@@ -58,16 +58,16 @@ With **ordered lists**, later items are blocked until earlier items are complete
 
 ```markdown
 1. [ ] Research the topic
-2. [ ] Write the draft          <- blocked until item 1 is done
+2. [ ] Write the draft <- blocked until item 1 is done
 3. [ ] Request review
 ```
 
 ### Dates
 
-| Emoji | Meaning | Example |
-| ----- | ------- | ------- |
+| Emoji | Meaning                                                           | Example         |
+| ----- | ----------------------------------------------------------------- | --------------- |
 | ⏳    | Scheduled date. The action becomes available on or after this day | `⏳ 2025-06-01` |
-| 📅    | Due date | `📅 2025-06-30` |
+| 📅    | Due date                                                          | `📅 2025-06-30` |
 
 ```markdown
 - [ ] Submit the monthly report ⏳ 2025-06-01 📅 2025-06-30
@@ -117,13 +117,13 @@ The Inbox view shows:
 
 The plugin detects the following alerts.
 
-| Alert | Trigger |
-| ----- | ------- |
-| Invalid frontmatter | `classification` or `status` contains an invalid value |
-| Reference note has next action | A Reference note still contains a checkbox task |
-| In-progress Actionable has no next action | The note is `In Progress` but has no next action |
-| Done/Abandoned Actionable has next action | The note is `Completed` or `Abandoned` but still has unchecked actions |
-| Dormant Actionable has no scheduled next action | The note is `Dormant` but has no scheduled action for today or later |
+| Alert                                           | Trigger                                                                |
+| ----------------------------------------------- | ---------------------------------------------------------------------- |
+| Invalid frontmatter                             | `classification` or `status` contains an invalid value                 |
+| Reference note has next action                  | A Reference note still contains a checkbox task                        |
+| In-progress Actionable has no next action       | The note is `In Progress` but has no next action                       |
+| Done/Abandoned Actionable has next action       | The note is `Completed` or `Abandoned` but still has unchecked actions |
+| Dormant Actionable has no scheduled next action | The note is `Dormant` but has no scheduled action for today or later   |
 
 ---
 
@@ -147,16 +147,16 @@ Features:
 
 All commands are available from the command palette (`Cmd/Ctrl + P`).
 
-| Command | Description |
-| ------- | ----------- |
-| **Open Inbox** | Open the Inbox view |
-| **Open Next Actions** | Open the Next Actions view |
-| **Change status** | Open a modal and choose a new status |
-| **Set status: In Progress** | Set the active note to In Progress |
-| **Set status: On Hold** | Set the active note to On Hold |
-| **Set status: Dormant** | Set the active note to Dormant |
-| **Set status: Completed** | Set the active note to Completed |
-| **Set status: Abandoned** | Set the active note to Abandoned |
+| Command                     | Description                                                  |
+| --------------------------- | ------------------------------------------------------------ |
+| **Open Inbox**              | Open the Inbox view                                          |
+| **Open Next Actions**       | Open the Next Actions view                                   |
+| **Change status**           | Open a modal and choose a new status                         |
+| **Set status: In Progress** | Set the active note to In Progress                           |
+| **Set status: On Hold**     | Set the active note to On Hold                               |
+| **Set status: Dormant**     | Set the active note to Dormant                               |
+| **Set status: Completed**   | Set the active note to Completed                             |
+| **Set status: Abandoned**   | Set the active note to Abandoned                             |
 | **Cancel all next actions** | Convert all unchecked checkboxes in the active note to `[-]` |
 
 `Cancel all next actions` is also available from the file context menu.
