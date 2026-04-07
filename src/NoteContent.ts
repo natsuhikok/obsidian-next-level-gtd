@@ -1,30 +1,32 @@
 const CODE_BLOCK_RE = /(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)/g;
 
-function transformCheckboxes(text: string): string {
-	return text.replace(/^((\s*[-*+]|\s*\d+\.)\s+)\[ \]/gm, '$1[-]');
-}
-
-function escapeRegExp(s: string): string {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 export class NoteContent {
 	constructor(readonly value: string) {}
 
+	private get segments(): readonly string[] {
+		return this.value.split(CODE_BLOCK_RE);
+	}
+
 	cancelAllNextActions(): NoteContent {
-		const parts = this.value.split(CODE_BLOCK_RE);
+		function transformCheckboxes(text: string): string {
+			return text.replace(/^((\s*[-*+]|\s*\d+\.)\s+)\[ \]/gm, '$1[-]');
+		}
 		return new NoteContent(
-			parts.map((part, i) => (i % 2 === 0 ? transformCheckboxes(part) : part)).join(''),
+			this.segments
+				.map((part, i) => (i % 2 === 0 ? transformCheckboxes(part) : part))
+				.join(''),
 		);
 	}
 
 	completeNextAction(actionText: string): NoteContent {
+		function escapeRegExp(s: string): string {
+			return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		}
 		const lineRe = new RegExp(
 			`^(\\s*(?:[-*+]|\\d+\\.)\\s+)\\[ \\](\\s*${escapeRegExp(actionText)})$`,
 			'm',
 		);
-		const parts = this.value.split(CODE_BLOCK_RE);
-		const { result } = parts.reduce<{
+		const { result } = this.segments.reduce<{
 			readonly result: readonly string[];
 			readonly replaced: boolean;
 		}>(
