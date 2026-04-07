@@ -1,6 +1,7 @@
 import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf, moment, setIcon } from 'obsidian';
 import { GTDNote } from '../GTDNote';
 import type { NextAction } from '../NextActionCollection';
+import { NextActionsFilter } from '../NextActionsFilter';
 import { NoteEditor } from '../NoteEditor';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
@@ -9,14 +10,14 @@ export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
 
 export class NextActionsView extends ItemView {
 	private noteCache: Record<string, GTDNote> = {};
-	private selectedContexts: readonly string[] = [''];
-	private showScheduledOnly = false;
+	private filter: NextActionsFilter;
 
 	constructor(
 		leaf: WorkspaceLeaf,
 		private readonly plugin: NextLevelGtdPlugin,
 	) {
 		super(leaf);
+		this.filter = NextActionsFilter.initial(plugin.settings.environmentContexts);
 	}
 
 	getViewType() {
@@ -128,14 +129,24 @@ export class NextActionsView extends ItemView {
 	}
 
 	private render() {
+		const currentFilter = NextActionsFilter.initial(this.plugin.settings.environmentContexts);
+		const allActions = Object.values(this.noteCache).flatMap((note) => [...note.nextActions]);
+		const allPropertyCandidates = currentFilter.allPropertyCandidates(allActions);
+		this.filter = new NextActionsFilter(
+			currentFilter.environmentContexts,
+			this.filter.selectedEnvironments.filter((e) =>
+				currentFilter.environmentContexts.includes(e),
+			),
+			this.filter.noContextSelected,
+			this.filter.selectedProperties,
+			this.filter.noPropertySelected,
+			this.filter.dateMode,
+		).withSelectedPropertiesPruned(allPropertyCandidates);
+
 		const { contentEl } = this;
 		contentEl.empty();
 
 		contentEl.createDiv({ cls: 'nav-header' });
-
-		const allActions = Object.values(this.noteCache).flatMap((note) => [
-			...note.availableActions,
-		]);
 
 		if (allActions.length === 0) {
 			contentEl.createEl('p', { text: t('noNextActions'), cls: 'gtd-empty' });
@@ -144,65 +155,25 @@ export class NextActionsView extends ItemView {
 
 		const today = moment().format('YYYY-MM-DD');
 
-		const allContexts = allActions
-			.flatMap((a) => a.context)
-			.filter((ctx, i, arr) => arr.indexOf(ctx) === i)
-			.sort();
-
 		const filterBar = contentEl.createDiv({ cls: 'gtd-context-filter' });
-		const addChip = (label: string, value: string) => {
-			const active = this.selectedContexts.includes(value);
-			const chip = filterBar.createEl('button', {
-				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
-				text: label,
-			});
-			chip.addEventListener('click', () => {
-				this.showScheduledOnly = false;
-				this.selectedContexts = this.selectedContexts.includes(value)
-					? this.selectedContexts.filter((c) => c !== value)
-					: [...this.selectedContexts, value];
-				this.render();
-			});
-		};
-		addChip(t('contextFilterNoContext'), '');
-		allContexts.forEach((ctx) => addChip('#' + ctx, ctx));
+		this.renderEnvBlock(filterBar, allActions, today);
 
-		filterBar.createDiv({ cls: 'gtd-context-filter-sep' });
+		if (allPropertyCandidates.length > 0) {
+			this.renderPropertyBlock(
+				filterBar,
+				allPropertyCandidates,
+				new Set(this.filter.propertyCandidates(allActions, today)),
+				this.hasPropertylessCandidate(allActions, today),
+			);
+		}
 
-		const scheduledChip = filterBar.createEl('button', {
-			cls: 'gtd-context-chip' + (this.showScheduledOnly ? ' is-active' : ''),
-			text: t('contextFilterScheduledOnly'),
-		});
-		scheduledChip.addEventListener('click', () => {
-			this.showScheduledOnly = !this.showScheduledOnly;
-			if (this.showScheduledOnly) {
-				this.selectedContexts = [];
-			} else {
-				this.selectedContexts = [''];
-			}
-			this.render();
-		});
+		this.renderDateBlock(filterBar);
 
-		const filteredActions = this.showScheduledOnly
-			? Object.values(this.noteCache)
-					.flatMap((note) => [...note.nextActions])
-					.filter(
-						(action) =>
-							!action.blocked && (action.scheduled !== null || action.due !== null),
-					)
-			: allActions.filter((action) =>
-					this.selectedContexts.some((ctx) =>
-						ctx === '' ? action.context.length === 0 : action.context.includes(ctx),
-					),
-				);
+		const filteredActions = this.filter.filter(allActions, today);
 
 		if (filteredActions.length === 0) return;
 
-		const sorted = [...filteredActions].sort((a, b) => {
-			const da = a.scheduled ?? a.due ?? '9999-99-99';
-			const db = b.scheduled ?? b.due ?? '9999-99-99';
-			return da.localeCompare(db);
-		});
+		const sorted = this.filter.sort(filteredActions);
 
 		const container = contentEl.createDiv({ cls: 'nav-files-container' });
 
@@ -222,6 +193,8 @@ export class NextActionsView extends ItemView {
 			const body = item.createDiv({ cls: 'gtd-next-action-body' });
 
 			body.createDiv({ cls: 'gtd-next-action-text', text: stripTaskMetadata(action.text) });
+
+			this.renderContextBadges(body, action);
 
 			const meta = body.createDiv({ cls: 'gtd-next-action-meta' });
 
@@ -255,6 +228,133 @@ export class NextActionsView extends ItemView {
 		contentEl.createDiv({
 			cls: 'gtd-next-action-count',
 			text: `${String(sorted.length)} actions`,
+		});
+	}
+
+	private renderEnvBlock(
+		filterBar: HTMLElement,
+		allActions: readonly NextAction<TFile>[],
+		today: string,
+	) {
+		const envContexts = this.filter.environmentContexts;
+		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
+
+		const addEnvChip = (label: string, value: string) => {
+			const active =
+				value === '__all__'
+					? this.filter.isAllEnvironmentsSelected
+					: value === '__no_context__'
+						? this.filter.noContextSelected
+						: this.filter.selectedEnvironments.includes(value);
+			const chip = row.createEl('button', {
+				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
+				text: label,
+			});
+			chip.addEventListener('click', () => {
+				if (value === '__all__') {
+					this.filter = this.filter.withAllEnvironmentsToggled();
+				} else if (value === '__no_context__') {
+					this.filter = this.filter.withNoContextToggled();
+				} else {
+					this.filter = this.filter.withEnvironmentToggled(value);
+				}
+				this.render();
+			});
+		};
+
+		// addEnvChip(t('filterEnvAll'), '__all__');
+		addEnvChip(t('filterEnvNoContext'), '__no_context__');
+		envContexts.forEach((ctx) => addEnvChip('#' + ctx, ctx));
+
+		void allActions;
+		void today;
+	}
+
+	private renderPropertyBlock(
+		filterBar: HTMLElement,
+		candidates: readonly string[],
+		enabledCandidates: ReadonlySet<string>,
+		hasPropertylessCandidate: boolean,
+	) {
+		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
+
+		const noPropertyActive = this.filter.noPropertySelected;
+		const noPropertyChip = row.createEl('button', {
+			cls: 'gtd-context-chip' + (noPropertyActive ? ' is-active' : ''),
+			text: t('filterPropNoContext'),
+		});
+		noPropertyChip.disabled = !noPropertyActive && !hasPropertylessCandidate;
+		noPropertyChip.addEventListener('click', () => {
+			this.filter = this.filter.withNoPropertyToggled();
+			this.render();
+		});
+
+		candidates.forEach((prop) => {
+			const active = this.filter.selectedProperties.includes(prop);
+			const enabled = active || enabledCandidates.has(prop);
+			const chip = row.createEl('button', {
+				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
+				text: '#' + prop,
+			});
+			chip.disabled = !enabled;
+			chip.addEventListener('click', () => {
+				this.filter = this.filter.withPropertyToggled(prop);
+				this.render();
+			});
+		});
+	}
+
+	private hasPropertylessCandidate(
+		actions: readonly NextAction<TFile>[],
+		today: string,
+	): boolean {
+		return actions.some(
+			(action) =>
+				this.filter.passesDateFilter(action, today) &&
+				this.filter.passesEnvironmentFilter(action) &&
+				this.filter.propertyTagsOf(action).length === 0,
+		);
+	}
+
+	private renderDateBlock(filterBar: HTMLElement) {
+		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
+		const addDateChip = (label: string, mode: 'actionable' | 'withDate') => {
+			const active = this.filter.dateMode === mode;
+			const chip = row.createEl('button', {
+				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
+				text: label,
+			});
+			chip.addEventListener('click', () => {
+				this.filter = this.filter.withDateMode(mode);
+				this.render();
+			});
+		};
+
+		addDateChip(t('filterDateActionable'), 'actionable');
+		addDateChip(t('filterDateWithDate'), 'withDate');
+	}
+
+	private renderContextBadges(body: HTMLElement, action: NextAction<TFile>) {
+		const envTags = this.filter.environmentTagsOf(action);
+		const propTags = this.filter.propertyTagsOf(action);
+
+		const hasBadges = envTags.length > 0 || propTags.length > 0;
+		if (!hasBadges) return;
+
+		const badgeContainer = body.createDiv({ cls: 'gtd-action-context-badges' });
+
+		envTags.forEach((tag) => {
+			badgeContainer.createSpan({
+				cls: 'gtd-action-context-badge gtd-action-context-badge--env',
+				text: '#' + tag,
+			});
+		});
+
+		propTags.forEach((tag) => {
+			badgeContainer.createSpan({
+				cls: 'gtd-action-context-badge gtd-action-context-badge--prop',
+				text: '#' + tag,
+			});
 		});
 	}
 

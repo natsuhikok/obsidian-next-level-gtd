@@ -54,8 +54,17 @@ interface PluginStrings {
 	openNextActionsViewCommand: string;
 	noNextActions: string;
 	completeNextAction: string;
-	contextFilterNoContext: string;
-	contextFilterScheduledOnly: string;
+	filterEnvAll: string;
+	filterEnvNoContext: string;
+	filterPropNoContext: string;
+	filterDateActionable: string;
+	filterDateWithDate: string;
+	// Environment contexts settings
+	settingEnvContextsSectionName: string;
+	settingEnvContextsSectionDesc: string;
+	settingEnvContextsPlaceholder: string;
+	settingEnvContextsAddButton: string;
+	settingEnvContextsRemoveButton: string;
 	// UI labels
 	classifyAsReference: string;
 	classifyAsActionable: string;
@@ -122,8 +131,17 @@ const en: PluginStrings = {
 	openNextActionsViewCommand: 'Open Next Actions',
 	noNextActions: 'No available next actions.',
 	completeNextAction: 'Complete',
-	contextFilterNoContext: 'No context',
-	contextFilterScheduledOnly: '⏳ only',
+	filterEnvAll: 'All environments',
+	filterEnvNoContext: 'Default',
+	filterPropNoContext: 'Default',
+	filterDateActionable: 'Actionable only',
+	filterDateWithDate: 'With date only',
+	settingEnvContextsSectionName: 'Environment Contexts',
+	settingEnvContextsSectionDesc:
+		'Tags that represent physical or situational environments (e.g. home, office). Tags not listed here are treated as property contexts.',
+	settingEnvContextsPlaceholder: 'Tag name (without #)',
+	settingEnvContextsAddButton: 'Add',
+	settingEnvContextsRemoveButton: 'Remove',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'Select status',
@@ -188,8 +206,17 @@ const ja: PluginStrings = {
 	openNextActionsViewCommand: 'ネクストアクションを開く',
 	noNextActions: '利用可能なネクストアクションはありません。',
 	completeNextAction: '完了',
-	contextFilterNoContext: 'context なし',
-	contextFilterScheduledOnly: '⏳ only',
+	filterEnvAll: 'すべての環境',
+	filterEnvNoContext: 'デフォルト',
+	filterPropNoContext: 'デフォルト',
+	filterDateActionable: '実行可能のみ',
+	filterDateWithDate: '日付ありのみ',
+	settingEnvContextsSectionName: '環境コンテキスト',
+	settingEnvContextsSectionDesc:
+		'物理的・状況的な環境を表すタグ（例: home, office）。ここに登録されていないタグは性質コンテキストとして扱われます。',
+	settingEnvContextsPlaceholder: 'タグ名（# 不要）',
+	settingEnvContextsAddButton: '追加',
+	settingEnvContextsRemoveButton: '削除',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'ステータスを選択',

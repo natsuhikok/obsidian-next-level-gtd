@@ -249,19 +249,17 @@
 
 .gtd-context-filter {
 	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 2px;
-	padding: 0px 4px 10px 4px;
+	flex-direction: column;
+	gap: 8px;
+	padding: 0 4px 10px 4px;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.gtd-context-filter-sep {
-	width: 1px;
-	height: 14px;
-	background: var(--background-modifier-border);
-	margin: 0 4px;
-	flex-shrink: 0;
+.gtd-context-filter-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 2px;
 }
 
 .gtd-context-chip {
@@ -284,6 +282,11 @@
 	color: var(--text-on-accent);
 }
 
+.gtd-context-chip:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
 .gtd-next-action-count {
 	position: absolute;
 	bottom: 0;
@@ -294,4 +297,37 @@
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
 	background: var(--background-primary);
+}
+
+.gtd-action-context-badges {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	gap: 3px;
+}
+
+.gtd-action-context-badge {
+	display: inline-block;
+	padding: 0 5px;
+	border-radius: 100px;
+	font-size: var(--font-ui-smaller);
+	line-height: 16px;
+	pointer-events: none;
+	user-select: none;
+}
+
+.gtd-action-context-badge--env {
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+}
+
+.gtd-action-context-badge--prop {
+	background: var(--background-modifier-border);
+	color: var(--text-faint);
+}
+
+.gtd-action-context-badge--no-context {
+	background: var(--background-modifier-border);
+	color: var(--text-faint);
+	font-style: italic;
 }
