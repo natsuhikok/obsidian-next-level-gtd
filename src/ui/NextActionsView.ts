@@ -132,10 +132,12 @@ export class NextActionsView extends ItemView {
 		const currentFilter = NextActionsFilter.initial(this.plugin.settings.environmentContexts);
 		this.filter = new NextActionsFilter(
 			currentFilter.environmentContexts,
-			this.filter.selectedEnvironments.filter(
-				(e) => e === 'anywhere' || currentFilter.environmentContexts.includes(e),
+			this.filter.selectedEnvironments.filter((e) =>
+				currentFilter.environmentContexts.includes(e),
 			),
+			this.filter.noContextSelected,
 			this.filter.selectedProperties,
+			this.filter.noPropertySelected,
 			this.filter.dateMode,
 		);
 
@@ -156,13 +158,11 @@ export class NextActionsView extends ItemView {
 		const filterBar = contentEl.createDiv({ cls: 'gtd-context-filter' });
 		this.renderEnvBlock(filterBar, allActions, today);
 
-		const candidates = this.filter.propertyCandidates(allActions, today);
+		const candidates = this.filter.allPropertyCandidates(allActions);
 		if (candidates.length > 0) {
-			filterBar.createDiv({ cls: 'gtd-context-filter-sep' });
 			this.renderPropertyBlock(filterBar, candidates);
 		}
 
-		filterBar.createDiv({ cls: 'gtd-context-filter-sep' });
 		this.renderDateBlock(filterBar);
 
 		const filteredActions = this.filter.filter(allActions, today);
@@ -233,32 +233,33 @@ export class NextActionsView extends ItemView {
 		today: string,
 	) {
 		const envContexts = this.filter.environmentContexts;
+		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
 
 		const addEnvChip = (label: string, value: string) => {
-			const active = this.filter.isAllEnvironmentsSelected
-				? value === '__all__'
-				: this.filter.selectedEnvironments.includes(value);
-			const chip = filterBar.createEl('button', {
+			const active =
+				value === '__all__'
+					? this.filter.isAllEnvironmentsSelected
+					: value === '__no_context__'
+						? this.filter.noContextSelected
+						: this.filter.selectedEnvironments.includes(value);
+			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
 				text: label,
 			});
 			chip.addEventListener('click', () => {
 				if (value === '__all__') {
-					this.filter = this.filter.withAllEnvironmentsSelected();
+					this.filter = this.filter.withAllEnvironmentsToggled();
+				} else if (value === '__no_context__') {
+					this.filter = this.filter.withNoContextToggled();
 				} else {
-					const toggled = this.filter.withEnvironmentToggled(value);
-					const allEnvs = ['anywhere', ...envContexts];
-					const allSelected = allEnvs.every((e) =>
-						toggled.selectedEnvironments.includes(e),
-					);
-					this.filter = allSelected ? toggled.withAllEnvironmentsSelected() : toggled;
+					this.filter = this.filter.withEnvironmentToggled(value);
 				}
 				this.render();
 			});
 		};
 
-		addEnvChip(t('filterEnvAll'), '__all__');
-		addEnvChip(t('filterEnvAnywhere'), 'anywhere');
+		// addEnvChip(t('filterEnvAll'), '__all__');
+		addEnvChip(t('filterEnvNoContext'), '__no_context__');
 		envContexts.forEach((ctx) => addEnvChip('#' + ctx, ctx));
 
 		void allActions;
@@ -266,9 +267,20 @@ export class NextActionsView extends ItemView {
 	}
 
 	private renderPropertyBlock(filterBar: HTMLElement, candidates: readonly string[]) {
+		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
+
+		const noPropertyChip = row.createEl('button', {
+			cls: 'gtd-context-chip' + (this.filter.noPropertySelected ? ' is-active' : ''),
+			text: t('filterPropNoContext'),
+		});
+		noPropertyChip.addEventListener('click', () => {
+			this.filter = this.filter.withNoPropertyToggled();
+			this.render();
+		});
+
 		candidates.forEach((prop) => {
 			const active = this.filter.selectedProperties.includes(prop);
-			const chip = filterBar.createEl('button', {
+			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
 				text: '#' + prop,
 			});
@@ -280,9 +292,10 @@ export class NextActionsView extends ItemView {
 	}
 
 	private renderDateBlock(filterBar: HTMLElement) {
+		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
 		const addDateChip = (label: string, mode: 'actionable' | 'withDate') => {
 			const active = this.filter.dateMode === mode;
-			const chip = filterBar.createEl('button', {
+			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
 				text: label,
 			});
@@ -299,26 +312,18 @@ export class NextActionsView extends ItemView {
 	private renderContextBadges(body: HTMLElement, action: NextAction<TFile>) {
 		const envTags = this.filter.environmentTagsOf(action);
 		const propTags = this.filter.propertyTagsOf(action);
-		const showAnywhere = envTags.length === 0;
 
-		const hasBadges = showAnywhere || envTags.length > 0 || propTags.length > 0;
+		const hasBadges = envTags.length > 0 || propTags.length > 0;
 		if (!hasBadges) return;
 
 		const badgeContainer = body.createDiv({ cls: 'gtd-action-context-badges' });
 
-		if (showAnywhere) {
+		envTags.forEach((tag) => {
 			badgeContainer.createSpan({
-				cls: 'gtd-action-context-badge gtd-action-context-badge--anywhere',
-				text: t('filterEnvAnywhere'),
+				cls: 'gtd-action-context-badge gtd-action-context-badge--env',
+				text: '#' + tag,
 			});
-		} else {
-			envTags.forEach((tag) => {
-				badgeContainer.createSpan({
-					cls: 'gtd-action-context-badge gtd-action-context-badge--env',
-					text: '#' + tag,
-				});
-			});
-		}
+		});
 
 		propTags.forEach((tag) => {
 			badgeContainer.createSpan({

@@ -55,7 +55,8 @@ interface PluginStrings {
 	noNextActions: string;
 	completeNextAction: string;
 	filterEnvAll: string;
-	filterEnvAnywhere: string;
+	filterEnvNoContext: string;
+	filterPropNoContext: string;
 	filterDateActionable: string;
 	filterDateWithDate: string;
 	// Environment contexts settings
@@ -131,7 +132,8 @@ const en: PluginStrings = {
 	noNextActions: 'No available next actions.',
 	completeNextAction: 'Complete',
 	filterEnvAll: 'All environments',
-	filterEnvAnywhere: 'anywhere',
+	filterEnvNoContext: 'Default',
+	filterPropNoContext: 'Default',
 	filterDateActionable: 'Actionable only',
 	filterDateWithDate: 'With date only',
 	settingEnvContextsSectionName: 'Environment Contexts',
@@ -205,7 +207,8 @@ const ja: PluginStrings = {
 	noNextActions: '利用可能なネクストアクションはありません。',
 	completeNextAction: '完了',
 	filterEnvAll: 'すべての環境',
-	filterEnvAnywhere: 'anywhere',
+	filterEnvNoContext: 'デフォルト',
+	filterPropNoContext: 'デフォルト',
 	filterDateActionable: '実行可能のみ',
 	filterDateWithDate: '日付ありのみ',
 	settingEnvContextsSectionName: '環境コンテキスト',

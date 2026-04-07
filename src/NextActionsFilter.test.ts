@@ -20,14 +20,17 @@ function action(
 }
 
 describe('NextActionsFilter', () => {
-	describe('initial()', () => {
-		it('すべての環境が選択された状態で初期化される', () => {
+	describe('初期状態', () => {
+		it('環境コンテキストなしのみが選択された状態で初期化される', () => {
 			const f = NextActionsFilter.initial(['home', 'office']);
-			expect(f.isAllEnvironmentsSelected).toBe(true);
+			expect(f.noContextSelected).toBe(true);
+			expect(f.selectedEnvironments).toEqual([]);
+			expect(f.isAllEnvironmentsSelected).toBe(false);
 		});
 
-		it('性質フィルタは未選択', () => {
+		it('性質コンテキストなしのみが選択された状態で初期化される', () => {
 			const f = NextActionsFilter.initial(['home']);
+			expect(f.noPropertySelected).toBe(true);
 			expect(f.selectedProperties).toEqual([]);
 		});
 
@@ -36,42 +39,54 @@ describe('NextActionsFilter', () => {
 			expect(f.dateMode).toBe('actionable');
 		});
 
-		it('environmentContexts は lowercase に正規化される', () => {
+		it('環境コンテキスト名の大文字小文字を区別しない', () => {
 			const f = NextActionsFilter.initial(['Home', 'OFFICE']);
 			expect(f.environmentContexts).toEqual(['home', 'office']);
 		});
 	});
 
-	describe('isAllEnvironmentsSelected', () => {
-		it('anywhere と全環境が選択されていれば true', () => {
-			const f = new NextActionsFilter(['home'], ['anywhere', 'home'], [], 'actionable');
+	describe('すべての環境の選択判定', () => {
+		it('全環境と環境コンテキストなしが選択されていればすべての環境が選択された状態', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], false, 'actionable');
 			expect(f.isAllEnvironmentsSelected).toBe(true);
+		});
+
+		it('全環境が選択されていても環境コンテキストなしが未選択ならすべての環境が選択された状態ではない', () => {
+			const f = new NextActionsFilter(['home'], ['home'], false, [], false, 'actionable');
+			expect(f.isAllEnvironmentsSelected).toBe(false);
 		});
 
 		it('一部の環境が未選択なら false', () => {
 			const f = new NextActionsFilter(
 				['home', 'office'],
-				['anywhere', 'home'],
+				['home'],
+				true,
 				[],
+				false,
 				'actionable',
 			);
 			expect(f.isAllEnvironmentsSelected).toBe(false);
 		});
 
-		it('environmentContexts が空のとき anywhere だけ選択されていれば true', () => {
-			const f = new NextActionsFilter([], ['anywhere'], [], 'actionable');
+		it('環境設定が空でも環境コンテキストなしが選択されていればすべての環境が選択された状態', () => {
+			const f = new NextActionsFilter([], [], true, [], false, 'actionable');
 			expect(f.isAllEnvironmentsSelected).toBe(true);
+		});
+
+		it('環境設定が空でも環境コンテキストなしが未選択ならすべての環境が選択された状態ではない', () => {
+			const f = new NextActionsFilter([], [], false, [], false, 'actionable');
+			expect(f.isAllEnvironmentsSelected).toBe(false);
 		});
 	});
 
-	describe('environmentTagsOf / propertyTagsOf', () => {
-		it('設定済み環境タグは environmentTagsOf に含まれる', () => {
+	describe('コンテキストタグの分類', () => {
+		it('設定済み環境に一致するタグは環境タグとして分類される', () => {
 			const f = NextActionsFilter.initial(['home']);
 			const a = action({ context: ['home', 'quick'] });
 			expect(f.environmentTagsOf(a)).toEqual(['home']);
 		});
 
-		it('環境設定にないタグは propertyTagsOf に含まれる', () => {
+		it('環境設定にないタグは性質タグとして分類される', () => {
 			const f = NextActionsFilter.initial(['home']);
 			const a = action({ context: ['home', 'quick'] });
 			expect(f.propertyTagsOf(a)).toEqual(['quick']);
@@ -85,130 +100,144 @@ describe('NextActionsFilter', () => {
 		});
 	});
 
-	describe('isAnywhere', () => {
-		it('環境タグが1つもない場合は anywhere', () => {
+	describe('環境コンテキストなし判定', () => {
+		it('環境タグが1つもない場合は no context', () => {
 			const f = NextActionsFilter.initial(['home']);
-			expect(f.isAnywhere(action({ context: ['quick'] }))).toBe(true);
+			expect(f.isNoContext(action({ context: ['quick'] }))).toBe(true);
 		});
 
-		it('環境タグがある場合は anywhere ではない', () => {
+		it('環境タグがある場合は no context ではない', () => {
 			const f = NextActionsFilter.initial(['home']);
-			expect(f.isAnywhere(action({ context: ['home'] }))).toBe(false);
+			expect(f.isNoContext(action({ context: ['home'] }))).toBe(false);
 		});
 	});
 
-	describe('passesDateFilter', () => {
-		it('blocked なタスクは常に false', () => {
+	describe('日付フィルタ', () => {
+		it('ブロックされたタスクは表示しない', () => {
 			const f = NextActionsFilter.initial([]);
 			expect(f.passesDateFilter(action({ blocked: true }), TODAY)).toBe(false);
 		});
 
 		describe('actionable モード', () => {
-			it('日付なしは通る', () => {
+			it('日付なしのタスクは表示する', () => {
 				const f = NextActionsFilter.initial([]);
 				expect(f.passesDateFilter(action(), TODAY)).toBe(true);
 			});
 
-			it('scheduled が今日以前なら通る', () => {
+			it('スケジュール日が今日以前のタスクは表示する', () => {
 				const f = NextActionsFilter.initial([]);
 				expect(f.passesDateFilter(action({ scheduled: '2026-04-01' }), TODAY)).toBe(true);
 			});
 
-			it('scheduled が未来なら通らない', () => {
+			it('スケジュール日が未来のタスクは表示しない', () => {
 				const f = NextActionsFilter.initial([]);
 				expect(f.passesDateFilter(action({ scheduled: '2026-04-02' }), TODAY)).toBe(false);
 			});
 
-			it('due のみありは通る', () => {
+			it('期限のみのタスクは表示する', () => {
 				const f = NextActionsFilter.initial([]);
 				expect(f.passesDateFilter(action({ due: '2026-05-01' }), TODAY)).toBe(true);
 			});
 		});
 
 		describe('withDate モード', () => {
-			it('scheduled あり（未来）は通る', () => {
-				const f = new NextActionsFilter([], ['anywhere'], [], 'withDate');
+			it('スケジュール日が未来のタスクも表示する', () => {
+				const f = new NextActionsFilter([], [], true, [], false, 'withDate');
 				expect(f.passesDateFilter(action({ scheduled: '2026-12-31' }), TODAY)).toBe(true);
 			});
 
-			it('due あり は通る', () => {
-				const f = new NextActionsFilter([], ['anywhere'], [], 'withDate');
+			it('期限ありのタスクは表示する', () => {
+				const f = new NextActionsFilter([], [], true, [], false, 'withDate');
 				expect(f.passesDateFilter(action({ due: '2026-05-01' }), TODAY)).toBe(true);
 			});
 
-			it('日付なしは通らない', () => {
-				const f = new NextActionsFilter([], ['anywhere'], [], 'withDate');
+			it('日付なしのタスクは表示しない', () => {
+				const f = new NextActionsFilter([], [], true, [], false, 'withDate');
 				expect(f.passesDateFilter(action(), TODAY)).toBe(false);
 			});
 		});
 	});
 
-	describe('passesEnvironmentFilter', () => {
-		it('すべての環境選択時は全タスクが通る', () => {
+	describe('環境フィルタ', () => {
+		it('初期状態では環境コンテキストなしのタスクのみ表示する', () => {
 			const f = NextActionsFilter.initial(['home']);
-			expect(f.passesEnvironmentFilter(action({ context: ['home'] }))).toBe(true);
+			expect(f.passesEnvironmentFilter(action({ context: ['home'] }))).toBe(false);
 			expect(f.passesEnvironmentFilter(action({ context: ['quick'] }))).toBe(true);
 			expect(f.passesEnvironmentFilter(action({ context: [] }))).toBe(true);
 		});
 
-		it('home のみ選択時: home タグを持つタスクが通る', () => {
-			const f = new NextActionsFilter(['home'], ['home'], [], 'actionable');
+		it('全環境が選択されていても環境コンテキストなしが未選択なら環境タグなしタスクは表示しない', () => {
+			const f = new NextActionsFilter(['home'], ['home'], false, [], false, 'actionable');
+			expect(f.passesEnvironmentFilter(action({ context: ['home'] }))).toBe(true);
+			expect(f.passesEnvironmentFilter(action({ context: [] }))).toBe(false);
+			expect(f.passesEnvironmentFilter(action({ context: ['quick'] }))).toBe(false);
+		});
+
+		it('home のみ選択時: home タグを持つタスクを表示する', () => {
+			const f = new NextActionsFilter(['home'], ['home'], false, [], false, 'actionable');
 			expect(f.passesEnvironmentFilter(action({ context: ['home'] }))).toBe(true);
 		});
 
-		it('home のみ選択時: anywhere タスクは通らない', () => {
-			const f = new NextActionsFilter(['home'], ['home'], [], 'actionable');
+		it('home のみ選択時: 環境コンテキストなしタスクは表示しない', () => {
+			const f = new NextActionsFilter(['home'], ['home'], false, [], false, 'actionable');
 			expect(f.passesEnvironmentFilter(action({ context: [] }))).toBe(false);
 		});
 
-		it('anywhere のみ選択時: 環境タグなしタスクが通る', () => {
-			const f = new NextActionsFilter(['home'], ['anywhere'], [], 'actionable');
+		it('環境コンテキストなしのみ選択時: 環境タグなしタスクを表示する', () => {
+			const f = new NextActionsFilter(['home'], [], true, [], false, 'actionable');
 			expect(f.passesEnvironmentFilter(action({ context: ['quick'] }))).toBe(true);
 		});
 
-		it('anywhere のみ選択時: home タスクは通らない', () => {
-			const f = new NextActionsFilter(['home'], ['anywhere'], [], 'actionable');
+		it('環境コンテキストなしのみ選択時: 環境タグありタスクは表示しない', () => {
+			const f = new NextActionsFilter(['home'], [], true, [], false, 'actionable');
 			expect(f.passesEnvironmentFilter(action({ context: ['home'] }))).toBe(false);
 		});
 
-		it('home と anywhere 両方選択: 両方通る', () => {
-			const f = new NextActionsFilter(['home'], ['home', 'anywhere'], [], 'actionable');
+		it('home と環境コンテキストなし両方選択: 両方表示する', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], false, 'actionable');
 			expect(f.passesEnvironmentFilter(action({ context: ['home'] }))).toBe(true);
 			expect(f.passesEnvironmentFilter(action({ context: [] }))).toBe(true);
 		});
 	});
 
-	describe('passesPropertyFilter', () => {
-		it('性質フィルタ未選択は全て通る', () => {
+	describe('性質フィルタ', () => {
+		it('初期状態では性質タグなしのタスクのみ表示する', () => {
 			const f = NextActionsFilter.initial(['home']);
 			expect(f.passesPropertyFilter(action({ context: ['home'] }))).toBe(true);
+			expect(f.passesPropertyFilter(action({ context: ['home', 'quick'] }))).toBe(false);
 		});
 
-		it('quick 選択時: quick を持つタスクが通る', () => {
+		it('quick 選択時: quick を持つタスクを表示する', () => {
 			const f = new NextActionsFilter(
 				['home'],
-				['anywhere', 'home'],
+				['home'],
+				true,
 				['quick'],
+				false,
 				'actionable',
 			);
 			expect(f.passesPropertyFilter(action({ context: ['home', 'quick'] }))).toBe(true);
 		});
 
-		it('quick 選択時: quick を持たないタスクは通らない', () => {
+		it('quick 選択時: quick を持たないタスクは表示しない', () => {
 			const f = new NextActionsFilter(
 				['home'],
-				['anywhere', 'home'],
+				['home'],
+				true,
 				['quick'],
+				false,
 				'actionable',
 			);
 			expect(f.passesPropertyFilter(action({ context: ['home'] }))).toBe(false);
 		});
 
-		it('quick と deep 両方選択時: 両方持つタスクのみ通る (AND)', () => {
+		it('複数の性質を選択した場合はすべてを満たすタスクのみ表示する', () => {
 			const f = new NextActionsFilter(
 				['home'],
-				['anywhere', 'home'],
+				['home'],
+				true,
 				['quick', 'deep'],
+				false,
 				'actionable',
 			);
 			expect(f.passesPropertyFilter(action({ context: ['home', 'quick', 'deep'] }))).toBe(
@@ -218,14 +247,49 @@ describe('NextActionsFilter', () => {
 		});
 
 		it('タグ比較は case-insensitive', () => {
-			const f = new NextActionsFilter(['home'], ['anywhere'], ['quick'], 'actionable');
+			const f = new NextActionsFilter(['home'], [], true, ['quick'], false, 'actionable');
 			expect(f.passesPropertyFilter(action({ context: ['Quick'] }))).toBe(true);
+		});
+
+		it('性質コンテキストなし選択時: 性質タグなしタスクを表示する', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], true, 'actionable');
+			expect(f.passesPropertyFilter(action({ context: ['home'] }))).toBe(true);
+		});
+
+		it('性質コンテキストなし選択時: 性質タグありタスクは表示しない', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], true, 'actionable');
+			expect(f.passesPropertyFilter(action({ context: ['home', 'quick'] }))).toBe(false);
+		});
+
+		it('quick と性質コンテキストなし両方選択: 両方表示する', () => {
+			const f = new NextActionsFilter(
+				['home'],
+				['home'],
+				true,
+				['quick'],
+				true,
+				'actionable',
+			);
+			expect(f.passesPropertyFilter(action({ context: ['home', 'quick'] }))).toBe(true);
+			expect(f.passesPropertyFilter(action({ context: ['home'] }))).toBe(true);
+		});
+
+		it('quick と性質コンテキストなし両方選択: 別の性質タグのみのタスクは表示しない', () => {
+			const f = new NextActionsFilter(
+				['home'],
+				['home'],
+				true,
+				['quick'],
+				true,
+				'actionable',
+			);
+			expect(f.passesPropertyFilter(action({ context: ['home', 'deep'] }))).toBe(false);
 		});
 	});
 
-	describe('propertyCandidates', () => {
-		it('環境・日付フィルタ後の性質タグ候補を返す', () => {
-			const f = new NextActionsFilter(['home'], ['home'], [], 'actionable');
+	describe('性質タグの候補', () => {
+		it('環境・日付フィルタを通過したタスクの性質タグが候補になる', () => {
+			const f = new NextActionsFilter(['home'], ['home'], false, [], false, 'actionable');
 			const actions = [
 				action({ context: ['home', 'quick'] }),
 				action({ context: ['home', 'deep'] }),
@@ -234,8 +298,15 @@ describe('NextActionsFilter', () => {
 			expect(f.propertyCandidates(actions, TODAY)).toEqual(['deep', 'quick']);
 		});
 
-		it('選択済み性質フィルタの影響を受けない（自身は候補生成に使わない）', () => {
-			const f = new NextActionsFilter(['home'], ['home'], ['quick'], 'actionable');
+		it('選択中の性質で候補が絞り込まれない', () => {
+			const f = new NextActionsFilter(
+				['home'],
+				['home'],
+				false,
+				['quick'],
+				false,
+				'actionable',
+			);
 			const actions = [
 				action({ context: ['home', 'quick'] }),
 				action({ context: ['home', 'deep'] }),
@@ -243,24 +314,24 @@ describe('NextActionsFilter', () => {
 			expect(f.propertyCandidates(actions, TODAY)).toEqual(['deep', 'quick']);
 		});
 
-		it('blocked なタスクの性質タグは候補に含まれない', () => {
-			const f = NextActionsFilter.initial(['home']);
+		it('ブロックされたタスクの性質タグは候補に含まれない', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], false, 'actionable');
 			const actions = [
-				action({ context: ['quick'], blocked: true }),
-				action({ context: ['deep'] }),
+				action({ context: ['home', 'quick'], blocked: true }),
+				action({ context: ['home', 'deep'] }),
 			];
 			expect(f.propertyCandidates(actions, TODAY)).toEqual(['deep']);
 		});
 
 		it('重複した性質タグは1つにまとめられる', () => {
-			const f = NextActionsFilter.initial([]);
+			const f = new NextActionsFilter([], [], true, [], false, 'actionable');
 			const actions = [action({ context: ['quick'] }), action({ context: ['quick'] })];
 			expect(f.propertyCandidates(actions, TODAY)).toEqual(['quick']);
 		});
 	});
 
-	describe('sort', () => {
-		it('due あり → scheduled あり → 日付なし の順になる', () => {
+	describe('並び順', () => {
+		it('期限あり → スケジュールあり → 日付なし の順に並ぶ', () => {
 			const actions = [
 				action({ text: '日付なし' }),
 				action({ text: 'scheduled あり', scheduled: '2026-04-05' }),
@@ -271,7 +342,7 @@ describe('NextActionsFilter', () => {
 			expect(sorted).toEqual(['due あり', 'scheduled あり', '日付なし']);
 		});
 
-		it('同一区分内は日付昇順になる', () => {
+		it('同じ区分では日付が近い順に並ぶ', () => {
 			const actions = [
 				action({ text: 'due2', due: '2026-04-10' }),
 				action({ text: 'due1', due: '2026-04-05' }),
@@ -281,7 +352,7 @@ describe('NextActionsFilter', () => {
 			expect(sorted).toEqual(['due1', 'due2']);
 		});
 
-		it('due の overdue は due 群内で先頭になる', () => {
+		it('期限切れのタスクは期限ありの先頭に並ぶ', () => {
 			const actions = [
 				action({ text: '未来の due', due: '2026-12-31' }),
 				action({ text: '過去の due (overdue)', due: '2026-01-01' }),
@@ -292,12 +363,14 @@ describe('NextActionsFilter', () => {
 		});
 	});
 
-	describe('withEnvironmentToggled', () => {
+	describe('環境の選択切り替え', () => {
 		it('未選択環境を選択状態にする', () => {
 			const f = new NextActionsFilter(
 				['home', 'office'],
-				['anywhere', 'home'],
+				['home'],
+				true,
 				[],
+				false,
 				'actionable',
 			);
 			const updated = f.withEnvironmentToggled('office');
@@ -305,21 +378,72 @@ describe('NextActionsFilter', () => {
 		});
 
 		it('選択済み環境を解除する', () => {
-			const f = NextActionsFilter.initial(['home']);
+			const f = new NextActionsFilter(['home'], ['home'], true, [], false, 'actionable');
 			const updated = f.withEnvironmentToggled('home');
 			expect(updated.selectedEnvironments).not.toContain('home');
 		});
-	});
 
-	describe('withAllEnvironmentsSelected', () => {
-		it('全環境が選択状態になる', () => {
-			const f = new NextActionsFilter(['home', 'office'], ['home'], [], 'actionable');
-			const updated = f.withAllEnvironmentsSelected();
-			expect(updated.isAllEnvironmentsSelected).toBe(true);
+		it('環境コンテキストなしの選択状態は変わらない', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], false, 'actionable');
+			expect(f.withEnvironmentToggled('home').noContextSelected).toBe(true);
 		});
 	});
 
-	describe('withPropertyToggled', () => {
+	describe('すべての環境の選択切り替え', () => {
+		it('全環境未選択時: すべての環境と環境コンテキストなしを選択する', () => {
+			const f = new NextActionsFilter(['home', 'office'], [], false, [], false, 'actionable');
+			const updated = f.withAllEnvironmentsToggled();
+			expect(updated.isAllEnvironmentsSelected).toBe(true);
+			expect(updated.noContextSelected).toBe(true);
+		});
+
+		it('全環境選択時: すべての環境と環境コンテキストなしを解除する', () => {
+			const f = new NextActionsFilter(
+				['home', 'office'],
+				['home', 'office'],
+				true,
+				[],
+				false,
+				'actionable',
+			);
+			const updated = f.withAllEnvironmentsToggled();
+			expect(updated.selectedEnvironments).toEqual([]);
+			expect(updated.noContextSelected).toBe(false);
+		});
+
+		it('一部選択時: すべての環境と環境コンテキストなしを選択する', () => {
+			const f = new NextActionsFilter(
+				['home', 'office'],
+				['home'],
+				false,
+				[],
+				false,
+				'actionable',
+			);
+			const updated = f.withAllEnvironmentsToggled();
+			expect(updated.isAllEnvironmentsSelected).toBe(true);
+			expect(updated.noContextSelected).toBe(true);
+		});
+	});
+
+	describe('環境コンテキストなしの選択切り替え', () => {
+		it('未選択から選択に切り替わる', () => {
+			const f = new NextActionsFilter(['home'], ['home'], false, [], false, 'actionable');
+			expect(f.withNoContextToggled().noContextSelected).toBe(true);
+		});
+
+		it('選択から未選択に切り替わる', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], false, 'actionable');
+			expect(f.withNoContextToggled().noContextSelected).toBe(false);
+		});
+
+		it('環境の選択状態は変わらない', () => {
+			const f = new NextActionsFilter(['home'], ['home'], false, [], false, 'actionable');
+			expect(f.withNoContextToggled().selectedEnvironments).toEqual(['home']);
+		});
+	});
+
+	describe('性質の選択切り替え', () => {
 		it('未選択性質を選択状態にする', () => {
 			const f = NextActionsFilter.initial(['home']);
 			const updated = f.withPropertyToggled('quick');
@@ -329,8 +453,10 @@ describe('NextActionsFilter', () => {
 		it('選択済み性質を解除する', () => {
 			const f = new NextActionsFilter(
 				['home'],
-				['anywhere', 'home'],
+				['home'],
+				true,
 				['quick'],
+				false,
 				'actionable',
 			);
 			const updated = f.withPropertyToggled('quick');
@@ -338,7 +464,31 @@ describe('NextActionsFilter', () => {
 		});
 	});
 
-	describe('withDateMode', () => {
+	describe('性質コンテキストなしの選択切り替え', () => {
+		it('未選択から選択に切り替わる', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], false, 'actionable');
+			expect(f.withNoPropertyToggled().noPropertySelected).toBe(true);
+		});
+
+		it('選択から未選択に切り替わる', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], true, 'actionable');
+			expect(f.withNoPropertyToggled().noPropertySelected).toBe(false);
+		});
+
+		it('性質の選択状態は変わらない', () => {
+			const f = new NextActionsFilter(
+				['home'],
+				['home'],
+				true,
+				['quick'],
+				false,
+				'actionable',
+			);
+			expect(f.withNoPropertyToggled().selectedProperties).toEqual(['quick']);
+		});
+	});
+
+	describe('日付モードの切り替え', () => {
 		it('日付モードを切り替えられる', () => {
 			const f = NextActionsFilter.initial([]);
 			expect(f.withDateMode('withDate').dateMode).toBe('withDate');
@@ -348,7 +498,14 @@ describe('NextActionsFilter', () => {
 
 	describe('受け入れ条件', () => {
 		it('#home #quick と #home のタスクがあるとき、環境=home・性質=quick で前者のみ表示', () => {
-			const f = new NextActionsFilter(['home'], ['home'], ['quick'], 'actionable');
+			const f = new NextActionsFilter(
+				['home'],
+				['home'],
+				false,
+				['quick'],
+				false,
+				'actionable',
+			);
 			const actions = [
 				action({ text: '#home #quick タスク', context: ['home', 'quick'] }),
 				action({ text: '#home のみタスク', context: ['home'] }),
@@ -357,33 +514,33 @@ describe('NextActionsFilter', () => {
 			expect(result).toEqual(['#home #quick タスク']);
 		});
 
-		it('#quick のみのタスクは anywhere として扱われる', () => {
+		it('#quick のみのタスクは環境コンテキストなしとして扱われる', () => {
 			const f = NextActionsFilter.initial(['home']);
 			const a = action({ context: ['quick'] });
-			expect(f.isAnywhere(a)).toBe(true);
+			expect(f.isNoContext(a)).toBe(true);
 		});
 
-		it('home のみ選択時に anywhere タスクは表示しない', () => {
-			const f = new NextActionsFilter(['home'], ['home'], [], 'actionable');
+		it('home のみ選択時に環境コンテキストなしタスクは表示しない', () => {
+			const f = new NextActionsFilter(['home'], ['home'], false, [], false, 'actionable');
 			const a = action({ context: ['quick'] });
 			expect(f.passesEnvironmentFilter(a)).toBe(false);
 		});
 
-		it('すべての環境選択時に anywhere を含む全環境タスクを表示', () => {
-			const f = NextActionsFilter.initial(['home']);
+		it('すべての環境選択時でも環境コンテキストなしが未選択なら環境タグなしタスクは表示しない', () => {
+			const f = new NextActionsFilter(['home'], ['home'], false, [], false, 'actionable');
 			expect(f.passesEnvironmentFilter(action({ context: ['home'] }))).toBe(true);
-			expect(f.passesEnvironmentFilter(action({ context: [] }))).toBe(true);
-			expect(f.passesEnvironmentFilter(action({ context: ['quick'] }))).toBe(true);
+			expect(f.passesEnvironmentFilter(action({ context: [] }))).toBe(false);
+			expect(f.passesEnvironmentFilter(action({ context: ['quick'] }))).toBe(false);
 		});
 
 		it('性質を2つ選択した場合、両方を持つタスクのみ表示', () => {
-			const f = new NextActionsFilter([], ['anywhere'], ['quick', 'deep'], 'actionable');
+			const f = new NextActionsFilter([], [], true, ['quick', 'deep'], false, 'actionable');
 			expect(f.passesPropertyFilter(action({ context: ['quick', 'deep'] }))).toBe(true);
 			expect(f.passesPropertyFilter(action({ context: ['quick'] }))).toBe(false);
 		});
 
 		it('日付ありのみ では scheduled または due を持つタスクのみ表示', () => {
-			const f = new NextActionsFilter([], ['anywhere'], [], 'withDate');
+			const f = new NextActionsFilter([], [], true, [], false, 'withDate');
 			expect(f.passesDateFilter(action({ scheduled: '2026-05-01' }), TODAY)).toBe(true);
 			expect(f.passesDateFilter(action({ due: '2026-05-01' }), TODAY)).toBe(true);
 			expect(f.passesDateFilter(action(), TODAY)).toBe(false);
@@ -392,6 +549,27 @@ describe('NextActionsFilter', () => {
 		it('実行可能のみ では future scheduled タスクは表示しない', () => {
 			const f = NextActionsFilter.initial([]);
 			expect(f.passesDateFilter(action({ scheduled: '2026-12-31' }), TODAY)).toBe(false);
+		});
+
+		it('すべての環境 → 環境コンテキストなしクリック: 環境コンテキストなしが解除されすべての環境が選択された状態ではなくなる', () => {
+			const f = new NextActionsFilter(['home'], ['home'], true, [], false, 'actionable');
+			const toggled = f.withNoContextToggled();
+			expect(toggled.noContextSelected).toBe(false);
+			expect(toggled.isAllEnvironmentsSelected).toBe(false);
+		});
+
+		it('すべての環境 → #home クリック: home が解除されすべての環境が選択された状態ではなくなる', () => {
+			const f = new NextActionsFilter(
+				['home', 'office'],
+				['home', 'office'],
+				true,
+				[],
+				false,
+				'actionable',
+			);
+			const toggled = f.withEnvironmentToggled('home');
+			expect(toggled.selectedEnvironments).toEqual(['office']);
+			expect(toggled.isAllEnvironmentsSelected).toBe(false);
 		});
 	});
 });

@@ -3,29 +3,37 @@ import type { NextAction } from './NextActionCollection';
 export class NextActionsFilter {
 	readonly environmentContexts: readonly string[];
 	readonly selectedEnvironments: readonly string[];
+	readonly noContextSelected: boolean;
 	readonly selectedProperties: readonly string[];
+	readonly noPropertySelected: boolean;
 	readonly dateMode: 'actionable' | 'withDate';
 
 	constructor(
 		environmentContexts: readonly string[],
 		selectedEnvironments: readonly string[],
+		noContextSelected: boolean,
 		selectedProperties: readonly string[],
+		noPropertySelected: boolean,
 		dateMode: 'actionable' | 'withDate',
 	) {
 		this.environmentContexts = environmentContexts.map((e) => e.toLowerCase());
 		this.selectedEnvironments = selectedEnvironments;
+		this.noContextSelected = noContextSelected;
 		this.selectedProperties = selectedProperties;
+		this.noPropertySelected = noPropertySelected;
 		this.dateMode = dateMode;
 	}
 
 	static initial(environmentContexts: readonly string[]): NextActionsFilter {
 		const normalized = environmentContexts.map((e) => e.toLowerCase());
-		return new NextActionsFilter(normalized, ['anywhere', ...normalized], [], 'actionable');
+		return new NextActionsFilter(normalized, [], true, [], true, 'actionable');
 	}
 
 	get isAllEnvironmentsSelected(): boolean {
-		const allEnvs = ['anywhere', ...this.environmentContexts];
-		return allEnvs.every((e) => this.selectedEnvironments.includes(e));
+		return (
+			this.noContextSelected &&
+			this.environmentContexts.every((e) => this.selectedEnvironments.includes(e))
+		);
 	}
 
 	environmentTagsOf<T>(action: NextAction<T>): readonly string[] {
@@ -36,7 +44,7 @@ export class NextActionsFilter {
 		return action.context.filter((t) => !this.environmentContexts.includes(t.toLowerCase()));
 	}
 
-	isAnywhere<T>(action: NextAction<T>): boolean {
+	isNoContext<T>(action: NextAction<T>): boolean {
 		return this.environmentTagsOf(action).length === 0;
 	}
 
@@ -49,17 +57,18 @@ export class NextActionsFilter {
 	}
 
 	passesEnvironmentFilter<T>(action: NextAction<T>): boolean {
-		if (this.isAllEnvironmentsSelected) return true;
 		const envTags = this.environmentTagsOf(action).map((t) => t.toLowerCase());
 		if (envTags.length === 0) {
-			return this.selectedEnvironments.includes('anywhere');
+			return this.noContextSelected;
 		}
 		return envTags.some((t) => this.selectedEnvironments.includes(t));
 	}
 
 	passesPropertyFilter<T>(action: NextAction<T>): boolean {
-		if (this.selectedProperties.length === 0) return true;
+		if (this.selectedProperties.length === 0 && !this.noPropertySelected) return true;
 		const propTags = this.propertyTagsOf(action).map((t) => t.toLowerCase());
+		if (propTags.length === 0) return this.noPropertySelected;
+		if (this.selectedProperties.length === 0) return false;
 		return this.selectedProperties.every((p) => propTags.includes(p));
 	}
 
@@ -68,6 +77,13 @@ export class NextActionsFilter {
 			(a) => this.passesDateFilter(a, today) && this.passesEnvironmentFilter(a),
 		);
 		return afterDateAndEnv
+			.flatMap((a) => this.propertyTagsOf(a).map((t) => t.toLowerCase()))
+			.filter((t, i, arr) => arr.indexOf(t) === i)
+			.sort();
+	}
+
+	allPropertyCandidates<T>(actions: readonly NextAction<T>[]): readonly string[] {
+		return actions
 			.flatMap((a) => this.propertyTagsOf(a).map((t) => t.toLowerCase()))
 			.filter((t, i, arr) => arr.indexOf(t) === i)
 			.sort();
@@ -100,17 +116,52 @@ export class NextActionsFilter {
 		return new NextActionsFilter(
 			this.environmentContexts,
 			updated,
+			this.noContextSelected,
 			this.selectedProperties,
+			this.noPropertySelected,
 			this.dateMode,
 		);
 	}
 
-	withAllEnvironmentsSelected(): NextActionsFilter {
-		const allEnvs = ['anywhere', ...this.environmentContexts];
+	withAllEnvironmentsToggled(): NextActionsFilter {
+		if (this.isAllEnvironmentsSelected) {
+			return new NextActionsFilter(
+				this.environmentContexts,
+				[],
+				false,
+				this.selectedProperties,
+				this.noPropertySelected,
+				this.dateMode,
+			);
+		}
 		return new NextActionsFilter(
 			this.environmentContexts,
-			allEnvs,
+			[...this.environmentContexts],
+			true,
 			this.selectedProperties,
+			this.noPropertySelected,
+			this.dateMode,
+		);
+	}
+
+	withNoContextToggled(): NextActionsFilter {
+		return new NextActionsFilter(
+			this.environmentContexts,
+			this.selectedEnvironments,
+			!this.noContextSelected,
+			this.selectedProperties,
+			this.noPropertySelected,
+			this.dateMode,
+		);
+	}
+
+	withNoPropertyToggled(): NextActionsFilter {
+		return new NextActionsFilter(
+			this.environmentContexts,
+			this.selectedEnvironments,
+			this.noContextSelected,
+			this.selectedProperties,
+			!this.noPropertySelected,
 			this.dateMode,
 		);
 	}
@@ -122,7 +173,9 @@ export class NextActionsFilter {
 		return new NextActionsFilter(
 			this.environmentContexts,
 			this.selectedEnvironments,
+			this.noContextSelected,
 			updated,
+			this.noPropertySelected,
 			this.dateMode,
 		);
 	}
@@ -131,7 +184,9 @@ export class NextActionsFilter {
 		return new NextActionsFilter(
 			this.environmentContexts,
 			this.selectedEnvironments,
+			this.noContextSelected,
 			this.selectedProperties,
+			this.noPropertySelected,
 			mode,
 		);
 	}
