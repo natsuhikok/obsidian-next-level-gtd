@@ -1,7 +1,7 @@
 import NextLevelGtdPlugin from 'main';
 import { ExcludedFolder } from 'types';
 
-export class ExcludedFoldersManager {
+export class ExcludedFolders {
 	constructor(private readonly plugin: NextLevelGtdPlugin) {}
 
 	getAll(): readonly ExcludedFolder[] {

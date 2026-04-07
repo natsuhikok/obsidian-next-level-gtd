@@ -1,4 +1,4 @@
-import { ExcludedFoldersManager } from 'ExcludedFoldersManager';
+import { ExcludedFolders } from 'ExcludedFolders';
 import { t } from 'i18n';
 import { InboxInitializer } from 'InboxInitializer';
 import NextLevelGtdPlugin from 'main';
@@ -61,7 +61,7 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName(t('settingExcludedFoldersSectionName')).setHeading();
 		new Setting(containerEl).setDesc(t('settingExcludedFoldersSectionDesc'));
 
-		const manager = new ExcludedFoldersManager(this.plugin);
+		const manager = new ExcludedFolders(this.plugin);
 		for (const ef of manager.getAll()) {
 			new Setting(containerEl)
 				.setName(ef.folder)

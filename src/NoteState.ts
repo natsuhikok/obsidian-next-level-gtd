@@ -1,4 +1,4 @@
-import { Status } from './types';
+import { AlertType, Status } from './types';
 
 function isValidStatus(value: unknown): value is Status {
 	return (
@@ -43,5 +43,30 @@ export class NoteState {
 
 	get isInvalid(): boolean {
 		return this.kind === 'invalid';
+	}
+
+	computeAlerts(
+		noteHasNextAction: boolean,
+		hasTodayOrFutureScheduledNextAction: boolean,
+	): readonly AlertType[] {
+		if (this.isInbox || this.isInvalid) {
+			return ['frontmatterInvalid'];
+		}
+
+		if (this.isReference) {
+			return noteHasNextAction ? ['referenceHasNextAction'] : [];
+		}
+
+		return [
+			...(this.status === '進行中' && !noteHasNextAction
+				? ['actionableInProgressNoNextAction' as const]
+				: []),
+			...((this.status === '完了' || this.status === '廃止') && noteHasNextAction
+				? ['actionableDoneHasNextAction' as const]
+				: []),
+			...(this.status === '休眠' && !hasTodayOrFutureScheduledNextAction
+				? ['dormantNoFutureScheduledNextAction' as const]
+				: []),
+		];
 	}
 }

@@ -1,5 +1,5 @@
 import { App, TFile } from 'obsidian';
-import { setNoteState } from '../setNoteState';
+import { NoteEditor } from '../NoteEditor';
 import { t } from '../i18n';
 import { NoteState } from '../NoteState';
 import { ALL_STATUSES, Status } from '../types';
@@ -33,7 +33,10 @@ function isActive(option: ToggleOption, state: NoteState): boolean {
 }
 
 async function apply(option: ToggleOption, app: App, file: TFile): Promise<void> {
-	await setNoteState(app, file, option.kind === 'reference' ? 'reference' : option.status);
+	await new NoteEditor(app).setState(
+		file,
+		option.kind === 'reference' ? 'reference' : option.status,
+	);
 }
 
 export function renderNoteStateToggle(

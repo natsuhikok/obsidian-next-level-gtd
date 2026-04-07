@@ -1,6 +1,6 @@
 import { NoteState } from 'NoteState';
+import { NoteEditor } from 'NoteEditor';
 import { App, TFile } from 'obsidian';
-import { setNoteState } from 'setNoteState';
 
 export class InboxInitializer {
 	constructor(
@@ -8,7 +8,7 @@ export class InboxInitializer {
 		private readonly excludedFolders: readonly string[],
 	) {}
 
-	findTargets(): TFile[] {
+	findTargets(): readonly TFile[] {
 		return this.app.vault
 			.getMarkdownFiles()
 			.filter(
@@ -19,7 +19,8 @@ export class InboxInitializer {
 			);
 	}
 
-	async initializeAll(targets: TFile[]): Promise<void> {
-		await Promise.all(targets.map((f) => setNoteState(this.app, f, 'reference')));
+	async initializeAll(targets: readonly TFile[]): Promise<void> {
+		const editor = new NoteEditor(this.app);
+		await Promise.all(targets.map((f) => editor.setState(f, 'reference')));
 	}
 }

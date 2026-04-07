@@ -5,8 +5,7 @@ import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
 import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
-import { setNoteState } from './setNoteState';
-import { cancelAllNextActionsInFile } from './cancelAllNextActions';
+import { NoteEditor } from './NoteEditor';
 import { ExcludedFolder, Status } from './types';
 
 export default class NextLevelGtdPlugin extends Plugin {
@@ -55,7 +54,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 				const file = this.app.workspace.getActiveFile();
 				if (file == null) return;
 				new StatusChangeModal(this.app, (status: Status) => {
-					void setNoteState(this.app, file, status).then(() => {
+					void new NoteEditor(this.app).setState(file, status).then(() => {
 						this.bannerRenderer.update(file);
 					});
 				}).open();
@@ -81,7 +80,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 				callback: () => {
 					const file = this.app.workspace.getActiveFile();
 					if (file == null) return;
-					void setNoteState(this.app, file, status).then(() => {
+					void new NoteEditor(this.app).setState(file, status).then(() => {
 						this.bannerRenderer.update(file);
 					});
 				},
@@ -94,7 +93,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			callback: () => {
 				const file = this.app.workspace.getActiveFile();
 				if (file == null) return;
-				void cancelAllNextActionsInFile(this.app, file);
+				void new NoteEditor(this.app).cancelAllNextActions(file);
 			},
 		});
 
@@ -106,7 +105,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 					item.setTitle(t('cancelAllNextActionsCommand'))
 						.setIcon('circle-slash')
 						.onClick(() => {
-							void cancelAllNextActionsInFile(this.app, file);
+							void new NoteEditor(this.app).cancelAllNextActions(file);
 						});
 				});
 			}),
