@@ -1,138 +1,182 @@
 # Next Level GTD
 
-Obsidian で GTD (Getting Things Done) を実践するためのプラグインです。Vault 内のすべてのノートを **Inbox / Reference / Actionable** の3種類に分類し、next action の有無を自動検出することで、タスク管理の見通しを改善します。
+Next Level GTD is an Obsidian plugin for practicing GTD (Getting Things Done) inside your vault. It classifies notes into **Inbox / Reference / Actionable**, detects next actions from Markdown checkboxes, and gives you focused views for triage and execution.
+
+Key features:
+
+- Classify notes and manage actionable status from the note UI
+- Detect next actions automatically from unchecked checkboxes
+- Review unclassified notes and GTD rule violations in the Inbox view
+- See available next actions across the vault in a dedicated Next Actions view
+- Bulk-initialize existing notes and exclude folders from GTD processing
 
 ---
 
-## ノートの分類
+## Note Classification
 
-各ノートは frontmatter の `classification` / `status` フィールドで状態を管理します。
+Each note is managed through frontmatter fields: `classification` and `status`.
 
-| 種別           | frontmatter                             | 意味                       |
-| -------------- | --------------------------------------- | -------------------------- |
-| **Inbox**      | 未設定                                  | まだ分類されていないノート |
-| **Reference**  | `classification: Reference`             | 参考情報。タスクを持たない |
-| **Actionable** | `classification: Actionable` + `status` | 行動が必要なノート         |
+| Type           | Frontmatter                             | Meaning                     |
+| -------------- | --------------------------------------- | --------------------------- |
+| **Inbox**      | not set                                 | A note that has not been classified yet |
+| **Reference**  | `classification: Reference`             | Reference material with no tasks |
+| **Actionable** | `classification: Actionable` + `status` | A note that requires action |
 
-Actionable のステータスは4種類です。
+Actionable notes support 5 statuses.
 
-| ステータス | 意味               |
-| ---------- | ------------------ |
-| 進行中     | 現在取り組んでいる |
-| 保留       | いったん止めている |
-| 完了       | 完了した           |
-| 廃止       | 取りやめた         |
+| Status     | Meaning |
+| ---------- | ------- |
+| In Progress | Currently active |
+| On Hold    | Paused for now |
+| Dormant    | Waiting for a future scheduled action |
+| Completed  | Finished |
+| Abandoned  | Intentionally dropped |
 
 ---
 
-## Next Action の書き方
+## Writing Next Actions
 
-ノート内の **未チェックのチェックボックス** が next action として認識されます。
+Any **unchecked Markdown checkbox** is treated as a next action.
 
 ```markdown
-- [ ] レポートを書く
-- [x] 資料を集める ← 完了済み（対象外）
-- [-] 会議を設定する ← キャンセル済み（対象外）
+- [ ] Write the report
+- [x] Gather source material    <- already done, ignored
+- [-] Schedule the meeting     <- cancelled, ignored
 ```
 
-### ネスト・ブロック
+### Nesting and Blocking
 
-チェックボックスを入れ子にすると、親タスクが子タスクをブロックします。
+Nested checkboxes are treated as blocked by their parent task.
 
 ```markdown
-- [ ] 企画書を作る
-    - [ ] 構成を考える ← 親がある限りブロックされる
-    - [ ] 下書きを書く
+- [ ] Prepare the proposal
+    - [ ] Draft the outline      <- blocked while the parent task exists
+    - [ ] Write the first draft
 ```
 
-**順序付きリスト**を使うと、前のアイテムが未完了の場合に後続アイテムがブロックされます。
+With **ordered lists**, later items are blocked until earlier items are complete.
 
 ```markdown
-1. [ ] 調査する
-2. [ ] 草稿を書く ← 「調査する」が終わるまでブロック
-3. [ ] レビューを依頼する
+1. [ ] Research the topic
+2. [ ] Write the draft          <- blocked until item 1 is done
+3. [ ] Request review
 ```
 
-### 日付指定
+### Dates
 
-| 絵文字 | 意味                                            | 例              |
-| ------ | ----------------------------------------------- | --------------- |
-| ⏳     | スケジュール日（その日以降に available になる） | `⏳ 2025-06-01` |
-| 📅     | 期限日                                          | `📅 2025-06-30` |
+| Emoji | Meaning | Example |
+| ----- | ------- | ------- |
+| ⏳    | Scheduled date. The action becomes available on or after this day | `⏳ 2025-06-01` |
+| 📅    | Due date | `📅 2025-06-30` |
 
 ```markdown
-- [ ] 月次レポートを提出する ⏳ 2025-06-01 📅 2025-06-30
+- [ ] Submit the monthly report ⏳ 2025-06-01 📅 2025-06-30
 ```
 
-### 一時的な除外
+### Temporary Exclusion
 
-`#temp` タグを付けると next action の検出から除外されます。
+Tasks with the `#temp` tag are ignored by next action detection.
 
 ```markdown
-- [ ] あとで考える #temp
+- [ ] Think about this later #temp
+```
+
+### Context Tags
+
+Tags such as `#home`, `#work`, or `#errands` are collected as contexts and can be used to filter the Next Actions view.
+
+```markdown
+- [ ] Buy packing tape #errands
+- [ ] Review proposal draft #work
 ```
 
 ---
 
-## バナー（ノート上部の操作パネル）
+## Banner UI
 
-Markdown ノートを開くと、編集エリアの上部に **分類トグル** が表示されます。
+When you open a Markdown note, the plugin renders a control banner above the editor.
 
+```text
+[ Reference ]  [ In Progress ]  [ On Hold ]  [ Dormant ]  [ Completed ]  [ Abandoned ]
 ```
-[ Reference ]  [ 進行中 ]  [ 保留 ]  [ 完了 ]  [ 廃止 ]
-```
 
-現在の状態がハイライトされ、他のボタンをクリックするだけで frontmatter を書き換えて分類を変更できます。
+The current state is highlighted. Clicking another button updates the note frontmatter immediately.
 
-アラートがある場合はバナーの下に警告が表示されます（詳細は後述）。
+If the note has GTD alerts, warning callouts are shown under the banner.
 
 ---
 
-## Inbox ビュー
+## Inbox View
 
-左サイドバーのリボンアイコン（Inbox）またはコマンドから開けます。
+Open it from the left ribbon icon or from the command palette.
 
-### Inbox タブ
+The Inbox view shows:
 
-`classification` が未設定のノート一覧です。新しいノートはここに現れます。ノート名をクリックすると開きます。
+- notes with no `classification`
+- notes that violate GTD rules
 
-### Alerts タブ
+The plugin detects the following alerts.
 
-GTD ルールに違反しているノートの一覧です。以下の4種類のアラートを検出します。
-
-| アラート                                  | 原因                                                        |
-| ----------------------------------------- | ----------------------------------------------------------- |
-| Invalid frontmatter                       | `classification` / `status` の値が不正                      |
-| Reference note has next action            | Reference ノートにチェックボックスがある                    |
-| In-progress Actionable has no next action | ステータスが「進行中」なのに next action がない             |
-| Done/Abandoned Actionable has next action | ステータスが「完了」「廃止」なのに next action が残っている |
-
----
-
-## コマンド
-
-コマンドパレット（`Cmd/Ctrl + P`）から実行できます。
-
-| コマンド                    | 説明                                                                     |
-| --------------------------- | ------------------------------------------------------------------------ |
-| **Open Inbox**              | Inbox ビューを開く                                                       |
-| **Change status**           | モーダルでステータスを選択して変更                                       |
-| **Set status: In Progress** | アクティブノートを「進行中」に設定                                       |
-| **Set status: On Hold**     | アクティブノートを「保留」に設定                                         |
-| **Set status: Completed**   | アクティブノートを「完了」に設定                                         |
-| **Set status: Abandoned**   | アクティブノートを「廃止」に設定                                         |
-| **Cancel all next actions** | アクティブノート内の未チェックボックスをすべて `[-]`（キャンセル）に変換 |
-
-「Cancel all next actions」はファイルの右クリックメニューからも実行できます。
+| Alert | Trigger |
+| ----- | ------- |
+| Invalid frontmatter | `classification` or `status` contains an invalid value |
+| Reference note has next action | A Reference note still contains a checkbox task |
+| In-progress Actionable has no next action | The note is `In Progress` but has no next action |
+| Done/Abandoned Actionable has next action | The note is `Completed` or `Abandoned` but still has unchecked actions |
+| Dormant Actionable has no scheduled next action | The note is `Dormant` but has no scheduled action for today or later |
 
 ---
 
-## 設定
+## Next Actions View
 
-### 除外フォルダ
+Open it from the left ribbon icon or from the command palette.
 
-Inbox ビューや初期化の対象から外したいフォルダを指定します。テンプレートフォルダや一時フォルダなどを追加してください。
+This view provides a cross-note list of actionable work.
 
-### Vault の初期化
+Features:
 
-`classification` が未設定のノートをまとめて `Reference` に設定します。既存の Vault を初めてこのプラグインで使い始めるときに便利です（除外フォルダ内のノートはスキップされます）。
+- show only currently available next actions
+- filter by context tags
+- show only scheduled or due tasks
+- open the source note directly from the list
+- mark a next action as completed from the list
+
+---
+
+## Commands
+
+All commands are available from the command palette (`Cmd/Ctrl + P`).
+
+| Command | Description |
+| ------- | ----------- |
+| **Open Inbox** | Open the Inbox view |
+| **Open Next Actions** | Open the Next Actions view |
+| **Change status** | Open a modal and choose a new status |
+| **Set status: In Progress** | Set the active note to In Progress |
+| **Set status: On Hold** | Set the active note to On Hold |
+| **Set status: Dormant** | Set the active note to Dormant |
+| **Set status: Completed** | Set the active note to Completed |
+| **Set status: Abandoned** | Set the active note to Abandoned |
+| **Cancel all next actions** | Convert all unchecked checkboxes in the active note to `[-]` |
+
+`Cancel all next actions` is also available from the file context menu.
+
+---
+
+## Settings
+
+### Excluded Folders
+
+Choose folders that should be ignored by Inbox scanning, Next Actions scanning, and vault initialization.
+
+This is useful for template folders, archives, or temporary work areas.
+
+### Initialize Vault
+
+Bulk-set all unclassified notes to `classification: Reference`.
+
+This is useful when you introduce the plugin into an existing vault and want to start from a clean baseline. Notes inside excluded folders are skipped.
+
+### Development Helpers
+
+The settings tab also includes a mock note generator for manual testing.
