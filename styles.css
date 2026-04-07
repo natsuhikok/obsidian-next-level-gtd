@@ -282,6 +282,11 @@
 	color: var(--text-on-accent);
 }
 
+.gtd-context-chip:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
 .gtd-next-action-count {
 	position: absolute;
 	bottom: 0;

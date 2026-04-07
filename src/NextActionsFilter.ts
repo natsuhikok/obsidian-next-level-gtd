@@ -89,6 +89,18 @@ export class NextActionsFilter {
 			.sort();
 	}
 
+	withSelectedPropertiesPruned(candidates: readonly string[]): NextActionsFilter {
+		const allowed = new Set(candidates.map((candidate) => candidate.toLowerCase()));
+		return new NextActionsFilter(
+			this.environmentContexts,
+			this.selectedEnvironments,
+			this.noContextSelected,
+			this.selectedProperties.filter((property) => allowed.has(property.toLowerCase())),
+			this.noPropertySelected,
+			this.dateMode,
+		);
+	}
+
 	filter<T>(actions: readonly NextAction<T>[], today: string): readonly NextAction<T>[] {
 		return actions.filter(
 			(a) =>

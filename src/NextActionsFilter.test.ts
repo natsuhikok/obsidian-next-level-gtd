@@ -330,6 +330,35 @@ describe('NextActionsFilter', () => {
 		});
 	});
 
+	describe('性質の選択状態の正規化', () => {
+		it('存在しなくなった性質タグは選択状態から取り除かれる', () => {
+			const f = new NextActionsFilter(
+				['home'],
+				['home'],
+				true,
+				['quick', 'deep'],
+				true,
+				'actionable',
+			);
+			const updated = f.withSelectedPropertiesPruned(['deep']);
+			expect(updated.selectedProperties).toEqual(['deep']);
+		});
+
+		it('候補に残っている性質タグは選択状態を維持する', () => {
+			const f = new NextActionsFilter(
+				['home'],
+				['home'],
+				true,
+				['quick'],
+				false,
+				'actionable',
+			);
+			const updated = f.withSelectedPropertiesPruned(['quick', 'deep']);
+			expect(updated.selectedProperties).toEqual(['quick']);
+			expect(updated.noPropertySelected).toBe(false);
+		});
+	});
+
 	describe('並び順', () => {
 		it('期限あり → スケジュールあり → 日付なし の順に並ぶ', () => {
 			const actions = [

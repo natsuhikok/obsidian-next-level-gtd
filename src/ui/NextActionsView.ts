@@ -130,6 +130,8 @@ export class NextActionsView extends ItemView {
 
 	private render() {
 		const currentFilter = NextActionsFilter.initial(this.plugin.settings.environmentContexts);
+		const allActions = Object.values(this.noteCache).flatMap((note) => [...note.nextActions]);
+		const allPropertyCandidates = currentFilter.allPropertyCandidates(allActions);
 		this.filter = new NextActionsFilter(
 			currentFilter.environmentContexts,
 			this.filter.selectedEnvironments.filter((e) =>
@@ -139,14 +141,12 @@ export class NextActionsView extends ItemView {
 			this.filter.selectedProperties,
 			this.filter.noPropertySelected,
 			this.filter.dateMode,
-		);
+		).withSelectedPropertiesPruned(allPropertyCandidates);
 
 		const { contentEl } = this;
 		contentEl.empty();
 
 		contentEl.createDiv({ cls: 'nav-header' });
-
-		const allActions = Object.values(this.noteCache).flatMap((note) => [...note.nextActions]);
 
 		if (allActions.length === 0) {
 			contentEl.createEl('p', { text: t('noNextActions'), cls: 'gtd-empty' });
@@ -158,9 +158,13 @@ export class NextActionsView extends ItemView {
 		const filterBar = contentEl.createDiv({ cls: 'gtd-context-filter' });
 		this.renderEnvBlock(filterBar, allActions, today);
 
-		const candidates = this.filter.allPropertyCandidates(allActions);
-		if (candidates.length > 0) {
-			this.renderPropertyBlock(filterBar, candidates);
+		if (allPropertyCandidates.length > 0) {
+			this.renderPropertyBlock(
+				filterBar,
+				allPropertyCandidates,
+				new Set(this.filter.propertyCandidates(allActions, today)),
+				this.hasPropertylessCandidate(allActions, today),
+			);
 		}
 
 		this.renderDateBlock(filterBar);
@@ -266,13 +270,20 @@ export class NextActionsView extends ItemView {
 		void today;
 	}
 
-	private renderPropertyBlock(filterBar: HTMLElement, candidates: readonly string[]) {
+	private renderPropertyBlock(
+		filterBar: HTMLElement,
+		candidates: readonly string[],
+		enabledCandidates: ReadonlySet<string>,
+		hasPropertylessCandidate: boolean,
+	) {
 		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
 
+		const noPropertyActive = this.filter.noPropertySelected;
 		const noPropertyChip = row.createEl('button', {
-			cls: 'gtd-context-chip' + (this.filter.noPropertySelected ? ' is-active' : ''),
+			cls: 'gtd-context-chip' + (noPropertyActive ? ' is-active' : ''),
 			text: t('filterPropNoContext'),
 		});
+		noPropertyChip.disabled = !noPropertyActive && !hasPropertylessCandidate;
 		noPropertyChip.addEventListener('click', () => {
 			this.filter = this.filter.withNoPropertyToggled();
 			this.render();
@@ -280,15 +291,29 @@ export class NextActionsView extends ItemView {
 
 		candidates.forEach((prop) => {
 			const active = this.filter.selectedProperties.includes(prop);
+			const enabled = active || enabledCandidates.has(prop);
 			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
 				text: '#' + prop,
 			});
+			chip.disabled = !enabled;
 			chip.addEventListener('click', () => {
 				this.filter = this.filter.withPropertyToggled(prop);
 				this.render();
 			});
 		});
+	}
+
+	private hasPropertylessCandidate(
+		actions: readonly NextAction<TFile>[],
+		today: string,
+	): boolean {
+		return actions.some(
+			(action) =>
+				this.filter.passesDateFilter(action, today) &&
+				this.filter.passesEnvironmentFilter(action) &&
+				this.filter.propertyTagsOf(action).length === 0,
+		);
 	}
 
 	private renderDateBlock(filterBar: HTMLElement) {
