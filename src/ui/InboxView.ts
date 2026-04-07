@@ -3,9 +3,8 @@ import { GTDNote } from '../GTDNote';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
 
-export const VIEW_TYPE_INBOX = 'gtd-inbox';
-
 export class InboxView extends ItemView {
+	static readonly type = 'gtd-inbox';
 	private noteCache: Record<string, GTDNote> = {};
 
 	constructor(
@@ -16,7 +15,7 @@ export class InboxView extends ItemView {
 	}
 
 	getViewType() {
-		return VIEW_TYPE_INBOX;
+		return InboxView.type;
 	}
 
 	getDisplayText() {

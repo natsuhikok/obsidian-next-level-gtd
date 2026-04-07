@@ -1,12 +1,19 @@
 import { Plugin, TFile } from 'obsidian';
-import { DEFAULT_SETTINGS, NextLevelGtdSettings, NextLevelGtdSettingTab } from './settings';
+import { NextLevelGtdSettings } from './NextLevelGtdSettings';
+import { NextLevelGtdSettingTab } from './NextLevelGtdSettingTab';
 import { t } from './i18n';
-import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
-import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
+import { InboxView } from './ui/InboxView';
+import { NextActionsView } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
 import { NoteEditor } from './NoteEditor';
-import { ExcludedFolder, Status } from './types';
+import { ExcludedFolder } from './ExcludedFolder';
+import { Status } from './Status';
+
+const DEFAULT_SETTINGS: NextLevelGtdSettings = {
+	_placeholder: null,
+	excludedFolders: [],
+};
 
 export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
@@ -20,22 +27,22 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 		this.addSettingTab(settingTab);
 
-		this.registerView(VIEW_TYPE_INBOX, (leaf) => new InboxView(leaf, this));
-		this.registerView(VIEW_TYPE_NEXT_ACTIONS, (leaf) => new NextActionsView(leaf, this));
+		this.registerView(InboxView.type, (leaf) => new InboxView(leaf, this));
+		this.registerView(NextActionsView.type, (leaf) => new NextActionsView(leaf, this));
 
 		this.addRibbonIcon('inbox', t('openInboxRibbon'), () => {
-			this.activateView(VIEW_TYPE_INBOX).catch(console.error);
+			this.activateView(InboxView.type).catch(console.error);
 		});
 
 		this.addRibbonIcon('list-checks', t('openNextActionsRibbon'), () => {
-			this.activateView(VIEW_TYPE_NEXT_ACTIONS).catch(console.error);
+			this.activateView(NextActionsView.type).catch(console.error);
 		});
 
 		this.addCommand({
 			id: 'open-inbox-view',
 			name: t('openInboxViewCommand'),
 			callback: () => {
-				this.activateView(VIEW_TYPE_INBOX).catch(console.error);
+				this.activateView(InboxView.type).catch(console.error);
 			},
 		});
 
@@ -43,7 +50,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			id: 'open-next-actions-view',
 			name: t('openNextActionsViewCommand'),
 			callback: () => {
-				this.activateView(VIEW_TYPE_NEXT_ACTIONS).catch(console.error);
+				this.activateView(NextActionsView.type).catch(console.error);
 			},
 		});
 
@@ -219,7 +226,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 	}
 
 	private notifyInboxView(file: TFile): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_INBOX)) {
+		for (const leaf of this.app.workspace.getLeavesOfType(InboxView.type)) {
 			const view = leaf.view;
 			if (view instanceof InboxView) {
 				view.onFileChange(file).catch(console.error);
@@ -228,7 +235,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 	}
 
 	private notifyNextActionsView(file: TFile): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_NEXT_ACTIONS)) {
+		for (const leaf of this.app.workspace.getLeavesOfType(NextActionsView.type)) {
 			const view = leaf.view;
 			if (view instanceof NextActionsView) {
 				view.onFileChange(file).catch(console.error);
@@ -237,7 +244,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 	}
 
 	private notifyInboxViewDelete(path: string): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_INBOX)) {
+		for (const leaf of this.app.workspace.getLeavesOfType(InboxView.type)) {
 			const view = leaf.view;
 			if (view instanceof InboxView) {
 				view.onFileDelete(path);
@@ -246,7 +253,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 	}
 
 	private notifyNextActionsViewDelete(path: string): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_NEXT_ACTIONS)) {
+		for (const leaf of this.app.workspace.getLeavesOfType(NextActionsView.type)) {
 			const view = leaf.view;
 			if (view instanceof NextActionsView) {
 				view.onFileDelete(path);

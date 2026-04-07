@@ -1,13 +1,12 @@
 import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf, moment, setIcon } from 'obsidian';
 import { GTDNote } from '../GTDNote';
-import type { NextAction } from '../NextActionCollection';
+import type { NextAction } from '../NextAction';
 import { NoteEditor } from '../NoteEditor';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
 
-export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
-
 export class NextActionsView extends ItemView {
+	static readonly type = 'gtd-next-actions';
 	private noteCache: Record<string, GTDNote> = {};
 	private selectedContexts: readonly string[] = [''];
 	private showScheduledOnly = false;
@@ -20,7 +19,7 @@ export class NextActionsView extends ItemView {
 	}
 
 	getViewType() {
-		return VIEW_TYPE_NEXT_ACTIONS;
+		return NextActionsView.type;
 	}
 
 	getDisplayText() {

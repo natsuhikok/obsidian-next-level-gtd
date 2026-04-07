@@ -1,4 +1,5 @@
-import { AlertType, Status } from './types';
+import { AlertType } from './AlertType';
+import { Status } from './Status';
 
 function isValidStatus(value: unknown): value is Status {
 	return (
@@ -11,6 +12,10 @@ function isValidStatus(value: unknown): value is Status {
 }
 
 export class NoteState {
+	static get allStatuses(): readonly Status[] {
+		return ['進行中', '保留', '休眠', '完了', '廃止'];
+	}
+
 	readonly kind: 'inbox' | 'reference' | 'actionable' | 'invalid';
 	readonly status: Status | null;
 

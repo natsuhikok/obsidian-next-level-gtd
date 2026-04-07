@@ -1,6 +1,6 @@
 import { App, TFile } from 'obsidian';
 import { NoteContent } from './NoteContent';
-import { Status } from './types';
+import { Status } from './Status';
 
 export class NoteEditor {
 	constructor(private readonly app: App) {}

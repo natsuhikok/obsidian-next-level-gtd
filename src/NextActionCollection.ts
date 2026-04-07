@@ -1,12 +1,4 @@
-export interface NextAction<T> {
-	readonly source: T;
-	readonly text: string;
-	readonly blocked: boolean;
-	readonly scheduled: string | null;
-	readonly due: string | null;
-	readonly available: boolean;
-	readonly context: readonly string[];
-}
+import { NextAction } from './NextAction';
 
 interface ListItem {
 	readonly indent: number;
@@ -146,15 +138,13 @@ function collectFromNodes<T>(
 	});
 }
 
-export interface ContentEntry<T> {
-	readonly source: T;
-	readonly content: string;
-}
-
 export class NextActionCollection<T> {
 	readonly nextActions: readonly NextAction<T>[];
 
-	constructor(entries: readonly ContentEntry<T>[], today: string) {
+	constructor(
+		entries: readonly { readonly source: T; readonly content: string }[],
+		today: string,
+	) {
 		this.nextActions = entries.flatMap((entry) =>
 			splitListGroups(entry.content).flatMap((items) => {
 				const tree = buildTree(items);

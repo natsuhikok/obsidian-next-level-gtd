@@ -1,5 +1,6 @@
 import { App, SuggestModal } from 'obsidian';
-import { ALL_STATUSES, Status } from '../types';
+import { NoteState } from '../NoteState';
+import { Status } from '../Status';
 import { t } from '../i18n';
 
 export class StatusChangeModal extends SuggestModal<Status> {
@@ -12,7 +13,7 @@ export class StatusChangeModal extends SuggestModal<Status> {
 	}
 
 	getSuggestions(): Status[] {
-		return [...ALL_STATUSES];
+		return [...NoteState.allStatuses];
 	}
 
 	renderSuggestion(status: Status, el: HTMLElement) {
