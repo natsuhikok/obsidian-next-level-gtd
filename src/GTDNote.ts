@@ -1,37 +1,45 @@
 import { App, moment, TFile } from 'obsidian';
-import { detectNoteAlerts } from './detectNoteAlerts';
-import { NextAction, NextActionCollection } from './NextActionCollection';
+import { NextActionCollection } from './NextActionCollection';
 import { NoteState } from './NoteState';
-import { AlertType } from './types';
 
 export class GTDNote {
 	readonly file: TFile;
 	readonly state: NoteState;
-	readonly hasNextAction: boolean;
-	readonly nextActions: readonly NextAction<TFile>[];
-	readonly availableActions: readonly NextAction<TFile>[];
-	readonly alerts: readonly AlertType[];
+	private readonly collection: NextActionCollection<TFile>;
+	private readonly today: string;
 
 	get isInbox() {
 		return this.state.isInbox;
 	}
 
+	get hasNextAction() {
+		return this.collection.hasNextAction;
+	}
+
+	get nextActions() {
+		return this.collection.nextActions;
+	}
+
+	get availableActions() {
+		return this.collection.availableActions;
+	}
+
+	private get hasTodayOrFutureScheduledNextAction() {
+		return this.nextActions.some((a) => a.scheduled !== null && a.scheduled >= this.today);
+	}
+
+	get alerts() {
+		return this.state.computeAlerts(
+			this.hasNextAction,
+			this.hasTodayOrFutureScheduledNextAction,
+		);
+	}
+
 	private constructor(file: TFile, fm: Record<string, unknown> | null, content: string) {
 		this.file = file;
 		this.state = NoteState.parse(fm);
-		const today = moment().format('YYYY-MM-DD');
-		const collection = new NextActionCollection([{ source: file, content }], today);
-		this.hasNextAction = collection.hasNextAction;
-		this.nextActions = collection.nextActions;
-		this.availableActions = collection.availableActions;
-		const hasTodayOrFutureScheduledNextAction = collection.nextActions.some(
-			(a) => a.scheduled !== null && a.scheduled >= today,
-		);
-		this.alerts = detectNoteAlerts(
-			this.state,
-			this.hasNextAction,
-			hasTodayOrFutureScheduledNextAction,
-		);
+		this.today = moment().format('YYYY-MM-DD');
+		this.collection = new NextActionCollection([{ source: file, content }], this.today);
 	}
 
 	static from(file: TFile, fm: Record<string, unknown> | null, content: string): GTDNote {
