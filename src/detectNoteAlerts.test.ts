@@ -124,7 +124,7 @@ describe('detectNoteAlerts', () => {
 	});
 
 	describe('dormantNoFutureScheduledNextAction', () => {
-		it('休眠 かつ未来の scheduled next action がない場合はアラートを返す', () => {
+		it('休眠 かつ今日以降の scheduled next action がない場合はアラートを返す', () => {
 			expect(
 				detectNoteAlerts(
 					NoteState.parse({ classification: 'Actionable', status: '休眠' }),
@@ -134,7 +134,7 @@ describe('detectNoteAlerts', () => {
 			).toContain('dormantNoFutureScheduledNextAction');
 		});
 
-		it('休眠 かつ未来の scheduled next action がある場合はアラートを返さない', () => {
+		it('休眠 かつ今日以降の scheduled next action がある場合はアラートを返さない', () => {
 			expect(
 				detectNoteAlerts(
 					NoteState.parse({ classification: 'Actionable', status: '休眠' }),
@@ -192,7 +192,7 @@ describe('detectNoteAlerts', () => {
 			).toHaveLength(0);
 		});
 
-		it('正常な Actionable 休眠（未来の scheduled あり）はアラートを返さない', () => {
+		it('正常な Actionable 休眠（今日以降の scheduled あり）はアラートを返さない', () => {
 			expect(
 				detectNoteAlerts(
 					NoteState.parse({ classification: 'Actionable', status: '休眠' }),
