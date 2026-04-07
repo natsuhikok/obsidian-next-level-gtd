@@ -1,5 +1,6 @@
 import NextLevelGtdPlugin from 'main';
-import { ExcludedFolder } from 'types';
+import { ExcludedFolder } from 'ExcludedFolder';
+import { NextLevelGtdSettings } from 'NextLevelGtdSettings';
 
 export class ExcludedFoldersManager {
 	constructor(private readonly plugin: NextLevelGtdPlugin) {}
@@ -13,33 +14,28 @@ export class ExcludedFoldersManager {
 	}
 
 	async add(folder: string): Promise<void> {
-		this.plugin.settings = {
-			...this.plugin.settings,
-			excludedFolders: [
-				...this.plugin.settings.excludedFolders,
-				{ folder, showAlertBanner: true },
-			],
-		};
+		this.plugin.settings = new NextLevelGtdSettings(this.plugin.settings._placeholder, [
+			...this.plugin.settings.excludedFolders,
+			{ folder, showAlertBanner: true },
+		]);
 		await this.plugin.saveSettings();
 	}
 
 	async remove(folder: string): Promise<void> {
-		this.plugin.settings = {
-			...this.plugin.settings,
-			excludedFolders: this.plugin.settings.excludedFolders.filter(
-				(ef) => ef.folder !== folder,
-			),
-		};
+		this.plugin.settings = new NextLevelGtdSettings(
+			this.plugin.settings._placeholder,
+			this.plugin.settings.excludedFolders.filter((ef) => ef.folder !== folder),
+		);
 		await this.plugin.saveSettings();
 	}
 
 	async setShowAlertBanner(folder: string, show: boolean): Promise<void> {
-		this.plugin.settings = {
-			...this.plugin.settings,
-			excludedFolders: this.plugin.settings.excludedFolders.map((ef) =>
+		this.plugin.settings = new NextLevelGtdSettings(
+			this.plugin.settings._placeholder,
+			this.plugin.settings.excludedFolders.map((ef) =>
 				ef.folder === folder ? { ...ef, showAlertBanner: show } : ef,
 			),
-		};
+		);
 		await this.plugin.saveSettings();
 	}
 }

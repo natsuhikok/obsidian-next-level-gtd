@@ -1,7 +1,7 @@
 import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf, moment, setIcon } from 'obsidian';
 import { GTDNote } from '../GTDNote';
-import type { NextAction } from '../NextActionCollection';
-import { completeNextActionInFile } from '../completeNextAction';
+import type { NextAction } from '../NextAction';
+import { NextActionCompleter } from '../NextActionCompleter';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
 
@@ -259,7 +259,9 @@ export class NextActionsView extends ItemView {
 	}
 
 	private completeAction(action: NextAction<TFile>) {
-		completeNextActionInFile(this.app, action.source, action.text).catch(console.error);
+		new NextActionCompleter()
+			.completeInFile(this.app, action.source, action.text)
+			.catch(console.error);
 	}
 }
 

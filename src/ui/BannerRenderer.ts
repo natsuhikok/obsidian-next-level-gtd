@@ -1,8 +1,9 @@
 import { App, MarkdownView, TFile, setIcon } from 'obsidian';
 import { GTDNote } from '../GTDNote';
 import { t } from '../i18n';
-import { AlertType, ExcludedFolder } from '../types';
-import { renderNoteStateToggle } from './NoteStateToggle';
+import { AlertType } from '../AlertType';
+import { ExcludedFolder } from '../ExcludedFolder';
+import { NoteStateToggle } from './NoteStateToggle';
 
 const BANNER_ID = 'gtd-banner';
 
@@ -48,7 +49,7 @@ export class BannerRenderer {
 		const banner = wrapper.createDiv({ cls: 'gtd-banner' });
 		const onChanged = () => this.update(file);
 
-		renderNoteStateToggle(banner, note.state, this.app, file, onChanged);
+		new NoteStateToggle(banner, note.state, this.app, file, onChanged).render();
 
 		const excludedFolder = this.getExcludedFolders().find((ef) =>
 			file.path.startsWith(ef.folder + '/'),

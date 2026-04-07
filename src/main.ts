@@ -1,13 +1,15 @@
 import { Plugin, TFile } from 'obsidian';
-import { DEFAULT_SETTINGS, NextLevelGtdSettings, NextLevelGtdSettingTab } from './settings';
+import { NextLevelGtdSettings } from './NextLevelGtdSettings';
+import { NextLevelGtdSettingTab } from './NextLevelGtdSettingTab';
 import { t } from './i18n';
 import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
 import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
-import { setNoteState } from './setNoteState';
-import { cancelAllNextActionsInFile } from './cancelAllNextActions';
-import { ExcludedFolder, Status } from './types';
+import { NoteState } from './NoteState';
+import { NextActionCanceller } from './NextActionCanceller';
+import { ExcludedFolder } from './ExcludedFolder';
+import { Status } from './Status';
 
 export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
@@ -55,9 +57,11 @@ export default class NextLevelGtdPlugin extends Plugin {
 				const file = this.app.workspace.getActiveFile();
 				if (file == null) return;
 				new StatusChangeModal(this.app, (status: Status) => {
-					void setNoteState(this.app, file, status).then(() => {
-						this.bannerRenderer.update(file);
-					});
+					void NoteState.fromTarget(status)
+						.applyTo(this.app, file)
+						.then(() => {
+							this.bannerRenderer.update(file);
+						});
 				}).open();
 			},
 		});
@@ -81,9 +85,11 @@ export default class NextLevelGtdPlugin extends Plugin {
 				callback: () => {
 					const file = this.app.workspace.getActiveFile();
 					if (file == null) return;
-					void setNoteState(this.app, file, status).then(() => {
-						this.bannerRenderer.update(file);
-					});
+					void NoteState.fromTarget(status)
+						.applyTo(this.app, file)
+						.then(() => {
+							this.bannerRenderer.update(file);
+						});
 				},
 			});
 		});
@@ -94,7 +100,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			callback: () => {
 				const file = this.app.workspace.getActiveFile();
 				if (file == null) return;
-				void cancelAllNextActionsInFile(this.app, file);
+				void new NextActionCanceller().cancelInFile(this.app, file);
 			},
 		});
 
@@ -106,7 +112,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 					item.setTitle(t('cancelAllNextActionsCommand'))
 						.setIcon('circle-slash')
 						.onClick(() => {
-							void cancelAllNextActionsInFile(this.app, file);
+							void new NextActionCanceller().cancelInFile(this.app, file);
 						});
 				});
 			}),
@@ -195,11 +201,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 					};
 				})
 			: [];
-		this.settings = {
-			...DEFAULT_SETTINGS,
-			...(raw as Partial<NextLevelGtdSettings> | null),
-			excludedFolders,
-		};
+		this.settings = new NextLevelGtdSettings(null, excludedFolders);
 	}
 
 	async saveSettings() {

@@ -1,6 +1,5 @@
 import { NoteState } from 'NoteState';
 import { App, TFile } from 'obsidian';
-import { setNoteState } from 'setNoteState';
 
 export class InboxInitializer {
 	constructor(
@@ -20,6 +19,8 @@ export class InboxInitializer {
 	}
 
 	async initializeAll(targets: TFile[]): Promise<void> {
-		await Promise.all(targets.map((f) => setNoteState(this.app, f, 'reference')));
+		await Promise.all(
+			targets.map((f) => NoteState.fromTarget('reference').applyTo(this.app, f)),
+		);
 	}
 }

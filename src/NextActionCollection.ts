@@ -1,19 +1,10 @@
-export interface NextAction<T> {
-	readonly source: T;
-	readonly text: string;
-	readonly blocked: boolean;
-	readonly scheduled: string | null;
-	readonly due: string | null;
-	readonly available: boolean;
-	readonly context: readonly string[];
-}
+import { NextAction } from './NextAction';
 
 interface ListItem {
 	readonly indent: number;
 	readonly listType: 'bullet' | 'ordered';
 	readonly checkboxState: 'unchecked' | 'checked' | 'cancelled' | null;
 	readonly body: string;
-	readonly children: ListItem[];
 }
 
 function stripCodeSpans(content: string): string {
@@ -44,7 +35,6 @@ function parseLine(line: string): ListItem | null {
 		listType: /^\d+\.$/.test(marker!) ? 'ordered' : 'bullet',
 		checkboxState,
 		body: body!,
-		children: [],
 	};
 }
 
@@ -68,42 +58,46 @@ function splitListGroups(content: string): readonly (readonly ListItem[])[] {
 
 interface TreeNode {
 	readonly indent: number;
-	readonly item: ListItem | null;
-	readonly children: TreeNode[];
+	readonly item: ListItem;
+	readonly children: readonly TreeNode[];
 }
 
-function buildTree(items: readonly ListItem[]): readonly TreeNode[] {
-	const root: TreeNode = { indent: -1, item: null, children: [] };
-	const stack: TreeNode[] = [root];
+function takeChildren(parentIndent: number, items: readonly ListItem[]): number {
+	const idx = items.findIndex((item) => item.indent <= parentIndent);
+	return idx === -1 ? items.length : idx;
+}
 
-	for (const item of items) {
-		const node: TreeNode = { indent: item.indent, item, children: [] };
-		while (stack.length > 1 && stack[stack.length - 1]!.indent >= item.indent) {
-			stack.pop();
-		}
-		stack[stack.length - 1]!.children.push(node);
-		stack.push(node);
-	}
-
-	return root.children;
+function buildTreeFromGroup(items: readonly ListItem[]): readonly TreeNode[] {
+	if (items.length === 0) return [];
+	const [first, ...rest] = items;
+	if (!first) return [];
+	const childCount = takeChildren(first.indent, rest);
+	const childItems = rest.slice(0, childCount);
+	const siblingItems = rest.slice(childCount);
+	const node: TreeNode = {
+		indent: first.indent,
+		item: first,
+		children: buildTreeFromGroup(childItems),
+	};
+	return [node, ...buildTreeFromGroup(siblingItems)];
 }
 
 function hasDescendantCheckbox(node: TreeNode): boolean {
 	return node.children.some(
-		(child) => child.item?.checkboxState !== null || hasDescendantCheckbox(child),
+		(child) => child.item.checkboxState !== null || hasDescendantCheckbox(child),
 	);
 }
 
 function isBlockedByPriorSibling(node: TreeNode, siblings: readonly TreeNode[]): boolean {
-	if (node.item?.listType !== 'ordered') return false;
+	if (node.item.listType !== 'ordered') return false;
 
 	const idx = siblings.indexOf(node);
-	for (let i = idx - 1; i >= 0; i--) {
-		const sibling = siblings[i]!;
-		if (sibling.item?.listType !== 'ordered') break;
-		if (sibling.item?.checkboxState === 'unchecked') return true;
-	}
-	return false;
+	return siblings
+		.slice(0, idx)
+		.some(
+			(sibling) =>
+				sibling.item.listType === 'ordered' && sibling.item.checkboxState === 'unchecked',
+		);
 }
 
 const TAG_RE = /#([^\s#][^\s]*)/g;
@@ -127,7 +121,7 @@ function collectFromNodes<T>(
 ): readonly NextAction<T>[] {
 	return nodes.flatMap((node) => {
 		const childActions = collectFromNodes(node.children, source, today);
-		if (!node.item || node.item.checkboxState !== 'unchecked') return childActions;
+		if (node.item.checkboxState !== 'unchecked') return childActions;
 		if (/#temp\b/.test(node.item.body)) return childActions;
 
 		const blockedByChildren = hasDescendantCheckbox(node);
@@ -137,27 +131,23 @@ function collectFromNodes<T>(
 		const { scheduled, due } = extractDates(node.item.body);
 		const context = extractContexts(node.item.body);
 
-		const available = !blocked && (scheduled !== null ? scheduled <= today : true);
-
 		return [
-			{ source, text: node.item.body, blocked, scheduled, due, available, context },
+			new NextAction(source, node.item.body, blocked, scheduled, due, context, today),
 			...childActions,
 		];
 	});
 }
 
-export interface ContentEntry<T> {
-	readonly source: T;
-	readonly content: string;
-}
-
 export class NextActionCollection<T> {
 	readonly nextActions: readonly NextAction<T>[];
 
-	constructor(entries: readonly ContentEntry<T>[], today: string) {
+	constructor(
+		entries: readonly { readonly source: T; readonly content: string }[],
+		today: string,
+	) {
 		this.nextActions = entries.flatMap((entry) =>
 			splitListGroups(entry.content).flatMap((items) => {
-				const tree = buildTree(items);
+				const tree = buildTreeFromGroup(items);
 				return collectFromNodes(tree, entry.source, today);
 			}),
 		);

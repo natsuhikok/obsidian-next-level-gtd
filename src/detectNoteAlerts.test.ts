@@ -1,37 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { detectNoteAlerts } from './detectNoteAlerts';
 import { NoteState } from './NoteState';
 
-describe('detectNoteAlerts', () => {
+describe('NoteState.alerts', () => {
 	describe('frontmatterInvalid', () => {
 		it('frontmatter が null の場合は frontmatterInvalid を返す', () => {
-			expect(detectNoteAlerts(NoteState.parse(null), false, false)).toContain(
-				'frontmatterInvalid',
-			);
+			expect(NoteState.parse(null).alerts(false, false)).toContain('frontmatterInvalid');
 		});
 
 		it('classification が未設定の場合は frontmatterInvalid を返す', () => {
-			expect(detectNoteAlerts(NoteState.parse({}), false, false)).toContain(
-				'frontmatterInvalid',
-			);
+			expect(NoteState.parse({}).alerts(false, false)).toContain('frontmatterInvalid');
 		});
 
 		it('classification が不正値の場合は frontmatterInvalid を返す', () => {
-			expect(
-				detectNoteAlerts(NoteState.parse({ classification: 'Foo' }), false, false),
-			).toContain('frontmatterInvalid');
+			expect(NoteState.parse({ classification: 'Foo' }).alerts(false, false)).toContain(
+				'frontmatterInvalid',
+			);
 		});
 
 		it('Actionable で status が未設定の場合は frontmatterInvalid を返す', () => {
 			expect(
-				detectNoteAlerts(NoteState.parse({ classification: 'Actionable' }), false, false),
+				NoteState.parse({ classification: 'Actionable' }).alerts(false, false),
 			).toContain('frontmatterInvalid');
 		});
 
 		it('Actionable で status が不正値の場合は frontmatterInvalid を返す', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: 'done' }),
+				NoteState.parse({ classification: 'Actionable', status: 'done' }).alerts(
 					false,
 					false,
 				),
@@ -39,7 +33,7 @@ describe('detectNoteAlerts', () => {
 		});
 
 		it('frontmatterInvalid の場合は他のアラートを返さない', () => {
-			const result = detectNoteAlerts(NoteState.parse({ classification: 'Foo' }), true, true);
+			const result = NoteState.parse({ classification: 'Foo' }).alerts(true, true);
 			expect(result).toHaveLength(1);
 			expect(result[0]).toBe('frontmatterInvalid');
 		});
@@ -47,14 +41,14 @@ describe('detectNoteAlerts', () => {
 
 	describe('referenceHasNextAction', () => {
 		it('Reference に next action がある場合はアラートを返す', () => {
-			expect(
-				detectNoteAlerts(NoteState.parse({ classification: 'Reference' }), true, false),
-			).toContain('referenceHasNextAction');
+			expect(NoteState.parse({ classification: 'Reference' }).alerts(true, false)).toContain(
+				'referenceHasNextAction',
+			);
 		});
 
 		it('Reference に next action がない場合はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(NoteState.parse({ classification: 'Reference' }), false, false),
+				NoteState.parse({ classification: 'Reference' }).alerts(false, false),
 			).not.toContain('referenceHasNextAction');
 		});
 	});
@@ -62,8 +56,7 @@ describe('detectNoteAlerts', () => {
 	describe('actionableInProgressNoNextAction', () => {
 		it('進行中 かつ next action が 0 件の場合はアラートを返す', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '進行中' }),
+				NoteState.parse({ classification: 'Actionable', status: '進行中' }).alerts(
 					false,
 					false,
 				),
@@ -72,8 +65,7 @@ describe('detectNoteAlerts', () => {
 
 		it('進行中 かつ next action がある場合はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '進行中' }),
+				NoteState.parse({ classification: 'Actionable', status: '進行中' }).alerts(
 					true,
 					false,
 				),
@@ -82,8 +74,7 @@ describe('detectNoteAlerts', () => {
 
 		it('保留 の場合はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '保留' }),
+				NoteState.parse({ classification: 'Actionable', status: '保留' }).alerts(
 					false,
 					false,
 				),
@@ -94,8 +85,7 @@ describe('detectNoteAlerts', () => {
 	describe('actionableDoneHasNextAction', () => {
 		it('完了 かつ next action がある場合はアラートを返す', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '完了' }),
+				NoteState.parse({ classification: 'Actionable', status: '完了' }).alerts(
 					true,
 					false,
 				),
@@ -104,8 +94,7 @@ describe('detectNoteAlerts', () => {
 
 		it('廃止 かつ next action がある場合はアラートを返す', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '廃止' }),
+				NoteState.parse({ classification: 'Actionable', status: '廃止' }).alerts(
 					true,
 					false,
 				),
@@ -114,8 +103,7 @@ describe('detectNoteAlerts', () => {
 
 		it('完了 かつ next action がない場合はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '完了' }),
+				NoteState.parse({ classification: 'Actionable', status: '完了' }).alerts(
 					false,
 					false,
 				),
@@ -126,8 +114,7 @@ describe('detectNoteAlerts', () => {
 	describe('dormantNoFutureScheduledNextAction', () => {
 		it('休眠 かつ今日以降の scheduled next action がない場合はアラートを返す', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '休眠' }),
+				NoteState.parse({ classification: 'Actionable', status: '休眠' }).alerts(
 					false,
 					false,
 				),
@@ -136,8 +123,7 @@ describe('detectNoteAlerts', () => {
 
 		it('休眠 かつ今日以降の scheduled next action がある場合はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '休眠' }),
+				NoteState.parse({ classification: 'Actionable', status: '休眠' }).alerts(
 					true,
 					true,
 				),
@@ -146,8 +132,7 @@ describe('detectNoteAlerts', () => {
 
 		it('休眠 は actionableInProgressNoNextAction を返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '休眠' }),
+				NoteState.parse({ classification: 'Actionable', status: '休眠' }).alerts(
 					false,
 					false,
 				),
@@ -156,8 +141,7 @@ describe('detectNoteAlerts', () => {
 
 		it('休眠 は actionableDoneHasNextAction を返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '休眠' }),
+				NoteState.parse({ classification: 'Actionable', status: '休眠' }).alerts(
 					true,
 					false,
 				),
@@ -168,14 +152,13 @@ describe('detectNoteAlerts', () => {
 	describe('アラートなし', () => {
 		it('正常な Reference はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(NoteState.parse({ classification: 'Reference' }), false, false),
+				NoteState.parse({ classification: 'Reference' }).alerts(false, false),
 			).toHaveLength(0);
 		});
 
 		it('正常な Actionable 進行中はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '進行中' }),
+				NoteState.parse({ classification: 'Actionable', status: '進行中' }).alerts(
 					true,
 					false,
 				),
@@ -184,8 +167,7 @@ describe('detectNoteAlerts', () => {
 
 		it('正常な Actionable 保留はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '保留' }),
+				NoteState.parse({ classification: 'Actionable', status: '保留' }).alerts(
 					true,
 					false,
 				),
@@ -194,8 +176,7 @@ describe('detectNoteAlerts', () => {
 
 		it('正常な Actionable 休眠（今日以降の scheduled あり）はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '休眠' }),
+				NoteState.parse({ classification: 'Actionable', status: '休眠' }).alerts(
 					true,
 					true,
 				),
@@ -204,8 +185,7 @@ describe('detectNoteAlerts', () => {
 
 		it('正常な Actionable 完了はアラートを返さない', () => {
 			expect(
-				detectNoteAlerts(
-					NoteState.parse({ classification: 'Actionable', status: '完了' }),
+				NoteState.parse({ classification: 'Actionable', status: '完了' }).alerts(
 					false,
 					false,
 				),

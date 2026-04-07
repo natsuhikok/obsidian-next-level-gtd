@@ -1,4 +1,6 @@
-import { Status } from './types';
+import { App, TFile } from 'obsidian';
+import { AlertType } from './AlertType';
+import { Status } from './Status';
 
 function isValidStatus(value: unknown): value is Status {
 	return (
@@ -11,12 +13,19 @@ function isValidStatus(value: unknown): value is Status {
 }
 
 export class NoteState {
+	static readonly allStatuses: readonly Status[] = ['進行中', '保留', '休眠', '完了', '廃止'];
+
 	readonly kind: 'inbox' | 'reference' | 'actionable' | 'invalid';
 	readonly status: Status | null;
 
 	private constructor(kind: NoteState['kind'], status: Status | null = null) {
 		this.kind = kind;
 		this.status = status;
+	}
+
+	static fromTarget(target: 'reference' | Status): NoteState {
+		if (target === 'reference') return new NoteState('reference');
+		return new NoteState('actionable', target);
 	}
 
 	static parse(fm: Record<string, unknown> | null | undefined): NoteState {
@@ -43,5 +52,33 @@ export class NoteState {
 
 	get isInvalid(): boolean {
 		return this.kind === 'invalid';
+	}
+
+	alerts(hasNextAction: boolean, hasTodayOrFutureScheduled: boolean): readonly AlertType[] {
+		if (this.isInbox || this.isInvalid) return ['frontmatterInvalid'];
+		if (this.isReference) return hasNextAction ? ['referenceHasNextAction'] : [];
+		return [
+			...(this.status === '進行中' && !hasNextAction
+				? ['actionableInProgressNoNextAction' as const]
+				: []),
+			...((this.status === '完了' || this.status === '廃止') && hasNextAction
+				? ['actionableDoneHasNextAction' as const]
+				: []),
+			...(this.status === '休眠' && !hasTodayOrFutureScheduled
+				? ['dormantNoFutureScheduledNextAction' as const]
+				: []),
+		];
+	}
+
+	async applyTo(app: App, file: TFile): Promise<void> {
+		await app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+			if (this.isReference) {
+				fm['classification'] = 'Reference';
+				delete fm['status'];
+			} else if (this.isActionable && this.status != null) {
+				fm['classification'] = 'Actionable';
+				fm['status'] = this.status;
+			}
+		});
 	}
 }

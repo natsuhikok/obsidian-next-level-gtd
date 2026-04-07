@@ -4,20 +4,9 @@ import { InboxInitializer } from 'InboxInitializer';
 import NextLevelGtdPlugin from 'main';
 import { MockNoteBuilder } from 'MockNoteBuilder';
 import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian';
-import { ExcludedFolder } from 'types';
 import { ConfirmModal } from 'ui/ConfirmModal';
 import { FolderSuggest } from 'ui/FolderSuggest';
 import { InboxView, VIEW_TYPE_INBOX } from 'ui/InboxView';
-
-export interface NextLevelGtdSettings {
-	_placeholder: null;
-	excludedFolders: readonly ExcludedFolder[];
-}
-
-export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
-	_placeholder: null,
-	excludedFolders: [],
-};
 
 export class NextLevelGtdSettingTab extends PluginSettingTab {
 	readonly plugin: NextLevelGtdPlugin;
