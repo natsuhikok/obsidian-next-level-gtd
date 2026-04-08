@@ -1,5 +1,5 @@
-import { NoteState } from 'NoteState';
-import { NoteEditor } from 'NoteEditor';
+import { NoteState } from './NoteState';
+import { NoteEditor } from './NoteEditor';
 import { App, TFile } from 'obsidian';
 
 export class InboxInitializer {
