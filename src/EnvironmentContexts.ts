@@ -1,4 +1,4 @@
-import NextLevelGtdPlugin from 'main';
+import NextLevelGtdPlugin from './main';
 
 export class EnvironmentContexts {
 	constructor(private readonly plugin: NextLevelGtdPlugin) {}
