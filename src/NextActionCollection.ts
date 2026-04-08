@@ -1,12 +1,6 @@
-export interface NextAction<T> {
-	readonly source: T;
-	readonly text: string;
-	readonly blocked: boolean;
-	readonly scheduled: string | null;
-	readonly due: string | null;
-	readonly available: boolean;
-	readonly context: readonly string[];
-}
+import { NextAction } from './NextAction';
+
+export { NextAction } from './NextAction';
 
 interface ListItem {
 	readonly indent: number;
@@ -120,13 +114,9 @@ function extractDates(body: string): { scheduled: string | null; due: string | n
 		: { scheduled: null, due: dueMatch?.[1] ?? null };
 }
 
-function collectFromNodes<T>(
-	nodes: readonly TreeNode[],
-	source: T,
-	today: string,
-): readonly NextAction<T>[] {
+function collectFromNodes<T>(nodes: readonly TreeNode[], source: T): readonly NextAction<T>[] {
 	return nodes.flatMap((node) => {
-		const childActions = collectFromNodes(node.children, source, today);
+		const childActions = collectFromNodes(node.children, source);
 		if (!node.item || node.item.checkboxState !== 'unchecked') return childActions;
 		if (/#temp\b/.test(node.item.body)) return childActions;
 
@@ -137,10 +127,8 @@ function collectFromNodes<T>(
 		const { scheduled, due } = extractDates(node.item.body);
 		const context = extractContexts(node.item.body);
 
-		const available = !blocked && (scheduled !== null ? scheduled <= today : true);
-
 		return [
-			{ source, text: node.item.body, blocked, scheduled, due, available, context },
+			new NextAction(source, node.item.body, blocked, scheduled, due, context),
 			...childActions,
 		];
 	});
@@ -153,12 +141,14 @@ export interface ContentEntry<T> {
 
 export class NextActionCollection<T> {
 	readonly nextActions: readonly NextAction<T>[];
+	private readonly today: string;
 
 	constructor(entries: readonly ContentEntry<T>[], today: string) {
+		this.today = today;
 		this.nextActions = entries.flatMap((entry) =>
 			splitListGroups(entry.content).flatMap((items) => {
 				const tree = buildTree(items);
-				return collectFromNodes(tree, entry.source, today);
+				return collectFromNodes(tree, entry.source);
 			}),
 		);
 	}
@@ -168,6 +158,6 @@ export class NextActionCollection<T> {
 	}
 
 	get availableActions(): readonly NextAction<T>[] {
-		return this.nextActions.filter((a) => a.available);
+		return this.nextActions.filter((a) => a.isAvailable(this.today));
 	}
 }
