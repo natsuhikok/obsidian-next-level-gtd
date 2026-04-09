@@ -442,5 +442,15 @@ describe('NextActionCollection', () => {
 			const c = new NextActionCollection([entry('- [ ] タスク ⏳ 2026-04-05 #仕事')], TODAY);
 			expect(c.nextActions[0]!.context).toEqual(['仕事']);
 		});
+
+		it('テキスト直後の # は context に含まれない', () => {
+			const c = new NextActionCollection([entry('- [ ] タスク#仕事')], TODAY);
+			expect(c.nextActions[0]!.context).toEqual([]);
+		});
+
+		it('先頭の # はスタンドアロンタグとして context に含まれる', () => {
+			const c = new NextActionCollection([entry('- [ ] #仕事 タスク')], TODAY);
+			expect(c.nextActions[0]!.context).toEqual(['仕事']);
+		});
 	});
 });

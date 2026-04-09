@@ -111,10 +111,10 @@ function isBlockedByPriorSibling(node: TreeNode, siblings: readonly TreeNode[]):
 	return false;
 }
 
-const TAG_RE = /#([^\s#][^\s]*)/g;
+const TAG_RE = /(^| )#([^\s#][^\s]*)/g;
 
 function extractContexts(body: string): readonly string[] {
-	return [...body.matchAll(TAG_RE)].map((m) => m[1]!).filter((tag) => tag !== 'temp');
+	return [...body.matchAll(TAG_RE)].map((m) => m[2]!).filter((tag) => tag !== 'temp');
 }
 
 function extractDates(body: string): { scheduled: string | null; due: string | null } {
