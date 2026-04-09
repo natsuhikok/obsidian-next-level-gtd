@@ -1,7 +1,9 @@
 import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf, moment, setIcon } from 'obsidian';
+import { ContextClassifier } from '../ContextClassifier';
+import { FilterSelection } from '../FilterSelection';
 import { GTDNote } from '../GTDNote';
 import type { NextAction } from '../NextActionCollection';
-import { NextActionsFilter } from '../NextActionsFilter';
+import { NextActionsQuery } from '../NextActionsQuery';
 import { NoteEditor } from '../NoteEditor';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
@@ -10,14 +12,14 @@ export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
 
 export class NextActionsView extends ItemView {
 	private noteCache: Record<string, GTDNote> = {};
-	private filter: NextActionsFilter;
+	private selection: FilterSelection;
 
 	constructor(
 		leaf: WorkspaceLeaf,
 		private readonly plugin: NextLevelGtdPlugin,
 	) {
 		super(leaf);
-		this.filter = NextActionsFilter.initial(plugin.settings.environmentContexts);
+		this.selection = FilterSelection.initial();
 	}
 
 	getViewType() {
@@ -129,19 +131,12 @@ export class NextActionsView extends ItemView {
 	}
 
 	private render() {
-		const currentFilter = NextActionsFilter.initial(this.plugin.settings.environmentContexts);
+		const classifier = new ContextClassifier(this.plugin.settings.environmentContexts);
 		const allActions = Object.values(this.noteCache).flatMap((note) => [...note.nextActions]);
-		const allPropertyCandidates = currentFilter.allPropertyCandidates(allActions);
-		this.filter = new NextActionsFilter(
-			currentFilter.environmentContexts,
-			this.filter.selectedEnvironments.filter((e) =>
-				currentFilter.environmentContexts.includes(e),
-			),
-			this.filter.noContextSelected,
-			this.filter.selectedProperties,
-			this.filter.noPropertySelected,
-			this.filter.dateMode,
-		).withSelectedPropertiesPruned(allPropertyCandidates);
+		const today = moment().format('YYYY-MM-DD');
+		const query = new NextActionsQuery(classifier, this.selection, allActions, today);
+
+		this.selection = query.normalizedSelection;
 
 		const { contentEl } = this;
 		contentEl.empty();
@@ -153,31 +148,28 @@ export class NextActionsView extends ItemView {
 			return;
 		}
 
-		const today = moment().format('YYYY-MM-DD');
-
 		const filterBar = contentEl.createDiv({ cls: 'gtd-context-filter' });
-		this.renderEnvBlock(filterBar, allActions, today);
+		this.renderEnvBlock(filterBar, classifier);
 
+		const allPropertyCandidates = query.allPropertyCandidates;
 		if (allPropertyCandidates.length > 0) {
 			this.renderPropertyBlock(
 				filterBar,
 				allPropertyCandidates,
-				new Set(this.filter.propertyCandidates(allActions, today)),
-				this.hasPropertylessCandidate(allActions, today),
+				query.enabledPropertyCandidates,
+				query.hasPropertylessCandidate,
 			);
 		}
 
 		this.renderDateBlock(filterBar);
 
-		const filteredActions = this.filter.filter(allActions, today);
+		const filteredActions = query.filteredActions;
 
 		if (filteredActions.length === 0) return;
 
-		const sorted = this.filter.sort(filteredActions);
-
 		const container = contentEl.createDiv({ cls: 'nav-files-container' });
 
-		sorted.forEach((action) => {
+		filteredActions.forEach((action) => {
 			const item = container.createDiv({ cls: 'gtd-next-action-item' });
 			item.addEventListener('click', (e) => {
 				this.openNote(action.source.path, e, action.text);
@@ -194,7 +186,7 @@ export class NextActionsView extends ItemView {
 
 			body.createDiv({ cls: 'gtd-next-action-text', text: stripTaskMetadata(action.text) });
 
-			this.renderContextBadges(body, action);
+			this.renderContextBadges(body, action, classifier);
 
 			const meta = body.createDiv({ cls: 'gtd-next-action-meta' });
 
@@ -227,36 +219,32 @@ export class NextActionsView extends ItemView {
 
 		contentEl.createDiv({
 			cls: 'gtd-next-action-count',
-			text: `${String(sorted.length)} actions`,
+			text: `${String(filteredActions.length)} actions`,
 		});
 	}
 
-	private renderEnvBlock(
-		filterBar: HTMLElement,
-		allActions: readonly NextAction<TFile>[],
-		today: string,
-	) {
-		const envContexts = this.filter.environmentContexts;
+	private renderEnvBlock(filterBar: HTMLElement, classifier: ContextClassifier) {
+		const envContexts = classifier.environmentContexts;
 		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
 
 		const addEnvChip = (label: string, value: string) => {
 			const active =
 				value === '__all__'
-					? this.filter.isAllEnvironmentsSelected
+					? this.selection.isAllEnvironmentsSelected(envContexts)
 					: value === '__no_context__'
-						? this.filter.noContextSelected
-						: this.filter.selectedEnvironments.includes(value);
+						? this.selection.noContextSelected
+						: this.selection.selectedEnvironments.includes(value);
 			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
 				text: label,
 			});
 			chip.addEventListener('click', () => {
 				if (value === '__all__') {
-					this.filter = this.filter.withAllEnvironmentsToggled();
+					this.selection = this.selection.withAllEnvironmentsToggled(envContexts);
 				} else if (value === '__no_context__') {
-					this.filter = this.filter.withNoContextToggled();
+					this.selection = this.selection.withNoContextToggled();
 				} else {
-					this.filter = this.filter.withEnvironmentToggled(value);
+					this.selection = this.selection.withEnvironmentToggled(value);
 				}
 				this.render();
 			});
@@ -265,9 +253,6 @@ export class NextActionsView extends ItemView {
 		// addEnvChip(t('filterEnvAll'), '__all__');
 		addEnvChip(t('filterEnvNoContext'), '__no_context__');
 		envContexts.forEach((ctx) => addEnvChip('#' + ctx, ctx));
-
-		void allActions;
-		void today;
 	}
 
 	private renderPropertyBlock(
@@ -278,19 +263,19 @@ export class NextActionsView extends ItemView {
 	) {
 		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
 
-		const noPropertyActive = this.filter.noPropertySelected;
+		const noPropertyActive = this.selection.noPropertySelected;
 		const noPropertyChip = row.createEl('button', {
 			cls: 'gtd-context-chip' + (noPropertyActive ? ' is-active' : ''),
 			text: t('filterPropNoContext'),
 		});
 		noPropertyChip.disabled = !noPropertyActive && !hasPropertylessCandidate;
 		noPropertyChip.addEventListener('click', () => {
-			this.filter = this.filter.withNoPropertyToggled();
+			this.selection = this.selection.withNoPropertyToggled();
 			this.render();
 		});
 
 		candidates.forEach((prop) => {
-			const active = this.filter.selectedProperties.includes(prop);
+			const active = this.selection.selectedProperties.includes(prop);
 			const enabled = active || enabledCandidates.has(prop);
 			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
@@ -298,34 +283,22 @@ export class NextActionsView extends ItemView {
 			});
 			chip.disabled = !enabled;
 			chip.addEventListener('click', () => {
-				this.filter = this.filter.withPropertyToggled(prop);
+				this.selection = this.selection.withPropertyToggled(prop);
 				this.render();
 			});
 		});
 	}
 
-	private hasPropertylessCandidate(
-		actions: readonly NextAction<TFile>[],
-		today: string,
-	): boolean {
-		return actions.some(
-			(action) =>
-				this.filter.passesDateFilter(action, today) &&
-				this.filter.passesEnvironmentFilter(action) &&
-				this.filter.propertyTagsOf(action).length === 0,
-		);
-	}
-
 	private renderDateBlock(filterBar: HTMLElement) {
 		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
 		const addDateChip = (label: string, mode: 'actionable' | 'withDate') => {
-			const active = this.filter.dateMode === mode;
+			const active = this.selection.dateMode === mode;
 			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
 				text: label,
 			});
 			chip.addEventListener('click', () => {
-				this.filter = this.filter.withDateMode(mode);
+				this.selection = this.selection.withDateMode(mode);
 				this.render();
 			});
 		};
@@ -334,9 +307,13 @@ export class NextActionsView extends ItemView {
 		addDateChip(t('filterDateWithDate'), 'withDate');
 	}
 
-	private renderContextBadges(body: HTMLElement, action: NextAction<TFile>) {
-		const envTags = this.filter.environmentTagsOf(action);
-		const propTags = this.filter.propertyTagsOf(action);
+	private renderContextBadges(
+		body: HTMLElement,
+		action: NextAction<TFile>,
+		classifier: ContextClassifier,
+	) {
+		const envTags = classifier.environmentTagsOf(action);
+		const propTags = classifier.propertyTagsOf(action);
 
 		const hasBadges = envTags.length > 0 || propTags.length > 0;
 		if (!hasBadges) return;

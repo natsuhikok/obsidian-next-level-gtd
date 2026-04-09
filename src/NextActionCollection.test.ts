@@ -219,27 +219,27 @@ describe('NextActionCollection', () => {
 	describe('available action', () => {
 		it('blocked でなく日付なしは available になる', () => {
 			const c = new NextActionCollection([entry('- [ ] タスク')], TODAY);
-			expect(c.nextActions[0]!.available).toBe(true);
+			expect(c.nextActions[0]!.isAvailable(TODAY)).toBe(true);
 		});
 
 		it('blocked でなく scheduled が今日以前なら available になる', () => {
 			const c = new NextActionCollection([entry('- [ ] タスク ⏳ 2026-04-01')], '2026-04-01');
-			expect(c.nextActions[0]!.available).toBe(true);
+			expect(c.nextActions[0]!.isAvailable('2026-04-01')).toBe(true);
 		});
 
 		it('blocked でなく scheduled が過去なら available になる', () => {
 			const c = new NextActionCollection([entry('- [ ] タスク ⏳ 2026-03-01')], '2026-04-01');
-			expect(c.nextActions[0]!.available).toBe(true);
+			expect(c.nextActions[0]!.isAvailable('2026-04-01')).toBe(true);
 		});
 
 		it('blocked でなく scheduled が未来なら available にならない', () => {
 			const c = new NextActionCollection([entry('- [ ] タスク ⏳ 2026-04-05')], '2026-04-01');
-			expect(c.nextActions[0]!.available).toBe(false);
+			expect(c.nextActions[0]!.isAvailable('2026-04-01')).toBe(false);
 		});
 
 		it('blocked でなく due ありは available になる', () => {
 			const c = new NextActionCollection([entry('- [ ] タスク 📅 2026-05-01')], TODAY);
-			expect(c.nextActions[0]!.available).toBe(true);
+			expect(c.nextActions[0]!.isAvailable(TODAY)).toBe(true);
 		});
 
 		it('blocked なら日付に関わらず available にならない', () => {
@@ -248,7 +248,7 @@ describe('NextActionCollection', () => {
 				TODAY,
 			);
 			const blocked = c.nextActions.find((a) => a.text === 'ブロックされたタスク');
-			expect(blocked!.available).toBe(false);
+			expect(blocked!.isAvailable(TODAY)).toBe(false);
 		});
 
 		it('blocked かつ scheduled でも available にならない', () => {
@@ -257,7 +257,7 @@ describe('NextActionCollection', () => {
 				TODAY,
 			);
 			const blocked = c.nextActions.find((a) => a.text === 'タスク ⏳ 2026-03-01');
-			expect(blocked!.available).toBe(false);
+			expect(blocked!.isAvailable(TODAY)).toBe(false);
 		});
 	});
 
