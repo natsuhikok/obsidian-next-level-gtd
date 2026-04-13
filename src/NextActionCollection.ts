@@ -1,3 +1,5 @@
+import { BlockedSchedule } from './BlockedSchedule';
+
 export class NextAction<T> {
 	constructor(
 		readonly source: T,
@@ -6,10 +8,23 @@ export class NextAction<T> {
 		readonly scheduled: string | null,
 		readonly due: string | null,
 		readonly context: readonly string[],
+		readonly blockedSchedule: BlockedSchedule = new BlockedSchedule(scheduled, []),
 	) {}
 
 	isAvailable(today: string): boolean {
 		return !this.blocked && (this.scheduled !== null ? this.scheduled <= today : true);
+	}
+
+	get hasInconsistentBlockedSchedule() {
+		return this.blocked && this.blockedSchedule.isInconsistent;
+	}
+
+	isSchedulableOnOrAfter(today: string) {
+		return (
+			this.scheduled !== null &&
+			this.scheduled >= today &&
+			!this.hasInconsistentBlockedSchedule
+		);
 	}
 }
 
@@ -99,6 +114,23 @@ function hasDescendantCheckbox(node: TreeNode): boolean {
 	);
 }
 
+function collectDescendantCheckboxSchedules(node: TreeNode): readonly (string | null)[] {
+	return node.children.flatMap((child) => {
+		if (child.item == null) {
+			return collectDescendantCheckboxSchedules(child);
+		}
+
+		if (child.item.checkboxState !== null) {
+			return [
+				extractDates(child.item.body).scheduled,
+				...collectDescendantCheckboxSchedules(child),
+			];
+		}
+
+		return collectDescendantCheckboxSchedules(child);
+	});
+}
+
 function isBlockedByPriorSibling(node: TreeNode, siblings: readonly TreeNode[]): boolean {
 	if (node.item?.listType !== 'ordered') return false;
 
@@ -109,6 +141,26 @@ function isBlockedByPriorSibling(node: TreeNode, siblings: readonly TreeNode[]):
 		if (sibling.item?.checkboxState === 'unchecked') return true;
 	}
 	return false;
+}
+
+function collectPriorSiblingSchedules(
+	node: TreeNode,
+	siblings: readonly TreeNode[],
+): readonly (string | null)[] {
+	if (node.item?.listType !== 'ordered') return [];
+
+	const idx = siblings.indexOf(node);
+	return siblings.slice(0, idx).reduce<readonly (string | null)[]>((blockers, sibling) => {
+		if (sibling.item?.listType !== 'ordered') {
+			return blockers;
+		}
+
+		if (sibling.item.checkboxState !== 'unchecked') {
+			return blockers;
+		}
+
+		return [...blockers, extractDates(sibling.item.body).scheduled];
+	}, []);
 }
 
 const TAG_RE = /(^| )#([^\s#][^\s]*)/g;
@@ -134,12 +186,24 @@ function collectFromNodes<T>(nodes: readonly TreeNode[], source: T): readonly Ne
 		const blockedByChildren = hasDescendantCheckbox(node);
 		const blockedBySibling = isBlockedByPriorSibling(node, nodes);
 		const blocked = blockedByChildren || blockedBySibling;
+		const blockerSchedules = [
+			...collectDescendantCheckboxSchedules(node),
+			...collectPriorSiblingSchedules(node, nodes),
+		];
 
 		const { scheduled, due } = extractDates(node.item.body);
 		const context = extractContexts(node.item.body);
 
 		return [
-			new NextAction(source, node.item.body, blocked, scheduled, due, context),
+			new NextAction(
+				source,
+				node.item.body,
+				blocked,
+				scheduled,
+				due,
+				context,
+				new BlockedSchedule(scheduled, blockerSchedules),
+			),
 			...childActions,
 		];
 	});
@@ -170,5 +234,13 @@ export class NextActionCollection<T> {
 
 	get availableActions(): readonly NextAction<T>[] {
 		return this.nextActions.filter((a) => a.isAvailable(this.today));
+	}
+
+	get hasTodayOrFutureSchedulableNextAction(): boolean {
+		return this.nextActions.some((action) => action.isSchedulableOnOrAfter(this.today));
+	}
+
+	get hasInconsistentBlockedScheduledNextAction(): boolean {
+		return this.nextActions.some((action) => action.hasInconsistentBlockedSchedule);
 	}
 }

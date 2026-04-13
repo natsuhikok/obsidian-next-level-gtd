@@ -6,7 +6,6 @@ export class GTDNote {
 	readonly file: TFile;
 	readonly state: NoteState;
 	private readonly collection: NextActionCollection<TFile>;
-	private readonly today: string;
 
 	get isInbox() {
 		return this.state.isInbox;
@@ -24,22 +23,21 @@ export class GTDNote {
 		return this.collection.availableActions;
 	}
 
-	private get hasTodayOrFutureScheduledNextAction() {
-		return this.nextActions.some((a) => a.scheduled !== null && a.scheduled >= this.today);
-	}
-
 	get alerts() {
 		return this.state.computeAlerts(
 			this.hasNextAction,
-			this.hasTodayOrFutureScheduledNextAction,
+			this.collection.hasTodayOrFutureSchedulableNextAction,
+			this.collection.hasInconsistentBlockedScheduledNextAction,
 		);
 	}
 
 	private constructor(file: TFile, fm: Record<string, unknown> | null, content: string) {
 		this.file = file;
 		this.state = NoteState.parse(fm);
-		this.today = moment().format('YYYY-MM-DD');
-		this.collection = new NextActionCollection([{ source: file, content }], this.today);
+		this.collection = new NextActionCollection(
+			[{ source: file, content }],
+			moment().format('YYYY-MM-DD'),
+		);
 	}
 
 	static from(file: TFile, fm: Record<string, unknown> | null, content: string): GTDNote {

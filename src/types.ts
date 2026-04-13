@@ -11,5 +11,6 @@ export type AlertType =
 	| 'referenceHasNextAction'
 	| 'actionableInProgressNoNextAction'
 	| 'actionableDoneHasNextAction'
+	| 'blockedScheduledNextActionHasInconsistentPrerequisiteSchedule'
 	| 'dormantNoFutureScheduledNextAction'
 	| 'frontmatterInvalid';

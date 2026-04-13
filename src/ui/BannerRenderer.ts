@@ -61,6 +61,9 @@ export class BannerRenderer {
 				referenceHasNextAction: t('alertReferenceHasNextAction'),
 				actionableInProgressNoNextAction: t('alertActionableInProgressNoNextAction'),
 				actionableDoneHasNextAction: t('alertActionableDoneHasNextAction'),
+				blockedScheduledNextActionHasInconsistentPrerequisiteSchedule: t(
+					'alertBlockedScheduledNextActionHasInconsistentPrerequisiteSchedule',
+				),
 				dormantNoFutureScheduledNextAction: t('alertDormantNoFutureScheduledNextAction'),
 			};
 

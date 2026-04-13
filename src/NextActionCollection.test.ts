@@ -214,6 +214,37 @@ describe('NextActionCollection', () => {
 			);
 			expect(c.nextActions.every((a) => !a.blocked)).toBe(true);
 		});
+
+		it('前提タスクが scheduled されていなければ blocked scheduled action は不整合になる', () => {
+			const c = new NextActionCollection(
+				[entry('1. [ ] 最初のタスク\n2. [ ] 次のタスク ⏳ 2026-04-03')],
+				TODAY,
+			);
+			const second = c.nextActions.find((a) => a.text === '次のタスク ⏳ 2026-04-03');
+			expect(second!.hasInconsistentBlockedSchedule).toBe(true);
+		});
+
+		it('前提タスクが同日以前に scheduled されていれば blocked scheduled action は不整合にならない', () => {
+			const c = new NextActionCollection(
+				[entry('1. [ ] 最初のタスク ⏳ 2026-04-02\n2. [ ] 次のタスク ⏳ 2026-04-03')],
+				TODAY,
+			);
+			const second = c.nextActions.find((a) => a.text === '次のタスク ⏳ 2026-04-03');
+			expect(second!.hasInconsistentBlockedSchedule).toBe(false);
+		});
+
+		it('前提タスクのいずれかが後日 scheduled なら blocked scheduled action は不整合になる', () => {
+			const c = new NextActionCollection(
+				[
+					entry(
+						'1. [ ] 最初のタスク ⏳ 2026-04-01\n2. [ ] 二番目のタスク ⏳ 2026-04-04\n3. [ ] 三番目のタスク ⏳ 2026-04-03',
+					),
+				],
+				TODAY,
+			);
+			const third = c.nextActions.find((a) => a.text === '三番目のタスク ⏳ 2026-04-03');
+			expect(third!.hasInconsistentBlockedSchedule).toBe(true);
+		});
 	});
 
 	describe('available action', () => {
@@ -300,6 +331,32 @@ describe('NextActionCollection', () => {
 			);
 			expect(c.availableActions).toHaveLength(1);
 			expect(c.availableActions[0]!.text).toBe('通常タスク');
+		});
+	});
+
+	describe('scheduled planning coverage', () => {
+		it('今日以降かつ blocker schedule が整合する scheduled action は future plan として数える', () => {
+			const c = new NextActionCollection(
+				[entry('1. [ ] 最初のタスク ⏳ 2026-04-01\n2. [ ] 次のタスク ⏳ 2026-04-03')],
+				TODAY,
+			);
+			expect(c.hasTodayOrFutureSchedulableNextAction).toBe(true);
+		});
+
+		it('不整合な blocked scheduled action は future plan として数えない', () => {
+			const c = new NextActionCollection(
+				[entry('1. [ ] 最初のタスク\n2. [ ] 次のタスク ⏳ 2026-04-03')],
+				TODAY,
+			);
+			expect(c.hasTodayOrFutureSchedulableNextAction).toBe(false);
+		});
+
+		it('不整合な blocked scheduled action があれば note alert 用フラグを立てる', () => {
+			const c = new NextActionCollection(
+				[entry('- [ ] 親タスク ⏳ 2026-04-03\n  - [ ] 子タスク')],
+				TODAY,
+			);
+			expect(c.hasInconsistentBlockedScheduledNextAction).toBe(true);
 		});
 	});
 

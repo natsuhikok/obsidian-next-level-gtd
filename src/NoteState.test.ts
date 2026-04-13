@@ -192,6 +192,16 @@ describe('NoteState.computeAlerts', () => {
 			).not.toContain('dormantNoFutureScheduledNextAction');
 		});
 
+		it('休眠 かつ future scheduled が blocker と不整合ならアラートを返す', () => {
+			expect(
+				NoteState.parse({ classification: 'Actionable', status: '休眠' }).computeAlerts(
+					true,
+					false,
+					true,
+				),
+			).toContain('dormantNoFutureScheduledNextAction');
+		});
+
 		it('休眠 は actionableInProgressNoNextAction を返さない', () => {
 			expect(
 				NoteState.parse({ classification: 'Actionable', status: '休眠' }).computeAlerts(
@@ -208,6 +218,28 @@ describe('NoteState.computeAlerts', () => {
 					false,
 				),
 			).not.toContain('actionableDoneHasNextAction');
+		});
+	});
+
+	describe('blockedScheduledNextActionHasInconsistentPrerequisiteSchedule', () => {
+		it('Actionable に不整合な blocked scheduled action がある場合はアラートを返す', () => {
+			expect(
+				NoteState.parse({ classification: 'Actionable', status: '進行中' }).computeAlerts(
+					true,
+					false,
+					true,
+				),
+			).toContain('blockedScheduledNextActionHasInconsistentPrerequisiteSchedule');
+		});
+
+		it('不整合がない場合はアラートを返さない', () => {
+			expect(
+				NoteState.parse({ classification: 'Actionable', status: '進行中' }).computeAlerts(
+					true,
+					true,
+					false,
+				),
+			).not.toContain('blockedScheduledNextActionHasInconsistentPrerequisiteSchedule');
 		});
 	});
 

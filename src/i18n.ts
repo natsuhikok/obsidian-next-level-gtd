@@ -28,6 +28,7 @@ interface PluginStrings {
 	alertReferenceHasNextAction: string;
 	alertActionableInProgressNoNextAction: string;
 	alertActionableDoneHasNextAction: string;
+	alertBlockedScheduledNextActionHasInconsistentPrerequisiteSchedule: string;
 	alertDormantNoFutureScheduledNextAction: string;
 	alertFrontmatterInvalid: string;
 	// Settings
@@ -104,6 +105,8 @@ const en: PluginStrings = {
 	alertReferenceHasNextAction: 'Reference note has next action',
 	alertActionableInProgressNoNextAction: 'In-progress Actionable has no next action',
 	alertActionableDoneHasNextAction: 'Done/Abandoned Actionable has next action',
+	alertBlockedScheduledNextActionHasInconsistentPrerequisiteSchedule:
+		'Blocked scheduled next action has prerequisite work that is not scheduled on the same day or earlier',
 	alertDormantNoFutureScheduledNextAction:
 		'Dormant Actionable has no scheduled next action for today or later',
 	alertFrontmatterInvalid: 'Invalid frontmatter (classification or status)',
@@ -179,6 +182,8 @@ const ja: PluginStrings = {
 	alertReferenceHasNextAction: 'Reference ノートに next action があります',
 	alertActionableInProgressNoNextAction: '進行中の Actionable に next action がありません',
 	alertActionableDoneHasNextAction: '完了/廃止の Actionable に next action があります',
+	alertBlockedScheduledNextActionHasInconsistentPrerequisiteSchedule:
+		'ブロックされた scheduled next action の前提作業が同日以前に scheduled されていません',
 	alertDormantNoFutureScheduledNextAction:
 		'休眠中の Actionable に今日以降の scheduled next action がありません',
 	alertFrontmatterInvalid: 'frontmatter の分類または状態が不正です',

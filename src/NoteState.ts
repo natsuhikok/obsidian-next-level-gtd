@@ -47,7 +47,8 @@ export class NoteState {
 
 	computeAlerts(
 		noteHasNextAction: boolean,
-		hasTodayOrFutureScheduledNextAction: boolean,
+		hasTodayOrFutureSchedulableNextAction: boolean,
+		hasInconsistentBlockedScheduledNextAction: boolean = false,
 	): readonly AlertType[] {
 		if (this.isInbox || this.isInvalid) {
 			return ['frontmatterInvalid'];
@@ -64,7 +65,10 @@ export class NoteState {
 			...((this.status === '完了' || this.status === '廃止') && noteHasNextAction
 				? ['actionableDoneHasNextAction' as const]
 				: []),
-			...(this.status === '休眠' && !hasTodayOrFutureScheduledNextAction
+			...(hasInconsistentBlockedScheduledNextAction
+				? ['blockedScheduledNextActionHasInconsistentPrerequisiteSchedule' as const]
+				: []),
+			...(this.status === '休眠' && !hasTodayOrFutureSchedulableNextAction
 				? ['dormantNoFutureScheduledNextAction' as const]
 				: []),
 		];
