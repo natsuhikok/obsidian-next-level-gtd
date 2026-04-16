@@ -125,15 +125,19 @@ function extractDates(body: string): { scheduled: string | null; due: string | n
 		: { scheduled: null, due: dueMatch?.[1] ?? null };
 }
 
-function collectFromNodes<T>(nodes: readonly TreeNode[], source: T): readonly NextAction<T>[] {
+function collectFromNodes<T>(
+	nodes: readonly TreeNode[],
+	source: T,
+	evaluateStructuralBlocking: boolean,
+): readonly NextAction<T>[] {
 	return nodes.flatMap((node) => {
-		const childActions = collectFromNodes(node.children, source);
+		const childActions = collectFromNodes(node.children, source, evaluateStructuralBlocking);
 		if (!node.item || node.item.checkboxState !== 'unchecked') return childActions;
 		if (/#temp\b/.test(node.item.body)) return childActions;
 
-		const blockedByChildren = hasDescendantCheckbox(node);
-		const blockedBySibling = isBlockedByPriorSibling(node, nodes);
-		const blocked = blockedByChildren || blockedBySibling;
+		const blocked =
+			evaluateStructuralBlocking &&
+			(hasDescendantCheckbox(node) || isBlockedByPriorSibling(node, nodes));
 
 		const { scheduled, due } = extractDates(node.item.body);
 		const context = extractContexts(node.item.body);
@@ -154,12 +158,16 @@ export class NextActionCollection<T> {
 	readonly nextActions: readonly NextAction<T>[];
 	private readonly today: string;
 
-	constructor(entries: readonly ContentEntry<T>[], today: string) {
+	constructor(
+		entries: readonly ContentEntry<T>[],
+		today: string,
+		evaluateStructuralBlocking = true,
+	) {
 		this.today = today;
 		this.nextActions = entries.flatMap((entry) =>
 			splitListGroups(entry.content).flatMap((items) => {
 				const tree = buildTree(items);
-				return collectFromNodes(tree, entry.source);
+				return collectFromNodes(tree, entry.source, evaluateStructuralBlocking);
 			}),
 		);
 	}

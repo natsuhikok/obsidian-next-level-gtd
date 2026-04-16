@@ -35,20 +35,38 @@ export class GTDNote {
 		);
 	}
 
-	private constructor(file: TFile, fm: Record<string, unknown> | null, content: string) {
+	private constructor(
+		file: TFile,
+		fm: Record<string, unknown> | null,
+		content: string,
+		evaluateStructuralNextActionBlocking = true,
+	) {
 		this.file = file;
 		this.state = NoteState.parse(fm);
 		this.today = moment().format('YYYY-MM-DD');
-		this.collection = new NextActionCollection([{ source: file, content }], this.today);
+		this.collection = new NextActionCollection(
+			[{ source: file, content }],
+			this.today,
+			evaluateStructuralNextActionBlocking,
+		);
 	}
 
-	static from(file: TFile, fm: Record<string, unknown> | null, content: string): GTDNote {
-		return new GTDNote(file, fm, content);
+	static from(
+		file: TFile,
+		fm: Record<string, unknown> | null,
+		content: string,
+		evaluateStructuralNextActionBlocking = true,
+	): GTDNote {
+		return new GTDNote(file, fm, content, evaluateStructuralNextActionBlocking);
 	}
 
-	static async load(app: App, file: TFile): Promise<GTDNote> {
+	static async load(
+		app: App,
+		file: TFile,
+		evaluateStructuralNextActionBlocking = true,
+	): Promise<GTDNote> {
 		const content = await app.vault.cachedRead(file);
 		const fm = app.metadataCache.getFileCache(file)?.frontmatter ?? null;
-		return new GTDNote(file, fm, content);
+		return new GTDNote(file, fm, content, evaluateStructuralNextActionBlocking);
 	}
 }

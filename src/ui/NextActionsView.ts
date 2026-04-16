@@ -63,8 +63,13 @@ export class NextActionsView extends ItemView {
 						file,
 						this.app.metadataCache.getFileCache(file)?.frontmatter ?? null,
 						activeView.editor.getValue(),
+						this.plugin.settings.evaluateStructuralNextActionBlocking,
 					)
-				: await GTDNote.load(this.app, file);
+				: await GTDNote.load(
+						this.app,
+						file,
+						this.plugin.settings.evaluateStructuralNextActionBlocking,
+					);
 		this.noteCache = { ...this.noteCache, [note.file.path]: note };
 		this.render();
 	}
@@ -74,6 +79,16 @@ export class NextActionsView extends ItemView {
 		this.noteCache = Object.fromEntries(
 			Object.entries(this.noteCache).filter(([key]) => key !== path),
 		);
+		this.render();
+	}
+
+	async refresh() {
+		await this.fullScan();
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (activeView?.file != null) {
+			await this.onFileChange(activeView.file);
+			return;
+		}
 		this.render();
 	}
 
@@ -123,7 +138,15 @@ export class NextActionsView extends ItemView {
 		const files = this.app.vault
 			.getMarkdownFiles()
 			.filter((file) => !excludedFolders.some((ef) => file.path.startsWith(ef.folder + '/')));
-		const notes = await Promise.all(files.map((file) => GTDNote.load(this.app, file)));
+		const notes = await Promise.all(
+			files.map((file) =>
+				GTDNote.load(
+					this.app,
+					file,
+					this.plugin.settings.evaluateStructuralNextActionBlocking,
+				),
+			),
+		);
 		this.noteCache = notes.reduce<Record<string, GTDNote>>(
 			(acc, note) => ({ ...acc, [note.file.path]: note }),
 			{},
