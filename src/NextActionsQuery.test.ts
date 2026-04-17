@@ -224,7 +224,7 @@ describe('NextActionsQuery', () => {
 	});
 
 	describe('並び順', () => {
-		it('期限あり → スケジュールあり → 日付なし の順に並ぶ', () => {
+		it('期限日とスケジュール日は区別せず日付が近い順に並ぶ', () => {
 			const s = new FilterSelection([], true, [], false, 'actionable');
 			const classifier = new ContextClassifier([]);
 			const actions = [
@@ -235,7 +235,7 @@ describe('NextActionsQuery', () => {
 			const result = new NextActionsQuery(classifier, s, actions, TODAY).filteredActions.map(
 				(a) => a.text,
 			);
-			expect(result).toEqual(['due あり', 'scheduled あり', '日付なし']);
+			expect(result).toEqual(['scheduled あり', 'due あり', '日付なし']);
 		});
 
 		it('同じ区分では日付が近い順に並ぶ', () => {
