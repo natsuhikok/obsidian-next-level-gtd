@@ -77,11 +77,11 @@ export class NextActionsQuery<T> {
 
 	private sortedByDate(actions: readonly NextAction<T>[]): readonly NextAction<T>[] {
 		return [...actions].sort((a, b) => {
-			const groupA = a.due !== null ? 0 : a.scheduled !== null ? 1 : 2;
-			const groupB = b.due !== null ? 0 : b.scheduled !== null ? 1 : 2;
+			const groupA = a.actionDate !== null ? 0 : 1;
+			const groupB = b.actionDate !== null ? 0 : 1;
 			if (groupA !== groupB) return groupA - groupB;
-			const dateA = a.due ?? a.scheduled ?? '';
-			const dateB = b.due ?? b.scheduled ?? '';
+			const dateA = a.actionDate ?? '';
+			const dateB = b.actionDate ?? '';
 			return dateA.localeCompare(dateB);
 		});
 	}
