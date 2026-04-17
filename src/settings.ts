@@ -16,6 +16,7 @@ export interface NextLevelGtdSettings {
 	evaluateStructuralNextActionBlocking: boolean;
 	excludedFolders: readonly ExcludedFolder[];
 	environmentContexts: readonly string[];
+	pinnedNextActionIds: readonly string[];
 }
 
 export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
 	evaluateStructuralNextActionBlocking: true,
 	excludedFolders: [],
 	environmentContexts: [],
+	pinnedNextActionIds: [],
 };
 
 export class NextLevelGtdSettingTab extends PluginSettingTab {

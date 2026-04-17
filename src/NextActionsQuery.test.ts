@@ -224,6 +224,39 @@ describe('NextActionsQuery', () => {
 	});
 
 	describe('並び順', () => {
+		it('ピン留めされたタスクは未ピンのタスクより前に並ぶ', () => {
+			const s = new FilterSelection([], true, [], false, 'actionable');
+			const classifier = new ContextClassifier([]);
+			const actions = [
+				action({ text: '未ピン', due: '2026-04-01' }),
+				action({ text: 'ピン留め', due: '2026-04-10' }),
+			];
+			const result = new NextActionsQuery(
+				classifier,
+				s,
+				actions,
+				TODAY,
+				(action) => action.text === 'ピン留め',
+			).filteredActions.map((a) => a.text);
+
+			expect(result).toEqual(['ピン留め', '未ピン']);
+		});
+
+		it('ピン留めされたタスク同士では日付順を保つ', () => {
+			const s = new FilterSelection([], true, [], false, 'actionable');
+			const classifier = new ContextClassifier([]);
+			const actions = [
+				action({ text: 'ピン留め2', due: '2026-04-10' }),
+				action({ text: 'ピン留め1', due: '2026-04-05' }),
+				action({ text: '未ピン', due: '2026-04-01' }),
+			];
+			const result = new NextActionsQuery(classifier, s, actions, TODAY, (action) =>
+				action.text.startsWith('ピン留め'),
+			).filteredActions.map((a) => a.text);
+
+			expect(result).toEqual(['ピン留め1', 'ピン留め2', '未ピン']);
+		});
+
 		it('期限日とスケジュール日は区別せず日付が近い順に並ぶ', () => {
 			const s = new FilterSelection([], true, [], false, 'actionable');
 			const classifier = new ContextClassifier([]);

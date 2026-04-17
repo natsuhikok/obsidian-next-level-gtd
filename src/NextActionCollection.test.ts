@@ -341,6 +341,19 @@ describe('NextActionCollection', () => {
 	});
 
 	describe('複合ケース', () => {
+		it('同じ行の未完了タスクは名前を変更しても同じ identity になる', () => {
+			const before = new NextActionCollection([entry('- [ ] 古い名前')], TODAY);
+			const after = new NextActionCollection([entry('- [ ] 新しい名前')], TODAY);
+
+			expect(before.nextActions[0]!.identity).toBe(after.nextActions[0]!.identity);
+		});
+
+		it('別の行の未完了タスクは異なる identity になる', () => {
+			const c = new NextActionCollection([entry('- [ ] タスクA\n- [ ] タスクB')], TODAY);
+
+			expect(c.nextActions[0]!.identity).not.toBe(c.nextActions[1]!.identity);
+		});
+
 		it('ネストされた順序リストで正しく blocked 判定される', () => {
 			const content = ['- 親タスク', '  1. [ ] サブタスク1', '  2. [ ] サブタスク2'].join(
 				'\n',

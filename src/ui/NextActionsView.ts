@@ -4,7 +4,7 @@ import { FilterSelection } from '../FilterSelection';
 import { GTDNote } from '../GTDNote';
 import type { NextAction } from '../NextActionCollection';
 import { NextActionsQuery } from '../NextActionsQuery';
-import { NoteEditor } from '../NoteEditor';
+import { PinnedNextActions } from '../PinnedNextActions';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
 
@@ -156,8 +156,16 @@ export class NextActionsView extends ItemView {
 	private render() {
 		const classifier = new ContextClassifier(this.plugin.settings.environmentContexts);
 		const allActions = Object.values(this.noteCache).flatMap((note) => [...note.nextActions]);
+		this.prunePinnedActions(allActions);
+		const pinnedActions = new PinnedNextActions(this.plugin.settings.pinnedNextActionIds);
 		const today = moment().format('YYYY-MM-DD');
-		const query = new NextActionsQuery(classifier, this.selection, allActions, today);
+		const query = new NextActionsQuery(
+			classifier,
+			this.selection,
+			allActions,
+			today,
+			(action) => pinnedActions.includes(this.pinIdOf(action)),
+		);
 
 		this.selection = query.normalizedSelection;
 
@@ -193,16 +201,22 @@ export class NextActionsView extends ItemView {
 		const container = contentEl.createDiv({ cls: 'nav-files-container' });
 
 		filteredActions.forEach((action) => {
-			const item = container.createDiv({ cls: 'gtd-next-action-item' });
+			const isPinned = pinnedActions.includes(this.pinIdOf(action));
+			const item = container.createDiv({
+				cls: 'gtd-next-action-item' + (isPinned ? ' is-pinned' : ''),
+			});
 			item.addEventListener('click', (e) => {
 				this.openNote(action.source.path, e, action.text);
 			});
 
-			const completeBtn = item.createEl('button', { cls: 'gtd-next-action-complete' });
-			completeBtn.setAttribute('aria-label', t('completeNextAction'));
-			setIcon(completeBtn, 'circle');
-			completeBtn.addEventListener('click', () => {
-				this.completeAction(action);
+			const pinBtn = item.createEl('button', {
+				cls: 'gtd-next-action-pin' + (isPinned ? ' is-pinned' : ''),
+			});
+			pinBtn.setAttribute('aria-label', isPinned ? t('unpinNextAction') : t('pinNextAction'));
+			setIcon(pinBtn, 'pin');
+			pinBtn.addEventListener('click', (event) => {
+				event.stopPropagation();
+				this.togglePinnedAction(action);
 			});
 
 			const body = item.createDiv({ cls: 'gtd-next-action-body' });
@@ -358,10 +372,29 @@ export class NextActionsView extends ItemView {
 		});
 	}
 
-	private completeAction(action: NextAction<TFile>) {
-		new NoteEditor(this.app)
-			.completeNextAction(action.source, action.text)
-			.catch(console.error);
+	private pinIdOf(action: NextAction<TFile>): string {
+		return `${action.source.path}:${action.identity}`;
+	}
+
+	private togglePinnedAction(action: NextAction<TFile>) {
+		const pinnedActions = new PinnedNextActions(this.plugin.settings.pinnedNextActionIds);
+		this.updatePinnedActionIds(pinnedActions.toggled(this.pinIdOf(action)).ids);
+		this.render();
+	}
+
+	private prunePinnedActions(actions: readonly NextAction<TFile>[]) {
+		const pinnedActions = new PinnedNextActions(this.plugin.settings.pinnedNextActionIds);
+		const pruned = pinnedActions.prunedTo(actions.map((action) => this.pinIdOf(action)));
+		if (pruned.equals(this.plugin.settings.pinnedNextActionIds)) return;
+		this.updatePinnedActionIds(pruned.ids);
+	}
+
+	private updatePinnedActionIds(pinnedNextActionIds: readonly string[]) {
+		this.plugin.settings = {
+			...this.plugin.settings,
+			pinnedNextActionIds,
+		};
+		this.plugin.saveSettings().catch(console.error);
 	}
 }
 

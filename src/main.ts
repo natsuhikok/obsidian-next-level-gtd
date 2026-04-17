@@ -204,12 +204,17 @@ export default class NextLevelGtdPlugin extends Plugin {
 			typeof rawEvaluateStructuralNextActionBlocking === 'boolean'
 				? rawEvaluateStructuralNextActionBlocking
 				: DEFAULT_SETTINGS.evaluateStructuralNextActionBlocking;
+		const rawPinnedNextActionIds = raw?.['pinnedNextActionIds'];
+		const pinnedNextActionIds = Array.isArray(rawPinnedNextActionIds)
+			? rawPinnedNextActionIds.filter((v): v is string => typeof v === 'string')
+			: [];
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			...(raw as Partial<NextLevelGtdSettings> | null),
 			evaluateStructuralNextActionBlocking,
 			excludedFolders,
 			environmentContexts,
+			pinnedNextActionIds,
 		};
 	}
 

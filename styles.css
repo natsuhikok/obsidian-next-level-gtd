@@ -158,7 +158,15 @@
 	background-color: var(--nav-item-background-hover);
 }
 
-.gtd-next-action-complete {
+.gtd-next-action-item.is-pinned {
+	background-color: var(--background-modifier-active-hover);
+}
+
+.gtd-next-action-item.is-pinned:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.gtd-next-action-pin {
 	flex-shrink: 0;
 	display: flex;
 	align-items: center;
@@ -176,12 +184,13 @@
 	border-radius: var(--radius-s);
 }
 
-.gtd-next-action-complete:hover {
+.gtd-next-action-pin:hover,
+.gtd-next-action-pin.is-pinned {
 	color: var(--color-accent);
 	opacity: 1;
 }
 
-.gtd-next-action-complete .svg-icon {
+.gtd-next-action-pin .svg-icon {
 	width: 19px;
 	height: 19px;
 }

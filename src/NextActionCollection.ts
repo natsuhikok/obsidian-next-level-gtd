@@ -6,6 +6,7 @@ export class NextAction<T> {
 		readonly scheduled: string | null,
 		readonly due: string | null,
 		readonly context: readonly string[],
+		readonly identity = text,
 	) {}
 
 	isAvailable(today: string): boolean {
@@ -18,6 +19,7 @@ export class NextAction<T> {
 }
 
 interface ListItem {
+	readonly lineNumber: number;
 	readonly indent: number;
 	readonly listType: 'bullet' | 'ordered';
 	readonly checkboxState: 'unchecked' | 'checked' | 'cancelled' | null;
@@ -36,7 +38,7 @@ const LIST_LINE_RE = /^(\s*)([-*+]|\d+\.)\s+(?:\[([ xX-])\]\s*)?(.*)/;
 const SCHEDULED_RE = /⏳ (\d{4}-\d{2}-\d{2})/;
 const DUE_RE = /📅 (\d{4}-\d{2}-\d{2})/;
 
-function parseLine(line: string): ListItem | null {
+function parseLine(line: string, lineNumber: number): ListItem | null {
 	const m = LIST_LINE_RE.exec(line);
 	if (!m) return null;
 	const [, indent, marker, checkbox, body] = m;
@@ -49,6 +51,7 @@ function parseLine(line: string): ListItem | null {
 					? ('checked' as const)
 					: null;
 	return {
+		lineNumber,
 		indent: indent!.length,
 		listType: /^\d+\.$/.test(marker!) ? 'ordered' : 'bullet',
 		checkboxState,
@@ -64,8 +67,8 @@ function splitListGroups(content: string): readonly (readonly ListItem[])[] {
 			readonly groups: readonly (readonly ListItem[])[];
 			readonly current: readonly ListItem[];
 		}>(
-			(acc, line) => {
-				const item = parseLine(line);
+			(acc, line, lineIndex) => {
+				const item = parseLine(line, lineIndex + 1);
 				if (item) return { ...acc, current: [...acc.current, item] };
 				if (acc.current.length === 0) return acc;
 				return { groups: [...acc.groups, acc.current], current: [] };
@@ -147,7 +150,15 @@ function collectFromNodes<T>(
 		const context = extractContexts(node.item.body);
 
 		return [
-			new NextAction(source, node.item.body, blocked, scheduled, due, context),
+			new NextAction(
+				source,
+				node.item.body,
+				blocked,
+				scheduled,
+				due,
+				context,
+				`line:${String(node.item.lineNumber)}:indent:${String(node.item.indent)}`,
+			),
 			...childActions,
 		];
 	});

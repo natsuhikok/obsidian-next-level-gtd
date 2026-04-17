@@ -8,6 +8,7 @@ export class NextActionsQuery<T> {
 		private readonly selection: FilterSelection,
 		private readonly actions: readonly NextAction<T>[],
 		private readonly today: string,
+		private readonly isPinned: (action: NextAction<T>) => boolean = () => false,
 	) {}
 
 	get normalizedSelection(): FilterSelection {
@@ -50,7 +51,7 @@ export class NextActionsQuery<T> {
 				this.passesEnvironmentFilter(a, ns) &&
 				this.passesPropertyFilter(a, ns),
 		);
-		return this.sortedByDate(filtered);
+		return this.sortedByPin(this.sortedByDate(filtered));
 	}
 
 	private passesDateFilter(action: NextAction<T>, ns: FilterSelection): boolean {
@@ -84,5 +85,11 @@ export class NextActionsQuery<T> {
 			const dateB = b.actionDate ?? '';
 			return dateA.localeCompare(dateB);
 		});
+	}
+
+	private sortedByPin(actions: readonly NextAction<T>[]): readonly NextAction<T>[] {
+		const pinned = actions.filter((action) => this.isPinned(action));
+		const unpinned = actions.filter((action) => !this.isPinned(action));
+		return [...pinned, ...unpinned];
 	}
 }
