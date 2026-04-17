@@ -56,7 +56,8 @@ interface PluginStrings {
 	openNextActionsRibbon: string;
 	openNextActionsViewCommand: string;
 	noNextActions: string;
-	completeNextAction: string;
+	pinNextAction: string;
+	unpinNextAction: string;
 	filterEnvAll: string;
 	filterEnvNoContext: string;
 	filterPropNoContext: string;
@@ -137,7 +138,8 @@ const en: PluginStrings = {
 	openNextActionsRibbon: 'Open GTD Next Actions',
 	openNextActionsViewCommand: 'Open Next Actions',
 	noNextActions: 'No available next actions.',
-	completeNextAction: 'Complete',
+	pinNextAction: 'Pin',
+	unpinNextAction: 'Unpin',
 	filterEnvAll: 'All environments',
 	filterEnvNoContext: 'Default',
 	filterPropNoContext: 'Default',
@@ -216,7 +218,8 @@ const ja: PluginStrings = {
 	openNextActionsRibbon: 'GTD ネクストアクションを開く',
 	openNextActionsViewCommand: 'ネクストアクションを開く',
 	noNextActions: '利用可能なネクストアクションはありません。',
-	completeNextAction: '完了',
+	pinNextAction: 'ピン留め',
+	unpinNextAction: 'ピン留めを解除',
 	filterEnvAll: 'すべての環境',
 	filterEnvNoContext: 'デフォルト',
 	filterPropNoContext: 'デフォルト',
