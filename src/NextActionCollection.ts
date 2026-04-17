@@ -11,6 +11,10 @@ export class NextAction<T> {
 	isAvailable(today: string): boolean {
 		return !this.blocked && (this.scheduled !== null ? this.scheduled <= today : true);
 	}
+
+	get actionDate() {
+		return this.due ?? this.scheduled;
+	}
 }
 
 interface ListItem {
