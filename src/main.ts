@@ -7,6 +7,7 @@ import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
 import { NoteEditor } from './NoteEditor';
 import { ExcludedFolder, Status } from './types';
+import { SavedNextActionsFilter } from './SavedNextActionsFilter';
 
 export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
@@ -198,6 +199,14 @@ export default class NextLevelGtdPlugin extends Plugin {
 		const environmentContexts: readonly string[] = Array.isArray(rawEnvContexts)
 			? rawEnvContexts.filter((v): v is string => typeof v === 'string')
 			: [];
+		const rawSavedNextActionsFilters = raw?.['savedNextActionsFilters'];
+		const savedNextActionsFilters: readonly SavedNextActionsFilter[] = Array.isArray(
+			rawSavedNextActionsFilters,
+		)
+			? rawSavedNextActionsFilters
+					.map((filter) => SavedNextActionsFilter.from(filter))
+					.filter((filter): filter is SavedNextActionsFilter => filter !== null)
+			: [];
 		const rawEvaluateStructuralNextActionBlocking =
 			raw?.['evaluateStructuralNextActionBlocking'];
 		const evaluateStructuralNextActionBlocking =
@@ -210,6 +219,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			evaluateStructuralNextActionBlocking,
 			excludedFolders,
 			environmentContexts,
+			savedNextActionsFilters,
 		};
 	}
 

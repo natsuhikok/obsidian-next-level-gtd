@@ -11,9 +11,10 @@ export class NextActionsQuery<T> {
 	) {}
 
 	get normalizedSelection(): FilterSelection {
-		return this.selection
-			.withEnvironmentsPrunedTo(this.classifier.environmentContexts)
-			.withSelectedPropertiesPruned(this.allPropertyCandidates);
+		return this.selection.withExpressionPrunedTo(
+			this.classifier.environmentContexts,
+			this.allPropertyCandidates,
+		);
 	}
 
 	get allPropertyCandidates(): readonly string[] {
@@ -44,11 +45,8 @@ export class NextActionsQuery<T> {
 
 	get filteredActions(): readonly NextAction<T>[] {
 		const ns = this.normalizedSelection;
-		const filtered = this.actions.filter(
-			(a) =>
-				this.passesDateFilter(a, ns) &&
-				this.passesEnvironmentFilter(a, ns) &&
-				this.passesPropertyFilter(a, ns),
+		const filtered = this.actions.filter((a) =>
+			ns.expression.matches(a, this.classifier, this.today),
 		);
 		return this.sortedByDate(filtered);
 	}

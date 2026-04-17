@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ContextClassifier } from './ContextClassifier';
 import { FilterSelection } from './FilterSelection';
+import { NextActionFilterCriterion } from './NextActionFilterCriterion';
+import { NextActionFilterExpression } from './NextActionFilterExpression';
+import { NextActionFilterGroup } from './NextActionFilterGroup';
 import { NextAction } from './NextActionCollection';
 import { NextActionsQuery } from './NextActionsQuery';
 
@@ -264,6 +267,32 @@ describe('NextActionsQuery', () => {
 	});
 
 	describe('受け入れ条件', () => {
+		it('OR グループごとの AND 条件を満たすタスクのみ表示する', () => {
+			const selection = FilterSelection.fromExpression(
+				new NextActionFilterExpression([
+					new NextActionFilterGroup([
+						new NextActionFilterCriterion('environment', 'home'),
+						new NextActionFilterCriterion('property', 'quick'),
+						new NextActionFilterCriterion('actionable'),
+					]),
+					new NextActionFilterGroup([
+						new NextActionFilterCriterion('noEnvironment'),
+						new NextActionFilterCriterion('withDate'),
+					]),
+				]),
+			);
+			const actions = [
+				action({ text: 'home quick', context: ['home', 'quick'] }),
+				action({ text: 'home のみ', context: ['home'] }),
+				action({ text: '日付あり', due: '2026-04-10' }),
+				action({ text: '日付なし' }),
+			];
+
+			const result = query(selection, actions).filteredActions.map((a) => a.text);
+
+			expect(result).toEqual(['日付あり', 'home quick']);
+		});
+
 		it('#home #quick と #home のタスクがあるとき、環境=home・性質=quick で前者のみ表示', () => {
 			const s = new FilterSelection(['home'], false, ['quick'], false, 'actionable');
 			const actions = [

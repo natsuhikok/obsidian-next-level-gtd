@@ -10,12 +10,14 @@ import { ConfirmModal } from './ui/ConfirmModal';
 import { FolderSuggest } from './ui/FolderSuggest';
 import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
 import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
+import { SavedNextActionsFilter } from './SavedNextActionsFilter';
 
 export interface NextLevelGtdSettings {
 	_placeholder: null;
 	evaluateStructuralNextActionBlocking: boolean;
 	excludedFolders: readonly ExcludedFolder[];
 	environmentContexts: readonly string[];
+	savedNextActionsFilters: readonly SavedNextActionsFilter[];
 }
 
 export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
 	evaluateStructuralNextActionBlocking: true,
 	excludedFolders: [],
 	environmentContexts: [],
+	savedNextActionsFilters: [],
 };
 
 export class NextLevelGtdSettingTab extends PluginSettingTab {

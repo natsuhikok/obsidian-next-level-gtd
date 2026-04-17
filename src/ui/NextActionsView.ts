@@ -1,12 +1,24 @@
-import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf, moment, setIcon } from 'obsidian';
+import {
+	ItemView,
+	Keymap,
+	MarkdownView,
+	Notice,
+	TFile,
+	WorkspaceLeaf,
+	moment,
+	setIcon,
+} from 'obsidian';
 import { ContextClassifier } from '../ContextClassifier';
 import { FilterSelection } from '../FilterSelection';
 import { GTDNote } from '../GTDNote';
+import { NextActionFilterCriterion } from '../NextActionFilterCriterion';
 import type { NextAction } from '../NextActionCollection';
 import { NextActionsQuery } from '../NextActionsQuery';
 import { NoteEditor } from '../NoteEditor';
+import { SavedNextActionsFilter } from '../SavedNextActionsFilter';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
+import { SavedFilterNameModal } from './SavedFilterNameModal';
 
 export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
 
@@ -166,12 +178,9 @@ export class NextActionsView extends ItemView {
 
 		contentEl.createDiv({ cls: 'nav-header' });
 
-		if (allActions.length === 0) {
-			contentEl.createEl('p', { text: t('noNextActions'), cls: 'gtd-empty' });
-			return;
-		}
-
 		const filterBar = contentEl.createDiv({ cls: 'gtd-context-filter' });
+		this.renderSavedFiltersBlock(filterBar);
+		this.renderFilterGroupBlock(filterBar);
 		this.renderEnvBlock(filterBar, classifier);
 
 		const allPropertyCandidates = query.allPropertyCandidates;
@@ -185,6 +194,11 @@ export class NextActionsView extends ItemView {
 		}
 
 		this.renderDateBlock(filterBar);
+
+		if (allActions.length === 0) {
+			contentEl.createEl('p', { text: t('noNextActions'), cls: 'gtd-empty' });
+			return;
+		}
 
 		const filteredActions = query.filteredActions;
 
@@ -246,17 +260,96 @@ export class NextActionsView extends ItemView {
 		});
 	}
 
+	private renderSavedFiltersBlock(filterBar: HTMLElement) {
+		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
+		const savedFilters = this.plugin.settings.savedNextActionsFilters;
+		const select = row.createEl('select', { cls: 'gtd-saved-filter-select' });
+		savedFilters.forEach((filter) => {
+			select.createEl('option', { value: filter.id, text: filter.name });
+		});
+		select.disabled = savedFilters.length === 0;
+
+		const applyButton = row.createEl('button', {
+			cls: 'gtd-context-chip',
+			text: t('filterApplySaved'),
+		});
+		applyButton.disabled = savedFilters.length === 0;
+		applyButton.addEventListener('click', () => {
+			const selected = savedFilters.find((filter) => filter.id === select.value);
+			if (selected == null) return;
+			this.selection = FilterSelection.fromExpression(selected.expression);
+			this.render();
+		});
+
+		const saveButton = row.createEl('button', {
+			cls: 'gtd-context-chip',
+			text: t('filterSaveCurrent'),
+		});
+		saveButton.addEventListener('click', () => {
+			new SavedFilterNameModal(this.app, (name) => {
+				void this.saveCurrentFilter(name);
+			}).open();
+		});
+
+		const deleteButton = row.createEl('button', {
+			cls: 'gtd-context-chip',
+			text: t('filterDeleteSaved'),
+		});
+		deleteButton.disabled = savedFilters.length === 0;
+		deleteButton.addEventListener('click', () => {
+			void this.deleteSavedFilter(select.value);
+		});
+	}
+
+	private renderFilterGroupBlock(filterBar: HTMLElement) {
+		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
+		this.selection.expression.groups.forEach((_, index) => {
+			const active = this.selection.activeGroupIndex === index;
+			const chip = row.createEl('button', {
+				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
+				text: `${t('filterOrGroup')} ${String(index + 1)}`,
+			});
+			chip.addEventListener('click', () => {
+				this.selection = this.selection.withActiveGroup(index);
+				this.render();
+			});
+		});
+
+		const addButton = row.createEl('button', {
+			cls: 'gtd-context-chip',
+			text: t('filterAddOrGroup'),
+		});
+		addButton.addEventListener('click', () => {
+			this.selection = this.selection.withGroupAdded();
+			this.render();
+		});
+
+		const removeButton = row.createEl('button', {
+			cls: 'gtd-context-chip',
+			text: t('filterRemoveOrGroup'),
+		});
+		removeButton.disabled = this.selection.expression.groups.length === 1;
+		removeButton.addEventListener('click', () => {
+			this.selection = this.selection.withGroupRemoved();
+			this.render();
+		});
+	}
+
 	private renderEnvBlock(filterBar: HTMLElement, classifier: ContextClassifier) {
 		const envContexts = classifier.environmentContexts;
 		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
 
 		const addEnvChip = (label: string, value: string) => {
+			const criterion =
+				value === '__no_context__'
+					? new NextActionFilterCriterion('noEnvironment')
+					: new NextActionFilterCriterion('environment', value);
 			const active =
 				value === '__all__'
 					? this.selection.isAllEnvironmentsSelected(envContexts)
 					: value === '__no_context__'
-						? this.selection.noContextSelected
-						: this.selection.selectedEnvironments.includes(value);
+						? this.selection.hasActiveCriterion(criterion)
+						: this.selection.hasActiveCriterion(criterion);
 			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
 				text: label,
@@ -264,10 +357,8 @@ export class NextActionsView extends ItemView {
 			chip.addEventListener('click', () => {
 				if (value === '__all__') {
 					this.selection = this.selection.withAllEnvironmentsToggled(envContexts);
-				} else if (value === '__no_context__') {
-					this.selection = this.selection.withNoContextToggled();
 				} else {
-					this.selection = this.selection.withEnvironmentToggled(value);
+					this.selection = this.selection.withActiveCriterionToggled(criterion);
 				}
 				this.render();
 			});
@@ -287,18 +378,22 @@ export class NextActionsView extends ItemView {
 		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
 
 		const noPropertyActive = this.selection.noPropertySelected;
+		const noPropertyCriterion = new NextActionFilterCriterion('noProperty');
 		const noPropertyChip = row.createEl('button', {
-			cls: 'gtd-context-chip' + (noPropertyActive ? ' is-active' : ''),
+			cls:
+				'gtd-context-chip' +
+				(this.selection.hasActiveCriterion(noPropertyCriterion) ? ' is-active' : ''),
 			text: t('filterPropNoContext'),
 		});
 		noPropertyChip.disabled = !noPropertyActive && !hasPropertylessCandidate;
 		noPropertyChip.addEventListener('click', () => {
-			this.selection = this.selection.withNoPropertyToggled();
+			this.selection = this.selection.withActiveCriterionToggled(noPropertyCriterion);
 			this.render();
 		});
 
 		candidates.forEach((prop) => {
-			const active = this.selection.selectedProperties.includes(prop);
+			const criterion = new NextActionFilterCriterion('property', prop);
+			const active = this.selection.hasActiveCriterion(criterion);
 			const enabled = active || enabledCandidates.has(prop);
 			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
@@ -306,7 +401,7 @@ export class NextActionsView extends ItemView {
 			});
 			chip.disabled = !enabled;
 			chip.addEventListener('click', () => {
-				this.selection = this.selection.withPropertyToggled(prop);
+				this.selection = this.selection.withActiveCriterionToggled(criterion);
 				this.render();
 			});
 		});
@@ -315,19 +410,47 @@ export class NextActionsView extends ItemView {
 	private renderDateBlock(filterBar: HTMLElement) {
 		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
 		const addDateChip = (label: string, mode: 'actionable' | 'withDate') => {
-			const active = this.selection.dateMode === mode;
+			const criterion = new NextActionFilterCriterion(mode);
+			const active = this.selection.hasActiveCriterion(criterion);
 			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
 				text: label,
 			});
 			chip.addEventListener('click', () => {
-				this.selection = this.selection.withDateMode(mode);
+				this.selection = this.selection.withActiveCriterionToggled(criterion);
 				this.render();
 			});
 		};
 
 		addDateChip(t('filterDateActionable'), 'actionable');
 		addDateChip(t('filterDateWithDate'), 'withDate');
+	}
+
+	private async saveCurrentFilter(name: string) {
+		const savedFilter = new SavedNextActionsFilter(
+			String(Date.now()),
+			name,
+			this.selection.expression,
+		);
+		this.plugin.settings = {
+			...this.plugin.settings,
+			savedNextActionsFilters: [...this.plugin.settings.savedNextActionsFilters, savedFilter],
+		};
+		await this.plugin.saveSettings();
+		new Notice(t('filterSavedNotice'));
+		this.render();
+	}
+
+	private async deleteSavedFilter(id: string) {
+		if (id === '') return;
+		this.plugin.settings = {
+			...this.plugin.settings,
+			savedNextActionsFilters: this.plugin.settings.savedNextActionsFilters.filter(
+				(filter) => filter.id !== id,
+			),
+		};
+		await this.plugin.saveSettings();
+		this.render();
 	}
 
 	private renderContextBadges(

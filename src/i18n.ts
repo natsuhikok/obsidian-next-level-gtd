@@ -62,6 +62,14 @@ interface PluginStrings {
 	filterPropNoContext: string;
 	filterDateActionable: string;
 	filterDateWithDate: string;
+	filterApplySaved: string;
+	filterSaveCurrent: string;
+	filterDeleteSaved: string;
+	filterSavePrompt: string;
+	filterSavedNotice: string;
+	filterOrGroup: string;
+	filterAddOrGroup: string;
+	filterRemoveOrGroup: string;
 	// Environment contexts settings
 	settingEnvContextsSectionName: string;
 	settingEnvContextsSectionDesc: string;
@@ -143,6 +151,14 @@ const en: PluginStrings = {
 	filterPropNoContext: 'Default',
 	filterDateActionable: 'Actionable only',
 	filterDateWithDate: 'With date only',
+	filterApplySaved: 'Apply saved',
+	filterSaveCurrent: 'Save current',
+	filterDeleteSaved: 'Delete saved',
+	filterSavePrompt: 'Saved filter name',
+	filterSavedNotice: 'Filter saved.',
+	filterOrGroup: 'OR group',
+	filterAddOrGroup: '+ OR',
+	filterRemoveOrGroup: 'Remove group',
 	settingEnvContextsSectionName: 'Environment Contexts',
 	settingEnvContextsSectionDesc:
 		'Tags that represent physical or situational environments (e.g. home, office). Tags not listed here are treated as property contexts.',
@@ -222,6 +238,14 @@ const ja: PluginStrings = {
 	filterPropNoContext: 'デフォルト',
 	filterDateActionable: '実行可能のみ',
 	filterDateWithDate: '日付ありのみ',
+	filterApplySaved: '保存フィルターを適用',
+	filterSaveCurrent: '現在の条件を保存',
+	filterDeleteSaved: '保存フィルターを削除',
+	filterSavePrompt: '保存フィルター名',
+	filterSavedNotice: 'フィルターを保存しました。',
+	filterOrGroup: 'OR グループ',
+	filterAddOrGroup: '+ OR',
+	filterRemoveOrGroup: 'グループを削除',
 	settingEnvContextsSectionName: '環境コンテキスト',
 	settingEnvContextsSectionDesc:
 		'物理的・状況的な環境を表すタグ（例: home, office）。ここに登録されていないタグは性質コンテキストとして扱われます。',
