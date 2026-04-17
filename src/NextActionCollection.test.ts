@@ -216,6 +216,43 @@ describe('NextActionCollection', () => {
 		});
 	});
 
+	describe('構造的な blocked 判定の設定', () => {
+		it('無効の場合は子チェックボックスを持つ親も blocked にならない', () => {
+			const c = new NextActionCollection(
+				[entry('- [ ] 親タスク\n  - [x] 完了した子')],
+				TODAY,
+				false,
+			);
+
+			expect(c.nextActions[0]!.blocked).toBe(false);
+			expect(c.nextActions[0]!.isAvailable(TODAY)).toBe(true);
+		});
+
+		it('無効の場合は順序リストの後続タスクも available になる', () => {
+			const c = new NextActionCollection(
+				[entry('1. [ ] 最初のタスク\n2. [ ] 次のタスク')],
+				TODAY,
+				false,
+			);
+			const second = c.nextActions.find((a) => a.text === '次のタスク');
+
+			expect(second!.blocked).toBe(false);
+			expect(second!.isAvailable(TODAY)).toBe(true);
+		});
+
+		it('無効の場合も未来の scheduled は available にならない', () => {
+			const c = new NextActionCollection(
+				[entry('1. [ ] 最初のタスク\n2. [ ] 次のタスク ⏳ 2026-04-05')],
+				TODAY,
+				false,
+			);
+			const second = c.nextActions.find((a) => a.text === '次のタスク ⏳ 2026-04-05');
+
+			expect(second!.blocked).toBe(false);
+			expect(second!.isAvailable(TODAY)).toBe(false);
+		});
+	});
+
 	describe('available action', () => {
 		it('blocked でなく日付なしは available になる', () => {
 			const c = new NextActionCollection([entry('- [ ] タスク')], TODAY);

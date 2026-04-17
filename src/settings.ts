@@ -9,15 +9,18 @@ import { ExcludedFolder } from './types';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { FolderSuggest } from './ui/FolderSuggest';
 import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
+import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 
 export interface NextLevelGtdSettings {
 	_placeholder: null;
+	evaluateStructuralNextActionBlocking: boolean;
 	excludedFolders: readonly ExcludedFolder[];
 	environmentContexts: readonly string[];
 }
 
 export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
 	_placeholder: null,
+	evaluateStructuralNextActionBlocking: true,
 	excludedFolders: [],
 	environmentContexts: [],
 };
@@ -34,6 +37,7 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 		this.renderInitSection(containerEl);
+		this.renderNextActionsSection(containerEl);
 		this.renderExcludedFoldersSection(containerEl);
 		this.renderEnvironmentContextsSection(containerEl);
 		this.renderDevSection(containerEl);
@@ -58,6 +62,25 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 						});
 					}).open();
 				}),
+			);
+	}
+
+	private renderNextActionsSection(containerEl: HTMLElement): void {
+		new Setting(containerEl).setName(t('settingNextActionsSectionName')).setHeading();
+		new Setting(containerEl)
+			.setName(t('settingEvaluateStructuralBlockingName'))
+			.setDesc(t('settingEvaluateStructuralBlockingDesc'))
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.evaluateStructuralNextActionBlocking)
+					.onChange(async (value) => {
+						this.plugin.settings = {
+							...this.plugin.settings,
+							evaluateStructuralNextActionBlocking: value,
+						};
+						await this.plugin.saveSettings();
+						this.refreshNextActionsView();
+					}),
 			);
 	}
 
@@ -158,6 +181,12 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 	private refreshInboxView(): void {
 		this.app.workspace.getLeavesOfType(VIEW_TYPE_INBOX).forEach((leaf) => {
 			(leaf.view as InboxView).refresh().catch(console.error);
+		});
+	}
+
+	private refreshNextActionsView(): void {
+		this.app.workspace.getLeavesOfType(VIEW_TYPE_NEXT_ACTIONS).forEach((leaf) => {
+			(leaf.view as NextActionsView).refresh().catch(console.error);
 		});
 	}
 }

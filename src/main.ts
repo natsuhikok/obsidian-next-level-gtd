@@ -198,9 +198,16 @@ export default class NextLevelGtdPlugin extends Plugin {
 		const environmentContexts: readonly string[] = Array.isArray(rawEnvContexts)
 			? rawEnvContexts.filter((v): v is string => typeof v === 'string')
 			: [];
+		const rawEvaluateStructuralNextActionBlocking =
+			raw?.['evaluateStructuralNextActionBlocking'];
+		const evaluateStructuralNextActionBlocking =
+			typeof rawEvaluateStructuralNextActionBlocking === 'boolean'
+				? rawEvaluateStructuralNextActionBlocking
+				: DEFAULT_SETTINGS.evaluateStructuralNextActionBlocking;
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			...(raw as Partial<NextLevelGtdSettings> | null),
+			evaluateStructuralNextActionBlocking,
 			excludedFolders,
 			environmentContexts,
 		};

@@ -41,6 +41,9 @@ interface PluginStrings {
 	settingGenerateMockSectionDesc: string;
 	settingGenerateMockButtonLabel: string;
 	settingGenerateMockSuccessNotice: string;
+	settingNextActionsSectionName: string;
+	settingEvaluateStructuralBlockingName: string;
+	settingEvaluateStructuralBlockingDesc: string;
 	// Excluded folders settings
 	settingExcludedFoldersSectionName: string;
 	settingExcludedFoldersSectionDesc: string;
@@ -119,6 +122,10 @@ const en: PluginStrings = {
 		'Generate sample notes for manual testing. Notes are created in the GTD-Mock folder.',
 	settingGenerateMockButtonLabel: 'Generate',
 	settingGenerateMockSuccessNotice: 'mock notes generated.',
+	settingNextActionsSectionName: 'Next Actions',
+	settingEvaluateStructuralBlockingName: 'Evaluate structural blocking',
+	settingEvaluateStructuralBlockingDesc:
+		'Use parent-child checkbox relationships and ordered list sequence to hide blocked next actions.',
 	settingExcludedFoldersSectionName: 'Excluded Folders',
 	settingExcludedFoldersSectionDesc:
 		'Notes in these folders are ignored by Inbox view and Initialize.',
@@ -194,6 +201,10 @@ const ja: PluginStrings = {
 		'手動テスト用のサンプルノートを生成します。ノートは GTD-Mock フォルダに作成されます。',
 	settingGenerateMockButtonLabel: '生成',
 	settingGenerateMockSuccessNotice: '件のモックノートを生成しました。',
+	settingNextActionsSectionName: 'ネクストアクション',
+	settingEvaluateStructuralBlockingName: '構造的なブロックを判定する',
+	settingEvaluateStructuralBlockingDesc:
+		'親子チェックボックスと順序リストの並びを使って、ブロックされたネクストアクションを非表示にします。',
 	settingExcludedFoldersSectionName: '除外フォルダ',
 	settingExcludedFoldersSectionDesc:
 		'これらのフォルダ内のノートは Inbox ビューと初期化の対象から除外されます。',
