@@ -27,4 +27,21 @@ describe('NextActionPin', () => {
 
 		expect(pin.matches(action({ name: 'project.md' }, '別のこと'))).toBe(false);
 	});
+
+	it('保存済みのファイル名とアクション名から復元できる', () => {
+		const pins = NextActionPin.storedPins([
+			{ fileName: 'project.md', actionName: '次にやること' },
+			{ fileName: 'other.md' },
+			'不正な値',
+		]);
+
+		expect(pins).toEqual([new NextActionPin('project.md', '次にやること')]);
+	});
+
+	it('対応する未完了アクションがなくなったピンは残らない', () => {
+		const pin = new NextActionPin('project.md', '次にやること');
+
+		expect(pin.remainingIn([action({ name: 'project.md' }, '次にやること')])).toBe(true);
+		expect(pin.remainingIn([action({ name: 'project.md' }, '完了したこと')])).toBe(false);
+	});
 });

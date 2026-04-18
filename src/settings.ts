@@ -5,6 +5,7 @@ import { t } from './i18n';
 import { InboxInitializer } from './InboxInitializer';
 import NextLevelGtdPlugin from './main';
 import { MockNoteBuilder } from './MockNoteBuilder';
+import { NextActionPin } from './NextActionPin';
 import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian';
 import { ExcludedFolder } from './types';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -18,6 +19,7 @@ export interface NextLevelGtdSettings {
 	excludedFolders: readonly ExcludedFolder[];
 	contextOrder: readonly string[];
 	environmentContexts: readonly string[];
+	pinnedNextActionPins: readonly NextActionPin[];
 }
 
 export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
@@ -26,6 +28,7 @@ export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
 	excludedFolders: [],
 	contextOrder: [],
 	environmentContexts: [],
+	pinnedNextActionPins: [],
 };
 
 export class NextLevelGtdSettingTab extends PluginSettingTab {

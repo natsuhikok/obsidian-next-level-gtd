@@ -13,7 +13,6 @@ export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
 
 export class NextActionsView extends ItemView {
 	private noteCache: Record<string, GTDNote> = {};
-	private pinnedActionPins: readonly NextActionPin[] = [];
 	private dateVisibility: DateVisibility;
 
 	constructor(
@@ -256,7 +255,7 @@ export class NextActionsView extends ItemView {
 		setIcon(pinBtn, 'pin');
 		pinBtn.addEventListener('click', (e) => {
 			e.stopPropagation();
-			this.togglePinnedAction(action);
+			this.togglePinnedAction(action).catch(console.error);
 		});
 
 		const body = item.createDiv({ cls: 'gtd-next-action-body' });
@@ -322,11 +321,12 @@ export class NextActionsView extends ItemView {
 		});
 	}
 
-	private togglePinnedAction(action: NextAction<TFile>) {
-		const pin = new NextActionPin(action.source.name, action.text);
+	private async togglePinnedAction(action: NextAction<TFile>) {
+		const pin = NextActionPin.fromAction(action);
 		this.pinnedActionPins = this.isPinned(action)
 			? this.pinnedActionPins.filter((pinned) => !pinned.matches(action))
 			: [...this.pinnedActionPins, pin];
+		await this.plugin.saveSettings();
 		this.render();
 	}
 
@@ -335,9 +335,21 @@ export class NextActionsView extends ItemView {
 	}
 
 	private prunePinnedActionPins(actions: readonly NextAction<TFile>[]) {
-		this.pinnedActionPins = this.pinnedActionPins.filter((pin) =>
-			actions.some((action) => pin.matches(action)),
-		);
+		const nextPins = this.pinnedActionPins.filter((pin) => pin.remainingIn(actions));
+		if (nextPins.length === this.pinnedActionPins.length) return;
+		this.pinnedActionPins = nextPins;
+		this.plugin.saveSettings().catch(console.error);
+	}
+
+	private get pinnedActionPins(): readonly NextActionPin[] {
+		return this.plugin.settings.pinnedNextActionPins;
+	}
+
+	private set pinnedActionPins(pins: readonly NextActionPin[]) {
+		this.plugin.settings = {
+			...this.plugin.settings,
+			pinnedNextActionPins: pins,
+		};
 	}
 }
 

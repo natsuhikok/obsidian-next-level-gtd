@@ -6,6 +6,7 @@ import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
 import { NoteEditor } from './NoteEditor';
+import { NextActionPin } from './NextActionPin';
 import { ExcludedFolder, Status } from './types';
 
 export default class NextLevelGtdPlugin extends Plugin {
@@ -212,6 +213,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			typeof rawEvaluateStructuralNextActionBlocking === 'boolean'
 				? rawEvaluateStructuralNextActionBlocking
 				: DEFAULT_SETTINGS.evaluateStructuralNextActionBlocking;
+		const pinnedNextActionPins = NextActionPin.storedPins(raw?.['pinnedNextActionPins']);
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			...(raw as Partial<NextLevelGtdSettings> | null),
@@ -219,6 +221,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			excludedFolders,
 			contextOrder,
 			environmentContexts,
+			pinnedNextActionPins,
 		};
 	}
 
