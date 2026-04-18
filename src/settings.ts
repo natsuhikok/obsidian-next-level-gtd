@@ -137,16 +137,42 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setDesc(t('settingEnvContextsSectionDesc'));
 
 		const manager = new EnvironmentContexts(this.plugin);
-		for (const ctx of manager.getAll()) {
-			new Setting(containerEl).setName('#' + ctx).addExtraButton((btn) =>
-				btn
-					.setIcon('trash')
-					.setTooltip(t('settingEnvContextsRemoveButton'))
-					.onClick(async () => {
-						await manager.remove(ctx);
-						this.display();
-					}),
-			);
+		const contexts = manager.getAll();
+		for (const [index, ctx] of contexts.entries()) {
+			new Setting(containerEl)
+				.setName('#' + ctx)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon('arrow-up')
+						.setTooltip(t('settingEnvContextsMoveUpButton'))
+						.setDisabled(index === 0)
+						.onClick(async () => {
+							await manager.moveEarlier(ctx);
+							this.refreshNextActionsView();
+							this.display();
+						}),
+				)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon('arrow-down')
+						.setTooltip(t('settingEnvContextsMoveDownButton'))
+						.setDisabled(index === contexts.length - 1)
+						.onClick(async () => {
+							await manager.moveLater(ctx);
+							this.refreshNextActionsView();
+							this.display();
+						}),
+				)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon('trash')
+						.setTooltip(t('settingEnvContextsRemoveButton'))
+						.onClick(async () => {
+							await manager.remove(ctx);
+							this.refreshNextActionsView();
+							this.display();
+						}),
+				);
 		}
 
 		let inputText: TextComponent;
@@ -159,6 +185,7 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 				const raw = inputText.getValue().trim().toLowerCase().replace(/^#/, '');
 				if (raw === '' || raw === 'anywhere' || manager.includes(raw)) return;
 				await manager.add(raw);
+				this.refreshNextActionsView();
 				this.display();
 			}),
 		);

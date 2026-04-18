@@ -69,7 +69,7 @@ describe('NextActionsQuery', () => {
 	});
 
 	describe('グループ構成', () => {
-		it('ピン留め、日付あり、コンテキストの順に表示する', () => {
+		it('ピン留め、日付あり、デフォルト、コンテキストの順に表示する', () => {
 			const result = query(
 				[
 					action({ text: 'ピン留め', context: ['quick'] }),
@@ -79,7 +79,7 @@ describe('NextActionsQuery', () => {
 				{ pinnedTexts: ['ピン留め'] },
 			).displayGroups.map((group) => group.title);
 
-			expect(result).toEqual(['pinned', 'dated', '#home', '#quick', 'default']);
+			expect(result).toEqual(['pinned', 'dated', 'default', '#home', '#quick']);
 		});
 
 		it('複数カテゴリに該当するタスクは各グループに表示する', () => {
@@ -111,7 +111,7 @@ describe('NextActionsQuery', () => {
 	});
 
 	describe('コンテキストグループ', () => {
-		it('環境コンテキストと性質コンテキストごとに表示する', () => {
+		it('設定済みコンテキストを設定順に表示して未設定コンテキストを名前順に後続させる', () => {
 			const result = query([
 				action({ text: 'home quick', context: ['home', 'quick'] }),
 				action({ text: 'office deep', context: ['office', 'deep'] }),

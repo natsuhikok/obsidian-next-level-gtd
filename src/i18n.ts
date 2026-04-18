@@ -66,6 +66,8 @@ interface PluginStrings {
 	settingEnvContextsPlaceholder: string;
 	settingEnvContextsAddButton: string;
 	settingEnvContextsRemoveButton: string;
+	settingEnvContextsMoveUpButton: string;
+	settingEnvContextsMoveDownButton: string;
 	// UI labels
 	classifyAsReference: string;
 	classifyAsActionable: string;
@@ -144,6 +146,8 @@ const en: PluginStrings = {
 	settingEnvContextsPlaceholder: 'Tag name (without #)',
 	settingEnvContextsAddButton: 'Add',
 	settingEnvContextsRemoveButton: 'Remove',
+	settingEnvContextsMoveUpButton: 'Move up',
+	settingEnvContextsMoveDownButton: 'Move down',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'Select status',
@@ -220,6 +224,8 @@ const ja: PluginStrings = {
 	settingEnvContextsPlaceholder: 'タグ名（# 不要）',
 	settingEnvContextsAddButton: '追加',
 	settingEnvContextsRemoveButton: '削除',
+	settingEnvContextsMoveUpButton: '上へ移動',
+	settingEnvContextsMoveDownButton: '下へ移動',
 	classifyAsReference: 'Reference',
 	classifyAsActionable: 'Actionable',
 	selectStatus: 'ステータスを選択',

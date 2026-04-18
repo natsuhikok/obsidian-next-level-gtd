@@ -40,9 +40,9 @@ export class NextActionsQuery<T> {
 
 	private contextGroups(actions: readonly NextAction<T>[]): readonly ActionGroup<T>[] {
 		return [
+			this.defaultContextGroup(actions),
 			...this.environmentContextGroups(actions),
 			...this.propertyContextGroups(actions),
-			this.defaultContextGroup(actions),
 		];
 	}
 
