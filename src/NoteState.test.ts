@@ -44,6 +44,12 @@ describe('NoteState.parse', () => {
 				'invalid',
 			);
 		});
+
+		it('"Actionable" + 休眠の場合は invalid になる', () => {
+			expect(NoteState.parse({ classification: 'Actionable', status: '休眠' }).kind).toBe(
+				'invalid',
+			);
+		});
 	});
 
 	describe('isInbox', () => {
@@ -92,6 +98,24 @@ describe('NoteState.computeAlerts', () => {
 					false,
 				),
 			).toContain('frontmatterInvalid');
+		});
+
+		it('Actionable で status が休眠の場合は frontmatterInvalid を返す', () => {
+			expect(
+				NoteState.parse({ classification: 'Actionable', status: '休眠' }).computeAlerts(
+					false,
+					false,
+				),
+			).toContain('frontmatterInvalid');
+		});
+
+		it('休眠に今日以降の scheduled next action があっても frontmatterInvalid を返す', () => {
+			expect(
+				NoteState.parse({ classification: 'Actionable', status: '休眠' }).computeAlerts(
+					true,
+					true,
+				),
+			).toEqual(['frontmatterInvalid']);
 		});
 
 		it('frontmatterInvalid の場合は他のアラートを返さない', () => {
@@ -173,44 +197,6 @@ describe('NoteState.computeAlerts', () => {
 		});
 	});
 
-	describe('dormantNoFutureScheduledNextAction', () => {
-		it('休眠 かつ今日以降の scheduled next action がない場合はアラートを返す', () => {
-			expect(
-				NoteState.parse({ classification: 'Actionable', status: '休眠' }).computeAlerts(
-					false,
-					false,
-				),
-			).toContain('dormantNoFutureScheduledNextAction');
-		});
-
-		it('休眠 かつ今日以降の scheduled next action がある場合はアラートを返さない', () => {
-			expect(
-				NoteState.parse({ classification: 'Actionable', status: '休眠' }).computeAlerts(
-					true,
-					true,
-				),
-			).not.toContain('dormantNoFutureScheduledNextAction');
-		});
-
-		it('休眠 は actionableInProgressNoNextAction を返さない', () => {
-			expect(
-				NoteState.parse({ classification: 'Actionable', status: '休眠' }).computeAlerts(
-					false,
-					false,
-				),
-			).not.toContain('actionableInProgressNoNextAction');
-		});
-
-		it('休眠 は actionableDoneHasNextAction を返さない', () => {
-			expect(
-				NoteState.parse({ classification: 'Actionable', status: '休眠' }).computeAlerts(
-					true,
-					false,
-				),
-			).not.toContain('actionableDoneHasNextAction');
-		});
-	});
-
 	describe('アラートなし', () => {
 		it('正常な Reference はアラートを返さない', () => {
 			expect(
@@ -232,15 +218,6 @@ describe('NoteState.computeAlerts', () => {
 				NoteState.parse({ classification: 'Actionable', status: '保留' }).computeAlerts(
 					true,
 					false,
-				),
-			).toHaveLength(0);
-		});
-
-		it('正常な Actionable 休眠（今日以降の scheduled あり）はアラートを返さない', () => {
-			expect(
-				NoteState.parse({ classification: 'Actionable', status: '休眠' }).computeAlerts(
-					true,
-					true,
 				),
 			).toHaveLength(0);
 		});
