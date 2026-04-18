@@ -1,6 +1,6 @@
 import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf, moment, setIcon } from 'obsidian';
 import { ContextClassifier } from '../ContextClassifier';
-import { FilterSelection } from '../FilterSelection';
+import { DateVisibility } from '../DateVisibility';
 import { GTDNote } from '../GTDNote';
 import type { NextAction } from '../NextActionCollection';
 import { NextActionPin } from '../NextActionPin';
@@ -13,14 +13,14 @@ export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
 export class NextActionsView extends ItemView {
 	private noteCache: Record<string, GTDNote> = {};
 	private pinnedActionPins: readonly NextActionPin[] = [];
-	private selection: FilterSelection;
+	private dateVisibility: DateVisibility;
 
 	constructor(
 		leaf: WorkspaceLeaf,
 		private readonly plugin: NextLevelGtdPlugin,
 	) {
 		super(leaf);
-		this.selection = FilterSelection.initial();
+		this.dateVisibility = DateVisibility.initial();
 	}
 
 	getViewType() {
@@ -159,9 +159,13 @@ export class NextActionsView extends ItemView {
 		const allActions = Object.values(this.noteCache).flatMap((note) => [...note.nextActions]);
 		this.prunePinnedActionPins(allActions);
 		const today = moment().format('YYYY-MM-DD');
-		const query = new NextActionsQuery(classifier, this.selection, allActions, today);
-
-		this.selection = query.normalizedSelection;
+		const query = new NextActionsQuery(
+			classifier,
+			this.dateVisibility,
+			allActions,
+			today,
+			(a) => this.isPinned(a),
+		);
 
 		const { contentEl } = this;
 		contentEl.empty();
@@ -174,169 +178,117 @@ export class NextActionsView extends ItemView {
 		}
 
 		const filterBar = contentEl.createDiv({ cls: 'gtd-context-filter' });
-		this.renderEnvBlock(filterBar, classifier);
-
-		const allPropertyCandidates = query.allPropertyCandidates;
-		if (allPropertyCandidates.length > 0) {
-			this.renderPropertyBlock(
-				filterBar,
-				allPropertyCandidates,
-				query.enabledPropertyCandidates,
-				query.hasPropertylessCandidate,
-			);
-		}
-
 		this.renderDateBlock(filterBar);
 
-		const filteredActions = query.filteredActions;
+		const groups = query.displayGroups;
 
-		if (filteredActions.length === 0) return;
+		if (groups.length === 0) {
+			contentEl.createEl('p', { text: t('noNextActions'), cls: 'gtd-empty' });
+			return;
+		}
 
 		const container = contentEl.createDiv({ cls: 'nav-files-container' });
 
-		filteredActions.forEach((action) => {
-			const pinned = this.isPinned(action);
-			const item = container.createDiv({
-				cls: 'gtd-next-action-item' + (pinned ? ' is-pinned' : ''),
+		groups.forEach((group) => {
+			const section = container.createDiv({ cls: 'gtd-next-action-group' });
+			section.createDiv({
+				cls: 'gtd-next-action-group-title',
+				text: this.groupTitle(group.title),
 			});
-			item.addEventListener('click', (e) => {
-				this.openNote(action.source.path, e, action.text);
-			});
-
-			const pinBtn = item.createEl('button', {
-				cls: 'gtd-next-action-pin' + (pinned ? ' is-pinned' : ''),
-			});
-			pinBtn.setAttribute('aria-label', pinned ? t('unpinNextAction') : t('pinNextAction'));
-			pinBtn.setAttribute('aria-pressed', String(pinned));
-			setIcon(pinBtn, 'pin');
-			pinBtn.addEventListener('click', (e) => {
-				e.stopPropagation();
-				this.togglePinnedAction(action);
-			});
-
-			const body = item.createDiv({ cls: 'gtd-next-action-body' });
-
-			body.createDiv({ cls: 'gtd-next-action-text', text: stripTaskMetadata(action.text) });
-
-			this.renderContextBadges(body, action, classifier);
-
-			const meta = body.createDiv({ cls: 'gtd-next-action-meta' });
-
-			const dateStr = action.due ?? action.scheduled;
-			if (dateStr !== null) {
-				const isOverdue = dateStr < today;
-				const isToday = dateStr === today;
-				const cls = [
-					'gtd-next-action-date',
-					isOverdue ? 'is-overdue' : '',
-					isToday ? 'is-today' : '',
-				]
-					.filter(Boolean)
-					.join(' ');
-				meta.createSpan({
-					cls,
-					text: (action.due !== null ? '📅' : '⏳') + ' ' + dateStr,
-				});
-			}
-
-			const projectLink = meta.createSpan({
-				cls: 'gtd-next-action-project',
-				text: action.source.basename,
-			});
-			projectLink.addEventListener('click', (e) => {
-				e.stopPropagation();
-				this.openNote(action.source.path, e, action.text);
-			});
+			group.actions.forEach((action) =>
+				this.renderAction(section, action, classifier, today),
+			);
 		});
 
 		contentEl.createDiv({
 			cls: 'gtd-next-action-count',
-			text: `${String(filteredActions.length)} actions`,
-		});
-	}
-
-	private renderEnvBlock(filterBar: HTMLElement, classifier: ContextClassifier) {
-		const envContexts = classifier.environmentContexts;
-		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
-
-		const addEnvChip = (label: string, value: string) => {
-			const active =
-				value === '__all__'
-					? this.selection.isAllEnvironmentsSelected(envContexts)
-					: value === '__no_context__'
-						? this.selection.noContextSelected
-						: this.selection.selectedEnvironments.includes(value);
-			const chip = row.createEl('button', {
-				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
-				text: label,
-			});
-			chip.addEventListener('click', () => {
-				if (value === '__all__') {
-					this.selection = this.selection.withAllEnvironmentsToggled(envContexts);
-				} else if (value === '__no_context__') {
-					this.selection = this.selection.withNoContextToggled();
-				} else {
-					this.selection = this.selection.withEnvironmentToggled(value);
-				}
-				this.render();
-			});
-		};
-
-		// addEnvChip(t('filterEnvAll'), '__all__');
-		addEnvChip(t('filterEnvNoContext'), '__no_context__');
-		envContexts.forEach((ctx) => addEnvChip('#' + ctx, ctx));
-	}
-
-	private renderPropertyBlock(
-		filterBar: HTMLElement,
-		candidates: readonly string[],
-		enabledCandidates: ReadonlySet<string>,
-		hasPropertylessCandidate: boolean,
-	) {
-		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
-
-		const noPropertyActive = this.selection.noPropertySelected;
-		const noPropertyChip = row.createEl('button', {
-			cls: 'gtd-context-chip' + (noPropertyActive ? ' is-active' : ''),
-			text: t('filterPropNoContext'),
-		});
-		noPropertyChip.disabled = !noPropertyActive && !hasPropertylessCandidate;
-		noPropertyChip.addEventListener('click', () => {
-			this.selection = this.selection.withNoPropertyToggled();
-			this.render();
-		});
-
-		candidates.forEach((prop) => {
-			const active = this.selection.selectedProperties.includes(prop);
-			const enabled = active || enabledCandidates.has(prop);
-			const chip = row.createEl('button', {
-				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
-				text: '#' + prop,
-			});
-			chip.disabled = !enabled;
-			chip.addEventListener('click', () => {
-				this.selection = this.selection.withPropertyToggled(prop);
-				this.render();
-			});
+			text: `${String(query.groupedActionCount)} actions`,
 		});
 	}
 
 	private renderDateBlock(filterBar: HTMLElement) {
 		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
-		const addDateChip = (label: string, mode: 'actionable' | 'withDate') => {
-			const active = this.selection.dateMode === mode;
+		const addDateChip = (label: string, mode: 'near' | 'all') => {
+			const active = this.dateVisibility.mode === mode;
 			const chip = row.createEl('button', {
 				cls: 'gtd-context-chip' + (active ? ' is-active' : ''),
 				text: label,
 			});
 			chip.addEventListener('click', () => {
-				this.selection = this.selection.withDateMode(mode);
+				this.dateVisibility = this.dateVisibility.withMode(mode);
 				this.render();
 			});
 		};
 
-		addDateChip(t('filterDateActionable'), 'actionable');
-		addDateChip(t('filterDateWithDate'), 'withDate');
+		addDateChip(t('dateVisibilityNear'), 'near');
+		addDateChip(t('dateVisibilityAll'), 'all');
+	}
+
+	private groupTitle(title: string): string {
+		if (title === 'pinned') return t('nextActionGroupPinned');
+		if (title === 'dated') return t('nextActionGroupDated');
+		if (title === 'default') return t('nextActionGroupDefault');
+		return title;
+	}
+
+	private renderAction(
+		container: HTMLElement,
+		action: NextAction<TFile>,
+		classifier: ContextClassifier,
+		today: string,
+	) {
+		const pinned = this.isPinned(action);
+		const item = container.createDiv({
+			cls: 'gtd-next-action-item' + (pinned ? ' is-pinned' : ''),
+		});
+		item.addEventListener('click', (e) => {
+			this.openNote(action.source.path, e, action.text);
+		});
+
+		const pinBtn = item.createEl('button', {
+			cls: 'gtd-next-action-pin' + (pinned ? ' is-pinned' : ''),
+		});
+		pinBtn.setAttribute('aria-label', pinned ? t('unpinNextAction') : t('pinNextAction'));
+		pinBtn.setAttribute('aria-pressed', String(pinned));
+		setIcon(pinBtn, 'pin');
+		pinBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.togglePinnedAction(action);
+		});
+
+		const body = item.createDiv({ cls: 'gtd-next-action-body' });
+
+		body.createDiv({ cls: 'gtd-next-action-text', text: stripTaskMetadata(action.text) });
+
+		this.renderContextBadges(body, action, classifier);
+
+		const meta = body.createDiv({ cls: 'gtd-next-action-meta' });
+
+		const dateStr = action.due ?? action.scheduled;
+		if (dateStr !== null) {
+			const isOverdue = dateStr < today;
+			const isToday = dateStr === today;
+			const cls = [
+				'gtd-next-action-date',
+				isOverdue ? 'is-overdue' : '',
+				isToday ? 'is-today' : '',
+			]
+				.filter(Boolean)
+				.join(' ');
+			meta.createSpan({
+				cls,
+				text: (action.due !== null ? '📅' : '⏳') + ' ' + dateStr,
+			});
+		}
+
+		const projectLink = meta.createSpan({
+			cls: 'gtd-next-action-project',
+			text: action.source.basename,
+		});
+		projectLink.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.openNote(action.source.path, e, action.text);
+		});
 	}
 
 	private renderContextBadges(
