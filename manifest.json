@@ -3,7 +3,7 @@
 	"name": "Next Level GTD",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "GTD classification support plugin. Provides Inbox triage, Alert detection, and status display with change UI.",
+	"description": "GTD classification support plugin. Provides File View browsing, Alert detection, and status display with change UI.",
 	"author": "natsuhiko",
 	"isDesktopOnly": false
 }

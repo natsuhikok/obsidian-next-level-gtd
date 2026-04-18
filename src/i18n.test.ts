@@ -8,7 +8,7 @@ describe('t()', () => {
 	});
 
 	it('英語ロケールで英語文字列を返す', () => {
-		expect(t('openInboxViewCommand')).toBe('Open Inbox');
+		expect(t('openFileViewCommand')).toBe('Open File View');
 		expect(t('classificationInbox')).toBe('Inbox');
 		expect(t('classificationReference')).toBe('Reference');
 		expect(t('classificationActionable')).toBe('Actionable');
@@ -16,11 +16,11 @@ describe('t()', () => {
 
 	it('日本語ロケールで日本語文字列を返す', () => {
 		vi.mocked(moment.locale).mockReturnValue('ja');
-		expect(t('openInboxViewCommand')).toBe('Inbox を開く');
+		expect(t('openFileViewCommand')).toBe('ファイルビューを開く');
 	});
 
 	it('未知のロケールは英語にフォールバックする', () => {
 		vi.mocked(moment.locale).mockReturnValue('fr');
-		expect(t('openInboxViewCommand')).toBe('Open Inbox');
+		expect(t('openFileViewCommand')).toBe('Open File View');
 	});
 });

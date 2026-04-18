@@ -36,7 +36,67 @@
 	font-weight: 600;
 }
 
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title {
+.workspace-leaf-content[data-type='gtd-file-view'] .view-content {
+	padding-left: 0;
+	padding-right: 0;
+	padding-top: 0;
+}
+
+.workspace-leaf-content[data-type='gtd-file-view'] .nav-files-container {
+	padding: 0;
+}
+
+.gtd-file-filter {
+	padding: 0 8px 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.gtd-file-filter input {
+	width: 100%;
+}
+
+.gtd-file-view-item {
+	display: flex;
+	align-items: center;
+}
+
+.gtd-file-view-item.is-pinned {
+	background-color: var(--background-modifier-active-hover);
+	box-shadow: inset 3px 0 0 var(--interactive-accent);
+}
+
+.gtd-file-pin {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin: 0 0 0 2px;
+	padding: 0;
+	opacity: 0.2;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	color: var(--text-faint);
+	cursor: pointer;
+	border-radius: var(--radius-s);
+}
+
+.gtd-file-pin:hover,
+.gtd-file-pin.is-pinned {
+	color: var(--color-accent);
+	opacity: 1;
+}
+
+.gtd-file-pin .svg-icon {
+	width: 16px;
+	height: 16px;
+}
+
+.workspace-leaf-content[data-type='gtd-file-view'] .nav-file-title {
+	flex: 1;
+	min-width: 0;
 	display: flex;
 	align-items: center;
 	border-radius: var(--radius-s);
@@ -52,19 +112,19 @@
 	transition: background var(--anim-duration-fast) var(--anim-motion-smoothing);
 }
 
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title:hover {
+.workspace-leaf-content[data-type='gtd-file-view'] .nav-file-title:hover {
 	background-color: var(--nav-item-background-hover);
 	color: var(--nav-item-color-hover);
 }
 
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title.is-active,
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title.is-active:hover {
+.workspace-leaf-content[data-type='gtd-file-view'] .nav-file-title.is-active,
+.workspace-leaf-content[data-type='gtd-file-view'] .nav-file-title.is-active:hover {
 	background-color: var(--nav-item-background-active);
 	color: var(--nav-item-color-active);
 	font-weight: var(--nav-item-weight-active);
 }
 
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title-content {
+.workspace-leaf-content[data-type='gtd-file-view'] .nav-file-title-content {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }

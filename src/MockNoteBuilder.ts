@@ -14,7 +14,7 @@ function randomId(): string {
 function buildNoteTemplates(): readonly MockNote[] {
 	const id = () => randomId();
 	return [
-		// 1. Inbox notes (no frontmatter) – for Inbox view testing
+		// 1. Inbox notes (no frontmatter) – for File View testing
 		{
 			path: `${MOCK_FOLDER}/inbox-${id()}.md`,
 			content: 'Inbox note without classification.\n',

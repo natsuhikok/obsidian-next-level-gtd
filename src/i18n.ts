@@ -2,8 +2,8 @@ import { moment } from 'obsidian';
 
 interface PluginStrings {
 	// Commands
-	openInboxRibbon: string;
-	openInboxViewCommand: string;
+	openFileViewRibbon: string;
+	openFileViewCommand: string;
 	setStatusInProgressCommand: string;
 	setStatusOnHoldCommand: string;
 	setStatusCompletedCommand: string;
@@ -11,7 +11,7 @@ interface PluginStrings {
 	changeStatusCommand: string;
 	cancelAllNextActionsCommand: string;
 	// View titles
-	inboxViewTitle: string;
+	fileViewTitle: string;
 	alertViewTitle: string;
 	// Classification labels
 	classificationInbox: string;
@@ -68,6 +68,14 @@ interface PluginStrings {
 	nextActionGroupPinned: string;
 	nextActionGroupDated: string;
 	nextActionGroupDefault: string;
+	fileViewTabInbox: string;
+	fileViewTabInProgress: string;
+	fileViewTabOnHold: string;
+	fileViewTabReference: string;
+	fileViewTabAll: string;
+	fileFilterPlaceholder: string;
+	pinFile: string;
+	unpinFile: string;
 	// Environment contexts settings
 	settingEnvContextsSectionName: string;
 	settingEnvContextsSectionDesc: string;
@@ -81,6 +89,7 @@ interface PluginStrings {
 	noInboxItems: string;
 	noAlerts: string;
 	noInboxOrAlerts: string;
+	noFileViewItems: string;
 	openNote: string;
 	// Modals
 	confirmModalTitle: string;
@@ -91,15 +100,15 @@ interface PluginStrings {
 }
 
 const en: PluginStrings = {
-	openInboxRibbon: 'Open GTD Inbox',
-	openInboxViewCommand: 'Open Inbox',
+	openFileViewRibbon: 'Open GTD File View',
+	openFileViewCommand: 'Open File View',
 	setStatusInProgressCommand: 'Set status: In Progress',
 	setStatusOnHoldCommand: 'Set status: On Hold',
 	setStatusCompletedCommand: 'Set status: Completed',
 	setStatusAbandonedCommand: 'Set status: Abandoned',
 	changeStatusCommand: 'Change status',
 	cancelAllNextActionsCommand: 'Cancel all next actions',
-	inboxViewTitle: 'Inbox',
+	fileViewTitle: 'File View',
 	alertViewTitle: 'Alerts',
 	classificationInbox: 'Inbox',
 	classificationReference: 'Reference',
@@ -130,7 +139,7 @@ const en: PluginStrings = {
 		'Use parent-child checkbox relationships and ordered list sequence to hide blocked next actions.',
 	settingExcludedFoldersSectionName: 'Excluded Folders',
 	settingExcludedFoldersSectionDesc:
-		'Notes in these folders are ignored by Inbox view and Initialize.',
+		'Notes in these folders are ignored by File View and Initialize.',
 	settingExcludedFoldersPlaceholder: 'Folder path',
 	settingExcludedFoldersAddButton: 'Add',
 	settingExcludedFoldersRemoveButton: 'Remove',
@@ -154,6 +163,14 @@ const en: PluginStrings = {
 	nextActionGroupPinned: 'Pinned',
 	nextActionGroupDated: 'Dated',
 	nextActionGroupDefault: 'Default',
+	fileViewTabInbox: 'Inbox',
+	fileViewTabInProgress: 'In Progress',
+	fileViewTabOnHold: 'On Hold',
+	fileViewTabReference: 'Reference',
+	fileViewTabAll: 'All',
+	fileFilterPlaceholder: 'Filter by filename',
+	pinFile: 'Pin file',
+	unpinFile: 'Unpin file',
 	settingEnvContextsSectionName: 'Environment Contexts',
 	settingEnvContextsSectionDesc:
 		'Tags that represent physical or situational environments (e.g. home, office). Tags not listed here are treated as property contexts.',
@@ -166,6 +183,7 @@ const en: PluginStrings = {
 	noInboxItems: 'No unclassified notes.',
 	noAlerts: 'No alerts.',
 	noInboxOrAlerts: 'No inbox or alert items.',
+	noFileViewItems: 'No matching files.',
 	openNote: 'Open',
 	confirmModalTitle: 'Confirm',
 	confirmModalExecute: 'Execute',
@@ -175,15 +193,15 @@ const en: PluginStrings = {
 };
 
 const ja: PluginStrings = {
-	openInboxRibbon: 'GTD Inbox を開く',
-	openInboxViewCommand: 'Inbox を開く',
+	openFileViewRibbon: 'GTD ファイルビューを開く',
+	openFileViewCommand: 'ファイルビューを開く',
 	setStatusInProgressCommand: 'ステータスを設定: 進行中',
 	setStatusOnHoldCommand: 'ステータスを設定: 保留',
 	setStatusCompletedCommand: 'ステータスを設定: 完了',
 	setStatusAbandonedCommand: 'ステータスを設定: 廃止',
 	changeStatusCommand: 'ステータスを変更',
 	cancelAllNextActionsCommand: 'すべての next action を中止にする',
-	inboxViewTitle: 'Inbox',
+	fileViewTitle: 'ファイルビュー',
 	alertViewTitle: 'Alerts',
 	classificationInbox: 'Inbox',
 	classificationReference: 'Reference',
@@ -214,7 +232,7 @@ const ja: PluginStrings = {
 		'親子チェックボックスと順序リストの並びを使って、ブロックされたネクストアクションを非表示にします。',
 	settingExcludedFoldersSectionName: '除外フォルダ',
 	settingExcludedFoldersSectionDesc:
-		'これらのフォルダ内のノートは Inbox ビューと初期化の対象から除外されます。',
+		'これらのフォルダ内のノートはファイルビューと初期化の対象から除外されます。',
 	settingExcludedFoldersPlaceholder: 'フォルダパス',
 	settingExcludedFoldersAddButton: '追加',
 	settingExcludedFoldersRemoveButton: '削除',
@@ -238,6 +256,14 @@ const ja: PluginStrings = {
 	nextActionGroupPinned: 'ピン留め',
 	nextActionGroupDated: '日付あり',
 	nextActionGroupDefault: 'デフォルト',
+	fileViewTabInbox: 'Inbox',
+	fileViewTabInProgress: '進行中',
+	fileViewTabOnHold: '保留',
+	fileViewTabReference: 'Reference',
+	fileViewTabAll: 'すべて',
+	fileFilterPlaceholder: 'ファイル名で絞り込み',
+	pinFile: 'ファイルをピン留め',
+	unpinFile: 'ファイルのピン留めを解除',
 	settingEnvContextsSectionName: '環境コンテキスト',
 	settingEnvContextsSectionDesc:
 		'物理的・状況的な環境を表すタグ（例: home, office）。ここに登録されていないタグは性質コンテキストとして扱われます。',
@@ -250,6 +276,7 @@ const ja: PluginStrings = {
 	noInboxItems: '未分類のノートはありません。',
 	noAlerts: 'アラートはありません。',
 	noInboxOrAlerts: 'Inbox もアラートもありません。',
+	noFileViewItems: '一致するファイルはありません。',
 	openNote: '開く',
 	confirmModalTitle: '確認',
 	confirmModalExecute: '実行',
