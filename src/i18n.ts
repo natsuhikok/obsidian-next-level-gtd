@@ -48,6 +48,14 @@ interface PluginStrings {
 	settingExcludedFoldersAddButton: string;
 	settingExcludedFoldersRemoveButton: string;
 	settingExcludedFoldersShowAlertBannerToggle: string;
+	// Context order settings
+	settingContextOrderSectionName: string;
+	settingContextOrderSectionDesc: string;
+	settingContextOrderPlaceholder: string;
+	settingContextOrderAddButton: string;
+	settingContextOrderMoveUpButton: string;
+	settingContextOrderMoveDownButton: string;
+	settingContextOrderRemoveButton: string;
 	// Next Actions view
 	nextActionsViewTitle: string;
 	openNextActionsRibbon: string;
@@ -127,6 +135,14 @@ const en: PluginStrings = {
 	settingExcludedFoldersAddButton: 'Add',
 	settingExcludedFoldersRemoveButton: 'Remove',
 	settingExcludedFoldersShowAlertBannerToggle: 'Show alert banner',
+	settingContextOrderSectionName: 'Context Display Order',
+	settingContextOrderSectionDesc:
+		'Manage the display order of context tags in Next Actions. This order applies to both environment and property contexts.',
+	settingContextOrderPlaceholder: 'Tag name (without #)',
+	settingContextOrderAddButton: 'Add',
+	settingContextOrderMoveUpButton: 'Move up',
+	settingContextOrderMoveDownButton: 'Move down',
+	settingContextOrderRemoveButton: 'Remove',
 	nextActionsViewTitle: 'Next Actions',
 	openNextActionsRibbon: 'Open GTD Next Actions',
 	openNextActionsViewCommand: 'Open Next Actions',
@@ -203,6 +219,14 @@ const ja: PluginStrings = {
 	settingExcludedFoldersAddButton: '追加',
 	settingExcludedFoldersRemoveButton: '削除',
 	settingExcludedFoldersShowAlertBannerToggle: 'アラートバナーを表示する',
+	settingContextOrderSectionName: 'コンテキストの表示順',
+	settingContextOrderSectionDesc:
+		'ネクストアクションでのコンテキストタグの表示順を管理します。この順序は環境コンテキストと性質コンテキストの両方に適用されます。',
+	settingContextOrderPlaceholder: 'タグ名（# 不要）',
+	settingContextOrderAddButton: '追加',
+	settingContextOrderMoveUpButton: '上へ移動',
+	settingContextOrderMoveDownButton: '下へ移動',
+	settingContextOrderRemoveButton: '削除',
 	nextActionsViewTitle: 'ネクストアクション',
 	openNextActionsRibbon: 'GTD ネクストアクションを開く',
 	openNextActionsViewCommand: 'ネクストアクションを開く',

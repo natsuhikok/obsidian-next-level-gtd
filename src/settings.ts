@@ -1,4 +1,5 @@
 import { ExcludedFolders } from './ExcludedFolders';
+import { ContextOrderSetting } from './ContextOrderSetting';
 import { EnvironmentContexts } from './EnvironmentContexts';
 import { t } from './i18n';
 import { InboxInitializer } from './InboxInitializer';
@@ -15,6 +16,7 @@ export interface NextLevelGtdSettings {
 	_placeholder: null;
 	evaluateStructuralNextActionBlocking: boolean;
 	excludedFolders: readonly ExcludedFolder[];
+	contextOrder: readonly string[];
 	environmentContexts: readonly string[];
 }
 
@@ -22,6 +24,7 @@ export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
 	_placeholder: null,
 	evaluateStructuralNextActionBlocking: true,
 	excludedFolders: [],
+	contextOrder: [],
 	environmentContexts: [],
 };
 
@@ -39,6 +42,7 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 		this.renderInitSection(containerEl);
 		this.renderNextActionsSection(containerEl);
 		this.renderExcludedFoldersSection(containerEl);
+		this.renderContextOrderSection(containerEl);
 		this.renderEnvironmentContextsSection(containerEl);
 		this.renderDevSection(containerEl);
 	}
@@ -127,6 +131,62 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 				if (raw === '' || manager.includes(raw)) return;
 				await manager.add(raw);
 				this.refreshInboxView();
+				this.display();
+			}),
+		);
+	}
+
+	private renderContextOrderSection(containerEl: HTMLElement): void {
+		new Setting(containerEl).setName(t('settingContextOrderSectionName')).setHeading();
+		new Setting(containerEl).setDesc(t('settingContextOrderSectionDesc'));
+
+		const manager = new ContextOrderSetting(this.plugin);
+		for (const ctx of manager.getAll()) {
+			new Setting(containerEl)
+				.setName('#' + ctx)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon('arrow-up')
+						.setTooltip(t('settingContextOrderMoveUpButton'))
+						.onClick(async () => {
+							await manager.moveUp(ctx);
+							this.refreshNextActionsView();
+							this.display();
+						}),
+				)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon('arrow-down')
+						.setTooltip(t('settingContextOrderMoveDownButton'))
+						.onClick(async () => {
+							await manager.moveDown(ctx);
+							this.refreshNextActionsView();
+							this.display();
+						}),
+				)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon('trash')
+						.setTooltip(t('settingContextOrderRemoveButton'))
+						.onClick(async () => {
+							await manager.remove(ctx);
+							this.refreshNextActionsView();
+							this.display();
+						}),
+				);
+		}
+
+		let inputText: TextComponent;
+		const addSetting = new Setting(containerEl).addText((text) => {
+			inputText = text;
+			text.setPlaceholder(t('settingContextOrderPlaceholder'));
+		});
+		addSetting.addButton((btn) =>
+			btn.setButtonText(t('settingContextOrderAddButton')).onClick(async () => {
+				const raw = inputText.getValue().trim().toLowerCase().replace(/^#/, '');
+				if (raw === '' || manager.includes(raw)) return;
+				await manager.add(raw);
+				this.refreshNextActionsView();
 				this.display();
 			}),
 		);

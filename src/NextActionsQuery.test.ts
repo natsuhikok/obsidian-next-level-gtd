@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ContextClassifier } from './ContextClassifier';
+import { ContextOrder } from './ContextOrder';
 import { DateVisibility } from './DateVisibility';
 import { NextAction } from './NextActionCollection';
 import { NextActionsQuery } from './NextActionsQuery';
@@ -31,12 +32,14 @@ function query(
 	overrides: {
 		visibility?: DateVisibility;
 		classifier?: ContextClassifier;
+		contextOrder?: ContextOrder;
 		pinnedTexts?: readonly string[];
 	} = {},
 ): NextActionsQuery<string> {
 	const pinnedTexts = overrides.pinnedTexts ?? [];
 	return new NextActionsQuery(
 		overrides.classifier ?? new ContextClassifier(['home', 'office']),
+		overrides.contextOrder ?? new ContextOrder(['home', 'office']),
 		overrides.visibility ?? DateVisibility.initial(),
 		actions,
 		TODAY,
@@ -69,17 +72,18 @@ describe('NextActionsQuery', () => {
 	});
 
 	describe('グループ構成', () => {
-		it('ピン留め、日付あり、コンテキストの順に表示する', () => {
+		it('ピン留め、日付あり、デフォルト、コンテキストの順に表示する', () => {
 			const result = query(
 				[
 					action({ text: 'ピン留め', context: ['quick'] }),
 					action({ text: '日付あり', due: '2026-04-03' }),
+					action({ text: 'デフォルト' }),
 					action({ text: '環境', context: ['home'] }),
 				],
 				{ pinnedTexts: ['ピン留め'] },
 			).displayGroups.map((group) => group.title);
 
-			expect(result).toEqual(['pinned', 'dated', '#home', '#quick', 'default']);
+			expect(result).toEqual(['pinned', 'dated', 'default', '#home', '#quick']);
 		});
 
 		it('複数カテゴリに該当するタスクは各グループに表示する', () => {
@@ -111,20 +115,23 @@ describe('NextActionsQuery', () => {
 	});
 
 	describe('コンテキストグループ', () => {
-		it('環境コンテキストと性質コンテキストごとに表示する', () => {
-			const result = query([
-				action({ text: 'home quick', context: ['home', 'quick'] }),
-				action({ text: 'office deep', context: ['office', 'deep'] }),
-			]).displayGroups.map((group) => ({
+		it('環境と性質の分類に関係なく設定された順序で表示する', () => {
+			const result = query(
+				[
+					action({ text: 'home quick', context: ['home', 'quick'] }),
+					action({ text: 'office deep', context: ['office', 'deep'] }),
+				],
+				{ contextOrder: new ContextOrder(['deep', 'office', 'quick']) },
+			).displayGroups.map((group) => ({
 				title: group.title,
 				texts: group.actions.map((a) => a.text),
 			}));
 
 			expect(result).toEqual([
-				{ title: '#home', texts: ['home quick'] },
-				{ title: '#office', texts: ['office deep'] },
 				{ title: '#deep', texts: ['office deep'] },
+				{ title: '#office', texts: ['office deep'] },
 				{ title: '#quick', texts: ['home quick'] },
+				{ title: '#home', texts: ['home quick'] },
 			]);
 		});
 
@@ -133,6 +140,53 @@ describe('NextActionsQuery', () => {
 			expect(result).toEqual([
 				{ title: 'default', actions: [action({ text: 'デフォルト' })] },
 			]);
+		});
+
+		it('設定されていないコンテキストは設定済みコンテキストの後に名前順で表示する', () => {
+			const result = query(
+				[
+					action({ text: 'beta', context: ['beta'] }),
+					action({ text: 'alpha', context: ['alpha'] }),
+					action({ text: 'home', context: ['home'] }),
+				],
+				{ contextOrder: new ContextOrder(['home']) },
+			).displayGroups.map((group) => group.title);
+
+			expect(result).toEqual(['#home', '#alpha', '#beta']);
+		});
+	});
+
+	describe('グループ内の並び順', () => {
+		it('デフォルトグループ内でピン留め、日付あり、デフォルトの順に表示する', () => {
+			const result = query(
+				[
+					action({ text: 'デフォルト' }),
+					action({ text: '日付あり', due: '2026-04-03' }),
+					action({ text: 'ピン留め' }),
+				],
+				{
+					contextOrder: new ContextOrder(['office']),
+					pinnedTexts: ['ピン留め'],
+				},
+			)
+				.displayGroups.find((group) => group.title === 'default')
+				?.actions.map((a) => a.text);
+
+			expect(result).toEqual(['ピン留め', '日付あり', 'デフォルト']);
+		});
+
+		it('同じコンテキストグループ内でも設定されたコンテキストを優先して表示する', () => {
+			const result = query(
+				[
+					action({ text: 'あと', context: ['shared'] }),
+					action({ text: 'さき', context: ['office', 'shared'] }),
+				],
+				{ contextOrder: new ContextOrder(['office']) },
+			)
+				.displayGroups.find((group) => group.title === '#shared')
+				?.actions.map((a) => a.text);
+
+			expect(result).toEqual(['さき', 'あと']);
 		});
 	});
 

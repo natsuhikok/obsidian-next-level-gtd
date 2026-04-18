@@ -197,6 +197,15 @@ export default class NextLevelGtdPlugin extends Plugin {
 		const environmentContexts: readonly string[] = Array.isArray(rawEnvContexts)
 			? rawEnvContexts.filter((v): v is string => typeof v === 'string')
 			: [];
+		const rawContextOrder = raw?.['contextOrder'];
+		const contextOrderSource = Array.isArray(rawContextOrder)
+			? rawContextOrder
+			: environmentContexts;
+		const contextOrder = contextOrderSource
+			.filter((v): v is string => typeof v === 'string')
+			.map((context) => context.trim().toLowerCase().replace(/^#/, ''))
+			.filter((context) => context !== '')
+			.filter((context, index, contexts) => contexts.indexOf(context) === index);
 		const rawEvaluateStructuralNextActionBlocking =
 			raw?.['evaluateStructuralNextActionBlocking'];
 		const evaluateStructuralNextActionBlocking =
@@ -208,6 +217,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			...(raw as Partial<NextLevelGtdSettings> | null),
 			evaluateStructuralNextActionBlocking,
 			excludedFolders,
+			contextOrder,
 			environmentContexts,
 		};
 	}

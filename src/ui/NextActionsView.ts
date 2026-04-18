@@ -1,5 +1,6 @@
 import { ItemView, Keymap, MarkdownView, TFile, WorkspaceLeaf, moment, setIcon } from 'obsidian';
 import { ContextClassifier } from '../ContextClassifier';
+import { ContextOrder } from '../ContextOrder';
 import { DateVisibility } from '../DateVisibility';
 import { GTDNote } from '../GTDNote';
 import type { NextAction } from '../NextActionCollection';
@@ -156,11 +157,13 @@ export class NextActionsView extends ItemView {
 
 	private render() {
 		const classifier = new ContextClassifier(this.plugin.settings.environmentContexts);
+		const contextOrder = new ContextOrder(this.plugin.settings.contextOrder);
 		const allActions = Object.values(this.noteCache).flatMap((note) => [...note.nextActions]);
 		this.prunePinnedActionPins(allActions);
 		const today = moment().format('YYYY-MM-DD');
 		const query = new NextActionsQuery(
 			classifier,
+			contextOrder,
 			this.dateVisibility,
 			allActions,
 			today,

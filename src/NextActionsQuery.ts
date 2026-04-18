@@ -1,4 +1,5 @@
 import type { ContextClassifier } from './ContextClassifier';
+import type { ContextOrder } from './ContextOrder';
 import type { DateVisibility } from './DateVisibility';
 import type { NextAction } from './NextActionCollection';
 
@@ -10,6 +11,7 @@ interface ActionGroup<T> {
 export class NextActionsQuery<T> {
 	constructor(
 		private readonly classifier: ContextClassifier,
+		private readonly contextOrder: ContextOrder,
 		private readonly dateVisibility: DateVisibility,
 		private readonly actions: readonly NextAction<T>[],
 		private readonly today: string,
@@ -17,12 +19,16 @@ export class NextActionsQuery<T> {
 	) {}
 
 	get displayGroups(): readonly ActionGroup<T>[] {
-		const eligibleActions = this.sortedByDate(this.actions.filter((a) => this.isEligible(a)));
-		const pinnedActions = eligibleActions.filter((a) => this.pinnedAction(a));
-		const datedActions = eligibleActions.filter((a) => a.scheduled !== null || a.due !== null);
+		const eligibleActions = this.sortedByDisplayPriority(
+			this.actions.filter((a) => this.isEligible(a)),
+		);
 		const fixedGroups: readonly ActionGroup<T>[] = [
-			{ title: 'pinned', actions: pinnedActions },
-			{ title: 'dated', actions: datedActions },
+			{ title: 'pinned', actions: eligibleActions.filter((a) => this.pinnedAction(a)) },
+			{
+				title: 'dated',
+				actions: eligibleActions.filter((a) => a.scheduled !== null || a.due !== null),
+			},
+			this.defaultContextGroup(eligibleActions),
 		];
 
 		return [...fixedGroups, ...this.contextGroups(eligibleActions)].filter(
@@ -39,44 +45,12 @@ export class NextActionsQuery<T> {
 	}
 
 	private contextGroups(actions: readonly NextAction<T>[]): readonly ActionGroup<T>[] {
-		return [
-			...this.environmentContextGroups(actions),
-			...this.propertyContextGroups(actions),
-			this.defaultContextGroup(actions),
-		];
-	}
-
-	private environmentContextGroups(actions: readonly NextAction<T>[]): readonly ActionGroup<T>[] {
-		return this.classifier.environmentContexts
-			.map((context) => ({
-				title: '#' + context,
-				actions: actions.filter((a) =>
-					this.classifier
-						.environmentTagsOf(a)
-						.map((tag) => tag.toLowerCase())
-						.includes(context),
-				),
-			}))
-			.filter((group) => group.actions.length > 0);
-	}
-
-	private propertyContextGroups(actions: readonly NextAction<T>[]): readonly ActionGroup<T>[] {
-		return this.propertyContextTitles(actions).map((context) => ({
+		return this.contextOrder.contextsFor(actions).map((context) => ({
 			title: '#' + context,
-			actions: actions.filter((a) =>
-				this.classifier
-					.propertyTagsOf(a)
-					.map((tag) => tag.toLowerCase())
-					.includes(context),
+			actions: actions.filter((action) =>
+				action.context.map((tag) => tag.toLowerCase()).includes(context),
 			),
 		}));
-	}
-
-	private propertyContextTitles(actions: readonly NextAction<T>[]): readonly string[] {
-		return actions
-			.flatMap((a) => this.classifier.propertyTagsOf(a).map((tag) => tag.toLowerCase()))
-			.filter((tag, index, tags) => tags.indexOf(tag) === index)
-			.sort();
 	}
 
 	private defaultContextGroup(actions: readonly NextAction<T>[]): ActionGroup<T> {
@@ -90,14 +64,41 @@ export class NextActionsQuery<T> {
 		};
 	}
 
-	private sortedByDate(actions: readonly NextAction<T>[]): readonly NextAction<T>[] {
+	private sortedByDisplayPriority(actions: readonly NextAction<T>[]): readonly NextAction<T>[] {
 		return [...actions].sort((a, b) => {
-			const groupA = a.actionDate !== null ? 0 : 1;
-			const groupB = b.actionDate !== null ? 0 : 1;
+			const groupA = this.displayPriorityOf(a);
+			const groupB = this.displayPriorityOf(b);
 			if (groupA !== groupB) return groupA - groupB;
 			const dateA = a.actionDate ?? '';
 			const dateB = b.actionDate ?? '';
-			return dateA.localeCompare(dateB);
+			if (dateA !== dateB) return dateA.localeCompare(dateB);
+			const contextA = this.contextPriorityOf(a);
+			const contextB = this.contextPriorityOf(b);
+			if (contextA !== contextB) return contextA - contextB;
+			const unconfiguredContextA = this.contextOrder.bestUnconfiguredContextOf(a);
+			const unconfiguredContextB = this.contextOrder.bestUnconfiguredContextOf(b);
+			if (unconfiguredContextA !== unconfiguredContextB) {
+				return unconfiguredContextA.localeCompare(unconfiguredContextB);
+			}
+			return a.text.localeCompare(b.text);
 		});
+	}
+
+	private displayPriorityOf(action: NextAction<T>): number {
+		if (this.pinnedAction(action)) return 0;
+		if (action.scheduled !== null || action.due !== null) return 1;
+		if (
+			this.classifier.environmentTagsOf(action).length === 0 &&
+			this.classifier.propertyTagsOf(action).length === 0
+		) {
+			return 2;
+		}
+		return 3;
+	}
+
+	private contextPriorityOf(action: NextAction<T>): number {
+		const configuredIndex = this.contextOrder.bestConfiguredIndexOf(action);
+		if (configuredIndex !== null) return configuredIndex;
+		return this.contextOrder.contexts.length + 1;
 	}
 }
