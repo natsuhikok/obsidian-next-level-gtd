@@ -55,11 +55,11 @@ interface PluginStrings {
 	noNextActions: string;
 	pinNextAction: string;
 	unpinNextAction: string;
-	filterEnvAll: string;
-	filterEnvNoContext: string;
-	filterPropNoContext: string;
-	filterDateActionable: string;
-	filterDateWithDate: string;
+	dateVisibilityNear: string;
+	dateVisibilityAll: string;
+	nextActionGroupPinned: string;
+	nextActionGroupDated: string;
+	nextActionGroupDefault: string;
 	// Environment contexts settings
 	settingEnvContextsSectionName: string;
 	settingEnvContextsSectionDesc: string;
@@ -133,11 +133,11 @@ const en: PluginStrings = {
 	noNextActions: 'No available next actions.',
 	pinNextAction: 'Pin',
 	unpinNextAction: 'Unpin',
-	filterEnvAll: 'All environments',
-	filterEnvNoContext: 'Default',
-	filterPropNoContext: 'Default',
-	filterDateActionable: 'Actionable only',
-	filterDateWithDate: 'With date only',
+	dateVisibilityNear: 'Show near dates only',
+	dateVisibilityAll: 'Show all dates',
+	nextActionGroupPinned: 'Pinned',
+	nextActionGroupDated: 'Dated',
+	nextActionGroupDefault: 'Default',
 	settingEnvContextsSectionName: 'Environment Contexts',
 	settingEnvContextsSectionDesc:
 		'Tags that represent physical or situational environments (e.g. home, office). Tags not listed here are treated as property contexts.',
@@ -209,11 +209,11 @@ const ja: PluginStrings = {
 	noNextActions: '利用可能なネクストアクションはありません。',
 	pinNextAction: 'ピン留め',
 	unpinNextAction: 'ピン留めを解除',
-	filterEnvAll: 'すべての環境',
-	filterEnvNoContext: 'デフォルト',
-	filterPropNoContext: 'デフォルト',
-	filterDateActionable: '実行可能のみ',
-	filterDateWithDate: '日付ありのみ',
+	dateVisibilityNear: '近い日付のみ表示',
+	dateVisibilityAll: 'すべての日付を表示',
+	nextActionGroupPinned: 'ピン留め',
+	nextActionGroupDated: '日付あり',
+	nextActionGroupDefault: 'デフォルト',
 	settingEnvContextsSectionName: '環境コンテキスト',
 	settingEnvContextsSectionDesc:
 		'物理的・状況的な環境を表すタグ（例: home, office）。ここに登録されていないタグは性質コンテキストとして扱われます。',
