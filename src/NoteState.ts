@@ -1,13 +1,7 @@
 import { AlertType, Status } from './types';
 
 function isValidStatus(value: unknown): value is Status {
-	return (
-		value === '進行中' ||
-		value === '保留' ||
-		value === '休眠' ||
-		value === '完了' ||
-		value === '廃止'
-	);
+	return value === '進行中' || value === '保留' || value === '完了' || value === '廃止';
 }
 
 export class NoteState {
@@ -47,7 +41,7 @@ export class NoteState {
 
 	computeAlerts(
 		noteHasNextAction: boolean,
-		hasTodayOrFutureScheduledNextAction: boolean,
+		_hasTodayOrFutureScheduledNextAction: boolean,
 	): readonly AlertType[] {
 		if (this.isInbox || this.isInvalid) {
 			return ['frontmatterInvalid'];
@@ -63,9 +57,6 @@ export class NoteState {
 				: []),
 			...((this.status === '完了' || this.status === '廃止') && noteHasNextAction
 				? ['actionableDoneHasNextAction' as const]
-				: []),
-			...(this.status === '休眠' && !hasTodayOrFutureScheduledNextAction
-				? ['dormantNoFutureScheduledNextAction' as const]
 				: []),
 		];
 	}

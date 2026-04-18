@@ -6,7 +6,6 @@ interface PluginStrings {
 	openInboxViewCommand: string;
 	setStatusInProgressCommand: string;
 	setStatusOnHoldCommand: string;
-	setStatusDormantCommand: string;
 	setStatusCompletedCommand: string;
 	setStatusAbandonedCommand: string;
 	changeStatusCommand: string;
@@ -21,14 +20,12 @@ interface PluginStrings {
 	// Status labels
 	statusInProgress: string;
 	statusOnHold: string;
-	statusDormant: string;
 	statusCompleted: string;
 	statusAbandoned: string;
 	// Alert messages
 	alertReferenceHasNextAction: string;
 	alertActionableInProgressNoNextAction: string;
 	alertActionableDoneHasNextAction: string;
-	alertDormantNoFutureScheduledNextAction: string;
 	alertFrontmatterInvalid: string;
 	// Settings
 	settingInitSectionName: string;
@@ -58,11 +55,11 @@ interface PluginStrings {
 	noNextActions: string;
 	pinNextAction: string;
 	unpinNextAction: string;
-	filterEnvAll: string;
-	filterEnvNoContext: string;
-	filterPropNoContext: string;
-	filterDateActionable: string;
-	filterDateWithDate: string;
+	dateVisibilityNear: string;
+	dateVisibilityAll: string;
+	nextActionGroupPinned: string;
+	nextActionGroupDated: string;
+	nextActionGroupDefault: string;
 	// Environment contexts settings
 	settingEnvContextsSectionName: string;
 	settingEnvContextsSectionDesc: string;
@@ -90,7 +87,6 @@ const en: PluginStrings = {
 	openInboxViewCommand: 'Open Inbox',
 	setStatusInProgressCommand: 'Set status: In Progress',
 	setStatusOnHoldCommand: 'Set status: On Hold',
-	setStatusDormantCommand: 'Set status: Dormant',
 	setStatusCompletedCommand: 'Set status: Completed',
 	setStatusAbandonedCommand: 'Set status: Abandoned',
 	changeStatusCommand: 'Change status',
@@ -102,14 +98,11 @@ const en: PluginStrings = {
 	classificationActionable: 'Actionable',
 	statusInProgress: '進行中',
 	statusOnHold: '保留',
-	statusDormant: '休眠',
 	statusCompleted: '完了',
 	statusAbandoned: '廃止',
 	alertReferenceHasNextAction: 'Reference note has next action',
 	alertActionableInProgressNoNextAction: 'In-progress Actionable has no next action',
 	alertActionableDoneHasNextAction: 'Done/Abandoned Actionable has next action',
-	alertDormantNoFutureScheduledNextAction:
-		'Dormant Actionable has no scheduled next action for today or later',
 	alertFrontmatterInvalid: 'Invalid frontmatter (classification or status)',
 	settingInitSectionName: 'Initialize Vault',
 	settingInitSectionDesc:
@@ -140,11 +133,11 @@ const en: PluginStrings = {
 	noNextActions: 'No available next actions.',
 	pinNextAction: 'Pin',
 	unpinNextAction: 'Unpin',
-	filterEnvAll: 'All environments',
-	filterEnvNoContext: 'Default',
-	filterPropNoContext: 'Default',
-	filterDateActionable: 'Actionable only',
-	filterDateWithDate: 'With date only',
+	dateVisibilityNear: 'Show near dates only',
+	dateVisibilityAll: 'Show all dates',
+	nextActionGroupPinned: 'Pinned',
+	nextActionGroupDated: 'Dated',
+	nextActionGroupDefault: 'Default',
 	settingEnvContextsSectionName: 'Environment Contexts',
 	settingEnvContextsSectionDesc:
 		'Tags that represent physical or situational environments (e.g. home, office). Tags not listed here are treated as property contexts.',
@@ -170,7 +163,6 @@ const ja: PluginStrings = {
 	openInboxViewCommand: 'Inbox を開く',
 	setStatusInProgressCommand: 'ステータスを設定: 進行中',
 	setStatusOnHoldCommand: 'ステータスを設定: 保留',
-	setStatusDormantCommand: 'ステータスを設定: 休眠',
 	setStatusCompletedCommand: 'ステータスを設定: 完了',
 	setStatusAbandonedCommand: 'ステータスを設定: 廃止',
 	changeStatusCommand: 'ステータスを変更',
@@ -182,14 +174,11 @@ const ja: PluginStrings = {
 	classificationActionable: 'Actionable',
 	statusInProgress: '進行中',
 	statusOnHold: '保留',
-	statusDormant: '休眠',
 	statusCompleted: '完了',
 	statusAbandoned: '廃止',
 	alertReferenceHasNextAction: 'Reference ノートに next action があります',
 	alertActionableInProgressNoNextAction: '進行中の Actionable に next action がありません',
 	alertActionableDoneHasNextAction: '完了/廃止の Actionable に next action があります',
-	alertDormantNoFutureScheduledNextAction:
-		'休眠中の Actionable に今日以降の scheduled next action がありません',
 	alertFrontmatterInvalid: 'frontmatter の分類または状態が不正です',
 	settingInitSectionName: 'Vault の初期化',
 	settingInitSectionDesc:
@@ -220,11 +209,11 @@ const ja: PluginStrings = {
 	noNextActions: '利用可能なネクストアクションはありません。',
 	pinNextAction: 'ピン留め',
 	unpinNextAction: 'ピン留めを解除',
-	filterEnvAll: 'すべての環境',
-	filterEnvNoContext: 'デフォルト',
-	filterPropNoContext: 'デフォルト',
-	filterDateActionable: '実行可能のみ',
-	filterDateWithDate: '日付ありのみ',
+	dateVisibilityNear: '近い日付のみ表示',
+	dateVisibilityAll: 'すべての日付を表示',
+	nextActionGroupPinned: 'ピン留め',
+	nextActionGroupDated: '日付あり',
+	nextActionGroupDefault: 'デフォルト',
 	settingEnvContextsSectionName: '環境コンテキスト',
 	settingEnvContextsSectionDesc:
 		'物理的・状況的な環境を表すタグ（例: home, office）。ここに登録されていないタグは性質コンテキストとして扱われます。',
