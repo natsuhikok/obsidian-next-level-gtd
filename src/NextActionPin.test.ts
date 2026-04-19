@@ -27,4 +27,25 @@ describe('NextActionPin', () => {
 
 		expect(pin.matches(action({ name: 'project.md' }, '別のこと'))).toBe(false);
 	});
+
+	it('保存されたファイル名とアクション名から復元できる', () => {
+		const pin = NextActionPin.fromStoredValue({
+			fileName: 'project.md',
+			actionName: '次にやること',
+		});
+
+		expect(pin).toEqual(new NextActionPin('project.md', '次にやること'));
+	});
+
+	it('保存された値が不正な場合は復元しない', () => {
+		expect(NextActionPin.fromStoredValue({ fileName: 'project.md' })).toBeNull();
+		expect(NextActionPin.fromStoredValue(null)).toBeNull();
+	});
+
+	it('同じファイル名とアクション名のピンとして比較できる', () => {
+		const pin = new NextActionPin('project.md', '次にやること');
+
+		expect(pin.equals(new NextActionPin('project.md', '次にやること'))).toBe(true);
+		expect(pin.equals(new NextActionPin('other.md', '次にやること'))).toBe(false);
+	});
 });
