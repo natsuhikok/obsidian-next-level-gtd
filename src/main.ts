@@ -6,6 +6,7 @@ import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
 import { NoteEditor } from './NoteEditor';
+import { NextActionPin } from './NextActionPin';
 import { ExcludedFolder, Status } from './types';
 
 export default class NextLevelGtdPlugin extends Plugin {
@@ -216,6 +217,16 @@ export default class NextLevelGtdPlugin extends Plugin {
 		const pinnedFileNames = Array.isArray(rawPinnedFileNames)
 			? rawPinnedFileNames.filter((v): v is string => typeof v === 'string' && v !== '')
 			: [];
+		const rawPinnedActionPins = raw?.['pinnedActionPins'];
+		const pinnedActionPins = Array.isArray(rawPinnedActionPins)
+			? rawPinnedActionPins
+					.map((value) => NextActionPin.fromStoredValue(value))
+					.filter((pin): pin is NextActionPin => pin !== null)
+					.filter(
+						(pin, index, pins) =>
+							pins.findIndex((other) => other.equals(pin)) === index,
+					)
+			: [];
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			...(raw as Partial<NextLevelGtdSettings> | null),
@@ -224,6 +235,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			contextOrder,
 			environmentContexts,
 			pinnedFileNames,
+			pinnedActionPins,
 		};
 	}
 
