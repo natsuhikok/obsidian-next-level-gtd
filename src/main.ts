@@ -1,7 +1,7 @@
 import { Plugin, TFile } from 'obsidian';
 import { DEFAULT_SETTINGS, NextLevelGtdSettings, NextLevelGtdSettingTab } from './settings';
 import { t } from './i18n';
-import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
+import { FileView } from './ui/FileView';
 import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
@@ -21,11 +21,11 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 		this.addSettingTab(settingTab);
 
-		this.registerView(VIEW_TYPE_INBOX, (leaf) => new InboxView(leaf, this));
+		this.registerView(FileView.viewType, (leaf) => new FileView(leaf, this));
 		this.registerView(VIEW_TYPE_NEXT_ACTIONS, (leaf) => new NextActionsView(leaf, this));
 
-		this.addRibbonIcon('inbox', t('openInboxRibbon'), () => {
-			this.activateView(VIEW_TYPE_INBOX).catch(console.error);
+		this.addRibbonIcon('folder-open', t('openFileViewRibbon'), () => {
+			this.activateView(FileView.viewType).catch(console.error);
 		});
 
 		this.addRibbonIcon('list-checks', t('openNextActionsRibbon'), () => {
@@ -33,10 +33,10 @@ export default class NextLevelGtdPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'open-inbox-view',
-			name: t('openInboxViewCommand'),
+			id: 'open-file-view',
+			name: t('openFileViewCommand'),
 			callback: () => {
-				this.activateView(VIEW_TYPE_INBOX).catch(console.error);
+				this.activateView(FileView.viewType).catch(console.error);
 			},
 		});
 
@@ -129,7 +129,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 				if (activeFile?.path === changedFile.path) {
 					this.bannerRenderer.update(changedFile);
 				}
-				this.notifyInboxView(changedFile);
+				this.notifyFileView(changedFile);
 				this.notifyNextActionsView(changedFile);
 			}),
 		);
@@ -151,7 +151,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 		this.registerEvent(
 			this.app.vault.on('modify', (abstractFile) => {
 				if (abstractFile instanceof TFile) {
-					this.notifyInboxView(abstractFile);
+					this.notifyFileView(abstractFile);
 					this.notifyNextActionsView(abstractFile);
 					this.bannerRenderer.updateAllViewsForFile(abstractFile).catch(console.error);
 				}
@@ -161,7 +161,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 		this.registerEvent(
 			this.app.vault.on('delete', (abstractFile) => {
 				if (abstractFile instanceof TFile) {
-					this.notifyInboxViewDelete(abstractFile.path);
+					this.notifyFileViewDelete(abstractFile.path);
 					this.notifyNextActionsViewDelete(abstractFile.path);
 				}
 			}),
@@ -170,9 +170,9 @@ export default class NextLevelGtdPlugin extends Plugin {
 		this.registerEvent(
 			this.app.vault.on('rename', (abstractFile, oldPath) => {
 				if (abstractFile instanceof TFile) {
-					this.notifyInboxViewDelete(oldPath);
+					this.notifyFileViewDelete(oldPath);
 					this.notifyNextActionsViewDelete(oldPath);
-					this.notifyInboxView(abstractFile);
+					this.notifyFileView(abstractFile);
 					this.notifyNextActionsView(abstractFile);
 				}
 			}),
@@ -213,6 +213,10 @@ export default class NextLevelGtdPlugin extends Plugin {
 			typeof rawEvaluateStructuralNextActionBlocking === 'boolean'
 				? rawEvaluateStructuralNextActionBlocking
 				: DEFAULT_SETTINGS.evaluateStructuralNextActionBlocking;
+		const rawPinnedFileNames = raw?.['pinnedFileNames'];
+		const pinnedFileNames = Array.isArray(rawPinnedFileNames)
+			? rawPinnedFileNames.filter((v): v is string => typeof v === 'string' && v !== '')
+			: [];
 		const rawPinnedActionPins = raw?.['pinnedActionPins'];
 		const pinnedActionPins = Array.isArray(rawPinnedActionPins)
 			? rawPinnedActionPins
@@ -230,6 +234,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			excludedFolders,
 			contextOrder,
 			environmentContexts,
+			pinnedFileNames,
 			pinnedActionPins,
 		};
 	}
@@ -251,10 +256,10 @@ export default class NextLevelGtdPlugin extends Plugin {
 		await workspace.revealLeaf(leaf);
 	}
 
-	private notifyInboxView(file: TFile): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_INBOX)) {
+	private notifyFileView(file: TFile): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(FileView.viewType)) {
 			const view = leaf.view;
-			if (view instanceof InboxView) {
+			if (view instanceof FileView) {
 				view.onFileChange(file).catch(console.error);
 			}
 		}
@@ -269,10 +274,10 @@ export default class NextLevelGtdPlugin extends Plugin {
 		}
 	}
 
-	private notifyInboxViewDelete(path: string): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_INBOX)) {
+	private notifyFileViewDelete(path: string): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(FileView.viewType)) {
 			const view = leaf.view;
-			if (view instanceof InboxView) {
+			if (view instanceof FileView) {
 				view.onFileDelete(path);
 			}
 		}

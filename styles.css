@@ -36,9 +36,28 @@
 	font-weight: 600;
 }
 
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title {
+.workspace-leaf-content[data-type='gtd-files'] .view-content {
+	padding-left: 0;
+	padding-right: 0;
+	padding-top: 0;
+}
+
+.workspace-leaf-content[data-type='gtd-files'] .gtd-tab-bar {
+	padding: 6px 8px 4px;
+}
+
+.gtd-file-filter {
+	padding: 0 8px 6px;
+}
+
+.gtd-file-filter-input {
+	width: 100%;
+}
+
+.workspace-leaf-content[data-type='gtd-files'] .nav-file-title {
 	display: flex;
 	align-items: center;
+	gap: 4px;
 	border-radius: var(--radius-s);
 	color: var(--nav-item-color);
 	cursor: var(--cursor);
@@ -52,21 +71,46 @@
 	transition: background var(--anim-duration-fast) var(--anim-motion-smoothing);
 }
 
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title:hover {
+.workspace-leaf-content[data-type='gtd-files'] .nav-file-title:hover {
 	background-color: var(--nav-item-background-hover);
 	color: var(--nav-item-color-hover);
 }
 
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title.is-active,
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title.is-active:hover {
+.workspace-leaf-content[data-type='gtd-files'] .nav-file-title.is-active,
+.workspace-leaf-content[data-type='gtd-files'] .nav-file-title.is-active:hover {
 	background-color: var(--nav-item-background-active);
 	color: var(--nav-item-color-active);
 	font-weight: var(--nav-item-weight-active);
 }
 
-.workspace-leaf-content[data-type='gtd-inbox'] .nav-file-title-content {
+.workspace-leaf-content[data-type='gtd-files'] .nav-file-title-content {
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.gtd-file-pin {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 20px;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: none;
+	box-shadow: none;
+	background: transparent;
+	color: var(--text-faint);
+	cursor: pointer;
+}
+
+.gtd-file-pin:hover,
+.gtd-file-pin.is-pinned {
+	color: var(--interactive-accent);
+}
+
+.gtd-file-pin .svg-icon {
+	width: 14px;
+	height: 14px;
 }
 
 .gtd-alert-callout {

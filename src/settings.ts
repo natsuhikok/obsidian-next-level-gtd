@@ -9,8 +9,8 @@ import type { NextActionPin } from './NextActionPin';
 import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian';
 import { ExcludedFolder } from './types';
 import { ConfirmModal } from './ui/ConfirmModal';
+import { FileView } from './ui/FileView';
 import { FolderSuggest } from './ui/FolderSuggest';
-import { InboxView, VIEW_TYPE_INBOX } from './ui/InboxView';
 import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 
 export interface NextLevelGtdSettings {
@@ -19,6 +19,7 @@ export interface NextLevelGtdSettings {
 	excludedFolders: readonly ExcludedFolder[];
 	contextOrder: readonly string[];
 	environmentContexts: readonly string[];
+	pinnedFileNames: readonly string[];
 	pinnedActionPins: readonly NextActionPin[];
 }
 
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS: NextLevelGtdSettings = {
 	excludedFolders: [],
 	contextOrder: [],
 	environmentContexts: [],
+	pinnedFileNames: [],
 	pinnedActionPins: [],
 };
 
@@ -113,7 +115,7 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 						.setTooltip(t('settingExcludedFoldersRemoveButton'))
 						.onClick(async () => {
 							await manager.remove(ef.folder);
-							this.refreshInboxView();
+							this.refreshFileView();
 							this.display();
 						}),
 				);
@@ -133,7 +135,7 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 					.replace(/^\/|\/$/, '');
 				if (raw === '' || manager.includes(raw)) return;
 				await manager.add(raw);
-				this.refreshInboxView();
+				this.refreshFileView();
 				this.display();
 			}),
 		);
@@ -241,9 +243,9 @@ export class NextLevelGtdSettingTab extends PluginSettingTab {
 			);
 	}
 
-	private refreshInboxView(): void {
-		this.app.workspace.getLeavesOfType(VIEW_TYPE_INBOX).forEach((leaf) => {
-			(leaf.view as InboxView).refresh().catch(console.error);
+	private refreshFileView(): void {
+		this.app.workspace.getLeavesOfType(FileView.viewType).forEach((leaf) => {
+			(leaf.view as FileView).refresh().catch(console.error);
 		});
 	}
 

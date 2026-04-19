@@ -12,6 +12,10 @@ export class GTDNote {
 		return this.state.isInbox;
 	}
 
+	get isReference() {
+		return this.state.isReference;
+	}
+
 	get hasNextAction() {
 		return this.collection.hasNextAction;
 	}
@@ -33,6 +37,10 @@ export class GTDNote {
 			this.hasNextAction,
 			this.hasTodayOrFutureScheduledNextAction,
 		);
+	}
+
+	hasActionableStatus(status: '進行中' | '保留'): boolean {
+		return this.state.isActionable && this.state.status === status;
 	}
 
 	private constructor(
