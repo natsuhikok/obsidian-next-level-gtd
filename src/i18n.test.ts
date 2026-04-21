@@ -17,7 +17,7 @@ describe('t()', () => {
 	it('日本語ロケールで日本語文字列を返す', () => {
 		vi.mocked(moment.locale).mockReturnValue('ja');
 		expect(t('openFileViewCommand')).toBe('ファイルを開く');
-		expect(t('fileViewTabReference')).toBe('資料');
+		expect(t('fileViewTabRecent')).toBe('最近');
 	});
 
 	it('未知のロケールは英語にフォールバックする', () => {
