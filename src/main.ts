@@ -1,10 +1,11 @@
-import { Plugin, TFile } from 'obsidian';
+import { MarkdownView, Plugin, TFile, type Editor, type MarkdownFileInfo } from 'obsidian';
 import { DEFAULT_SETTINGS, NextLevelGtdSettings, NextLevelGtdSettingTab } from './settings';
 import { t } from './i18n';
 import { FileView } from './ui/FileView';
 import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
 import { NoteEditor } from './NoteEditor';
+import { NoteContent } from './NoteContent';
 import { NextActionPin } from './NextActionPin';
 import { RecentFileHistory } from './RecentFileHistory';
 import { ExcludedFolder } from './types';
@@ -13,6 +14,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
 	private bannerRenderer: BannerRenderer;
 	private editorChangeTimer: ReturnType<typeof setTimeout> | null = null;
+	private editorContentByPath: Record<string, string> = {};
 
 	async onload() {
 		await this.loadSettings();
@@ -48,6 +50,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {
+				this.rememberActiveEditorContent();
 				this.bannerRenderer.renderForActiveView();
 			}),
 		);
@@ -60,6 +63,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on('layout-change', () => {
+				this.rememberActiveEditorContent();
 				this.bannerRenderer.renderForActiveView();
 			}),
 		);
@@ -76,7 +80,8 @@ export default class NextLevelGtdPlugin extends Plugin {
 		);
 
 		this.registerEvent(
-			this.app.workspace.on('editor-change', () => {
+			this.app.workspace.on('editor-change', (editor, info) => {
+				this.releaseNextStoppedOrderedAction(editor, info);
 				if (this.editorChangeTimer != null) {
 					clearTimeout(this.editorChangeTimer);
 				}
@@ -88,6 +93,8 @@ export default class NextLevelGtdPlugin extends Plugin {
 				}, 300);
 			}),
 		);
+
+		this.rememberActiveEditorContent();
 
 		this.registerEvent(
 			this.app.vault.on('modify', (abstractFile) => {
@@ -206,6 +213,36 @@ export default class NextLevelGtdPlugin extends Plugin {
 				view.onFileChange(file).catch(console.error);
 			}
 		}
+	}
+
+	private rememberActiveEditorContent(): void {
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (view?.file == null) return;
+		this.editorContentByPath = {
+			...this.editorContentByPath,
+			[view.file.path]: view.editor.getValue(),
+		};
+	}
+
+	private releaseNextStoppedOrderedAction(
+		editor: Editor,
+		info: MarkdownView | MarkdownFileInfo,
+	): void {
+		const file = info.file;
+		if (file == null) return;
+
+		const current = new NoteContent(editor.getValue());
+		const previousValue = this.editorContentByPath[file.path];
+		if (previousValue == null) {
+			this.editorContentByPath = { ...this.editorContentByPath, [file.path]: current.value };
+			return;
+		}
+
+		const updated = current.releaseNextStoppedOrderedAction(new NoteContent(previousValue));
+		if (updated.value !== current.value) {
+			editor.setValue(updated.value);
+		}
+		this.editorContentByPath = { ...this.editorContentByPath, [file.path]: updated.value };
 	}
 
 	private notifyNextActionsView(file: TFile): void {

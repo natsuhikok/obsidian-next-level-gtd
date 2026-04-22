@@ -63,3 +63,76 @@ describe('NoteContent.cancelAllNextActions', () => {
 		expect(new NoteContent('').cancelAllNextActions().value).toBe('');
 	});
 });
+
+describe('NoteContent.releaseNextStoppedOrderedAction', () => {
+	it('完了した番号付きタスクの次の中止タスクを未完了にする', () => {
+		const previous = new NoteContent('1. [ ] 最初\n2. [-] 次');
+		const current = new NoteContent('1. [x] 最初\n2. [-] 次');
+
+		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(
+			'1. [x] 最初\n2. [ ] 次',
+		);
+	});
+
+	it('大文字で完了した番号付きタスクの次の中止タスクを未完了にする', () => {
+		const previous = new NoteContent('1. [ ] 最初\n2. [-] 次');
+		const current = new NoteContent('1. [X] 最初\n2. [-] 次');
+
+		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(
+			'1. [X] 最初\n2. [ ] 次',
+		);
+	});
+
+	it('直後の中止タスクだけを未完了にする', () => {
+		const previous = new NoteContent('1. [ ] 最初\n2. [-] 次\n3. [-] さらに次');
+		const current = new NoteContent('1. [x] 最初\n2. [-] 次\n3. [-] さらに次');
+
+		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(
+			'1. [x] 最初\n2. [ ] 次\n3. [-] さらに次',
+		);
+	});
+
+	it('次の番号付きタスクが中止ではない場合は変更しない', () => {
+		const previous = new NoteContent('1. [ ] 最初\n2. [ ] 次');
+		const current = new NoteContent('1. [x] 最初\n2. [ ] 次');
+
+		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(current.value);
+	});
+
+	it('箇条書きの中止タスクは変更しない', () => {
+		const previous = new NoteContent('- [ ] 最初\n- [-] 次');
+		const current = new NoteContent('- [x] 最初\n- [-] 次');
+
+		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(current.value);
+	});
+
+	it('完了した番号付きタスクの子タスクは変更しない', () => {
+		const previous = new NoteContent('1. [ ] 最初\n   - [-] 子\n2. [-] 次');
+		const current = new NoteContent('1. [x] 最初\n   - [-] 子\n2. [-] 次');
+
+		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(
+			'1. [x] 最初\n   - [-] 子\n2. [ ] 次',
+		);
+	});
+
+	it('別のリストにある中止タスクは変更しない', () => {
+		const previous = new NoteContent('1. [ ] 最初\n\n1. [-] 次');
+		const current = new NoteContent('1. [x] 最初\n\n1. [-] 次');
+
+		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(current.value);
+	});
+
+	it('前回から新しく完了していない場合は変更しない', () => {
+		const previous = new NoteContent('1. [x] 最初\n2. [-] 次');
+		const current = new NoteContent('1. [x] 最初\n2. [-] 次');
+
+		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(current.value);
+	});
+
+	it('コードブロック内の中止タスクは変更しない', () => {
+		const previous = new NoteContent('1. [ ] 最初\n```\n2. [-] 次\n```');
+		const current = new NoteContent('1. [x] 最初\n```\n2. [-] 次\n```');
+
+		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(current.value);
+	});
+});
