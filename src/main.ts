@@ -4,11 +4,10 @@ import { t } from './i18n';
 import { FileView } from './ui/FileView';
 import { NextActionsView, VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 import { BannerRenderer } from './ui/BannerRenderer';
-import { StatusChangeModal } from './ui/StatusChangeModal';
 import { NoteEditor } from './NoteEditor';
 import { NextActionPin } from './NextActionPin';
 import { RecentFileHistory } from './RecentFileHistory';
-import { ExcludedFolder, Status } from './types';
+import { ExcludedFolder } from './types';
 
 export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
@@ -31,71 +30,6 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 		this.addRibbonIcon('list-checks', t('openNextActionsRibbon'), () => {
 			this.activateView(VIEW_TYPE_NEXT_ACTIONS).catch(console.error);
-		});
-
-		this.addCommand({
-			id: 'open-file-view',
-			name: t('openFileViewCommand'),
-			callback: () => {
-				this.activateView(FileView.viewType).catch(console.error);
-			},
-		});
-
-		this.addCommand({
-			id: 'open-next-actions-view',
-			name: t('openNextActionsViewCommand'),
-			callback: () => {
-				this.activateView(VIEW_TYPE_NEXT_ACTIONS).catch(console.error);
-			},
-		});
-
-		this.addCommand({
-			id: 'change-status',
-			name: t('changeStatusCommand'),
-			callback: () => {
-				const file = this.app.workspace.getActiveFile();
-				if (file == null) return;
-				new StatusChangeModal(this.app, (status: Status) => {
-					void new NoteEditor(this.app).setState(file, status).then(() => {
-						this.bannerRenderer.update(file);
-					});
-				}).open();
-			},
-		});
-
-		const statusCommands: { id: string; name: string; status: Status }[] = [
-			{
-				id: 'set-status-in-progress',
-				name: t('setStatusInProgressCommand'),
-				status: '進行中',
-			},
-			{ id: 'set-status-on-hold', name: t('setStatusOnHoldCommand'), status: '保留' },
-			{ id: 'set-status-completed', name: t('setStatusCompletedCommand'), status: '完了' },
-			{ id: 'set-status-abandoned', name: t('setStatusAbandonedCommand'), status: '廃止' },
-		];
-
-		statusCommands.forEach(({ id, name, status }) => {
-			this.addCommand({
-				id,
-				name,
-				callback: () => {
-					const file = this.app.workspace.getActiveFile();
-					if (file == null) return;
-					void new NoteEditor(this.app).setState(file, status).then(() => {
-						this.bannerRenderer.update(file);
-					});
-				},
-			});
-		});
-
-		this.addCommand({
-			id: 'cancel-all-next-actions',
-			name: t('cancelAllNextActionsCommand'),
-			callback: () => {
-				const file = this.app.workspace.getActiveFile();
-				if (file == null) return;
-				void new NoteEditor(this.app).cancelAllNextActions(file);
-			},
 		});
 
 		this.registerEvent(
