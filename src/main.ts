@@ -7,6 +7,7 @@ import { BannerRenderer } from './ui/BannerRenderer';
 import { StatusChangeModal } from './ui/StatusChangeModal';
 import { NoteEditor } from './NoteEditor';
 import { NextActionPin } from './NextActionPin';
+import { RecentFileHistory } from './RecentFileHistory';
 import { ExcludedFolder, Status } from './types';
 
 export default class NextLevelGtdPlugin extends Plugin {
@@ -114,6 +115,12 @@ export default class NextLevelGtdPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {
 				this.bannerRenderer.renderForActiveView();
+			}),
+		);
+
+		this.registerEvent(
+			this.app.workspace.on('file-open', (file) => {
+				this.recordOpenedFileInRecentHistory(file);
 			}),
 		);
 
@@ -227,6 +234,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 							pins.findIndex((other) => other.equals(pin)) === index,
 					)
 			: [];
+		const recentFilePaths = RecentFileHistory.fromStoredValue(raw?.['recentFilePaths']);
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			...(raw as Partial<NextLevelGtdSettings> | null),
@@ -236,6 +244,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			environmentContexts,
 			pinnedFileNames,
 			pinnedActionPins,
+			recentFilePaths,
 		};
 	}
 
@@ -288,6 +297,31 @@ export default class NextLevelGtdPlugin extends Plugin {
 			const view = leaf.view;
 			if (view instanceof NextActionsView) {
 				view.onFileDelete(path);
+			}
+		}
+	}
+
+	private recordOpenedFileInRecentHistory(file: TFile | null): void {
+		if (file == null || file.extension !== 'md' || this.isExcludedFromFileView(file)) return;
+		const recentFilePaths = this.settings.recentFilePaths.record(file);
+		if (recentFilePaths.equals(this.settings.recentFilePaths)) return;
+		this.settings = {
+			...this.settings,
+			recentFilePaths,
+		};
+		this.saveSettings().catch(console.error);
+		this.notifyRecentFileHistoryChange();
+	}
+
+	private isExcludedFromFileView(file: TFile): boolean {
+		return this.settings.excludedFolders.some((ef) => file.path.startsWith(ef.folder + '/'));
+	}
+
+	private notifyRecentFileHistoryChange(): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(FileView.viewType)) {
+			const view = leaf.view;
+			if (view instanceof FileView) {
+				view.onRecentFileHistoryChange();
 			}
 		}
 	}

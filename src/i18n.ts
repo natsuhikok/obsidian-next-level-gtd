@@ -73,6 +73,7 @@ interface PluginStrings {
 	fileViewTabOnHold: string;
 	fileViewTabReference: string;
 	fileViewTabAll: string;
+	fileViewTabRecent: string;
 	fileViewFilterPlaceholder: string;
 	pinFile: string;
 	unpinFile: string;
@@ -168,6 +169,7 @@ const en: PluginStrings = {
 	fileViewTabOnHold: '保留',
 	fileViewTabReference: '資料',
 	fileViewTabAll: 'All',
+	fileViewTabRecent: 'Recent',
 	fileViewFilterPlaceholder: 'Filter by file name',
 	pinFile: 'Pin file',
 	unpinFile: 'Unpin file',
@@ -261,6 +263,7 @@ const ja: PluginStrings = {
 	fileViewTabOnHold: '保留',
 	fileViewTabReference: '資料',
 	fileViewTabAll: 'すべて',
+	fileViewTabRecent: '最近',
 	fileViewFilterPlaceholder: 'ファイル名で絞り込み',
 	pinFile: 'ファイルをピン留め',
 	unpinFile: 'ファイルのピン留めを解除',

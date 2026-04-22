@@ -4,12 +4,13 @@ import { GTDNote } from '../GTDNote';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
 
-type FileTabId = 'inbox' | 'inProgress' | 'onHold' | 'reference' | 'all';
+type FileTabId = 'inbox' | 'all' | 'recent' | 'inProgress';
 
 type FileTab = {
 	readonly id: FileTabId;
 	readonly label: string;
 	readonly notes: readonly GTDNote[];
+	readonly usePinnedOrder: boolean;
 };
 
 export class FileView extends ItemView {
@@ -74,6 +75,10 @@ export class FileView extends ItemView {
 		this.render();
 	}
 
+	onRecentFileHistoryChange() {
+		this.render();
+	}
+
 	async refresh() {
 		await this.fullScan();
 		this.render();
@@ -112,26 +117,27 @@ export class FileView extends ItemView {
 				id: 'inbox',
 				label: t('fileViewTabInbox'),
 				notes: notes.filter((note) => note.isInbox || note.alerts.length > 0),
-			},
-			{
-				id: 'inProgress',
-				label: t('fileViewTabInProgress'),
-				notes: notes.filter((note) => note.hasActionableStatus('進行中')),
-			},
-			{
-				id: 'onHold',
-				label: t('fileViewTabOnHold'),
-				notes: notes.filter((note) => note.hasActionableStatus('保留')),
-			},
-			{
-				id: 'reference',
-				label: t('fileViewTabReference'),
-				notes: notes.filter((note) => note.isReference),
+				usePinnedOrder: true,
 			},
 			{
 				id: 'all',
 				label: t('fileViewTabAll'),
 				notes,
+				usePinnedOrder: true,
+			},
+			{
+				id: 'recent',
+				label: t('fileViewTabRecent'),
+				notes: this.plugin.settings.recentFilePaths.filePaths
+					.map((filePath) => this.noteCache[filePath])
+					.filter((note): note is GTDNote => note != null),
+				usePinnedOrder: false,
+			},
+			{
+				id: 'inProgress',
+				label: t('fileViewTabInProgress'),
+				notes: notes.filter((note) => note.hasActionableStatus('進行中')),
+				usePinnedOrder: true,
 			},
 		];
 	}
@@ -189,7 +195,8 @@ export class FileView extends ItemView {
 	private renderFileList() {
 		if (this.listContainer == null) return;
 		this.listContainer.empty();
-		const notes = this.filteredNotes(this.selectedTab.notes);
+		const selectedTab = this.selectedTab;
+		const notes = this.filteredNotes(selectedTab.notes, selectedTab.usePinnedOrder);
 
 		if (notes.length === 0) {
 			this.listContainer.createEl('p', { text: t('noFilesInSelectedTab'), cls: 'gtd-empty' });
@@ -223,12 +230,13 @@ export class FileView extends ItemView {
 		});
 	}
 
-	private filteredNotes(notes: readonly GTDNote[]): readonly GTDNote[] {
+	private filteredNotes(notes: readonly GTDNote[], usePinnedOrder: boolean): readonly GTDNote[] {
 		const normalizedFilter = this.filterText.trim().toLowerCase();
 		const filtered =
 			normalizedFilter === ''
 				? notes
 				: notes.filter((note) => note.file.name.toLowerCase().includes(normalizedFilter));
+		if (!usePinnedOrder) return filtered;
 		return [
 			...filtered.filter((note) => this.isPinned(note.file)),
 			...filtered.filter((note) => !this.isPinned(note.file)),
