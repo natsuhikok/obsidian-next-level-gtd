@@ -17,26 +17,4 @@ export class NoteContent {
 				.join(''),
 		);
 	}
-
-	completeNextAction(actionText: string): NoteContent {
-		function escapeRegExp(s: string): string {
-			return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-		}
-		const lineRe = new RegExp(
-			`^(\\s*(?:[-*+]|\\d+\\.)\\s+)\\[ \\](\\s*${escapeRegExp(actionText)})$`,
-			'm',
-		);
-		const { result } = this.segments.reduce<{
-			readonly result: readonly string[];
-			readonly replaced: boolean;
-		}>(
-			(acc, part, i) => {
-				if (i % 2 !== 0 || acc.replaced) return { ...acc, result: [...acc.result, part] };
-				const updated = part.replace(lineRe, '$1[x]$2');
-				return { result: [...acc.result, updated], replaced: updated !== part };
-			},
-			{ result: [], replaced: false },
-		);
-		return new NoteContent(result.join(''));
-	}
 }
