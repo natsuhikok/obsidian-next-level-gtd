@@ -22,10 +22,4 @@ export class NoteEditor {
 		const updated = new NoteContent(raw).cancelAllNextActions();
 		await this.app.vault.modify(file, updated.value);
 	}
-
-	async completeNextAction(file: TFile, actionText: string): Promise<void> {
-		const raw = await this.app.vault.read(file);
-		const updated = new NoteContent(raw).completeNextAction(actionText);
-		await this.app.vault.modify(file, updated.value);
-	}
 }

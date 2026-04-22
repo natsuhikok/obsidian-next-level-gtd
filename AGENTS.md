@@ -7,6 +7,7 @@ This repository is an Obsidian plugin for GTD workflows. Keep changes small, foc
 Use npm. CI installs with `npm ci` and runs:
 
 - `npm run build --if-present`
+- `npm run format`
 - `npm run check`
 - `npm run test`
 
