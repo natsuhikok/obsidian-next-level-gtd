@@ -118,4 +118,56 @@ describe('NoteContent.completeNextAction', () => {
 			'- [x] タスク (重要) [A]\n',
 		);
 	});
+
+	it('番号付きリストの直後の中止アクションを未完了に戻す', () => {
+		const content = '1. [ ] タスクA 📅 2026-04-01\n2. [-] タスクB #home\n';
+		expect(new NoteContent(content).completeNextAction('タスクA 📅 2026-04-01').value).toBe(
+			'1. [x] タスクA 📅 2026-04-01\n2. [ ] タスクB #home\n',
+		);
+	});
+
+	it('番号付きリストの直後以外の中止アクションは未完了に戻さない', () => {
+		const content = '1. [ ] タスクA\n2. [-] タスクB\n3. [-] タスクC\n';
+		expect(new NoteContent(content).completeNextAction('タスクA').value).toBe(
+			'1. [x] タスクA\n2. [ ] タスクB\n3. [-] タスクC\n',
+		);
+	});
+
+	it('同じ階層ではない中止アクションは未完了に戻さない', () => {
+		const childContent = '1. [ ] タスクA\n  1. [-] 子タスク\n';
+		expect(new NoteContent(childContent).completeNextAction('タスクA').value).toBe(
+			'1. [x] タスクA\n  1. [-] 子タスク\n',
+		);
+
+		const parentContent = '  1. [ ] 子タスク\n1. [-] 親タスク\n';
+		expect(new NoteContent(parentContent).completeNextAction('子タスク').value).toBe(
+			'  1. [x] 子タスク\n1. [-] 親タスク\n',
+		);
+	});
+
+	it('リスト外の内容で分かれた中止アクションは未完了に戻さない', () => {
+		const content = '1. [ ] タスクA\n説明\n2. [-] タスクB\n';
+		expect(new NoteContent(content).completeNextAction('タスクA').value).toBe(
+			'1. [x] タスクA\n説明\n2. [-] タスクB\n',
+		);
+	});
+
+	it('直後が中止以外の状態なら変更しない', () => {
+		const uncheckedContent = '1. [ ] タスクA\n2. [ ] タスクB\n';
+		expect(new NoteContent(uncheckedContent).completeNextAction('タスクA').value).toBe(
+			'1. [x] タスクA\n2. [ ] タスクB\n',
+		);
+
+		const checkedContent = '1. [ ] タスクA\n2. [X] タスクB\n';
+		expect(new NoteContent(checkedContent).completeNextAction('タスクA').value).toBe(
+			'1. [x] タスクA\n2. [X] タスクB\n',
+		);
+	});
+
+	it('箇条書きリストの中止アクションは未完了に戻さない', () => {
+		const content = '- [ ] タスクA\n- [-] タスクB\n';
+		expect(new NoteContent(content).completeNextAction('タスクA').value).toBe(
+			'- [x] タスクA\n- [-] タスクB\n',
+		);
+	});
 });
