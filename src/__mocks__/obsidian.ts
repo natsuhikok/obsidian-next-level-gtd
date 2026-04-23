@@ -1,15 +1,28 @@
 import { vi } from 'vitest';
 
-const createElement = () =>
-	({
+const createElement = () => {
+	let attributes: Record<string, string> = {};
+	let classes: readonly string[] = [];
+	return {
 		empty: vi.fn(),
 		createDiv: vi.fn(() => createElement()),
 		createEl: vi.fn(() => createElement()),
-		addClass: vi.fn(),
-		removeClass: vi.fn(),
+		addClass: vi.fn((className: string) => {
+			classes = classes.includes(className) ? classes : [...classes, className];
+		}),
+		removeClass: vi.fn((className: string) => {
+			classes = classes.filter((current) => current !== className);
+		}),
+		hasClass: vi.fn((className: string) => classes.includes(className)),
+		remove: vi.fn(),
+		setAttribute: vi.fn((name: string, value: string) => {
+			attributes = { ...attributes, [name]: value };
+		}),
+		getAttribute: vi.fn((name: string) => attributes[name] ?? null),
 		setText: vi.fn(),
 		appendChild: vi.fn(),
-	}) as unknown as HTMLElement;
+	} as unknown as HTMLElement;
+};
 
 export const moment = Object.assign(
 	vi.fn(() => ({ format: vi.fn(() => '2026-04-01') })),
@@ -20,6 +33,8 @@ export const moment = Object.assign(
 
 export class TFile {
 	declare path: string;
+	declare name: string;
+	declare basename: string;
 	declare extension: string;
 }
 
@@ -39,6 +54,9 @@ export class MarkdownView {
 	readonly editor = {
 		getValue: vi.fn(() => ''),
 	};
+	readonly addAction = vi.fn(
+		(_icon: string, _title: string, _callback: (evt: MouseEvent) => unknown) => createElement(),
+	);
 }
 
 export class App {

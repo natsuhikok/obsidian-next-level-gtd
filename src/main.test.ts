@@ -101,7 +101,15 @@ describe('ノート編集時の番号付きタスク更新', () => {
 			getValue: vi.fn(() => editorValue),
 			setValue,
 		} as unknown as Editor;
-		const view = { file, editor } as MarkdownView;
+		const view = {
+			file,
+			editor,
+			addAction: vi.fn(() => ({
+				addClass: vi.fn(),
+				removeClass: vi.fn(),
+				setAttribute: vi.fn(),
+			})),
+		} as unknown as MarkdownView;
 		plugin.app.workspace.getActiveViewOfType.mockReturnValue(view);
 
 		await plugin.onload();

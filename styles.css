@@ -113,6 +113,10 @@
 	height: 14px;
 }
 
+.gtd-note-file-pin.is-pinned {
+	color: var(--interactive-accent);
+}
+
 .gtd-alert-callout {
 	margin-top: 6px;
 	margin-right: 6px;
