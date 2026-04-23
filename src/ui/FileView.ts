@@ -208,7 +208,7 @@ export class FileView extends ItemView {
 			const isActive = note.file.path === activeFilePath;
 			const pinned = this.isPinned(note.file);
 			const title = this.listContainer?.createDiv({ cls: 'nav-file' }).createDiv({
-				cls: `nav-file-title${isActive ? ' is-active' : ''}${pinned ? ' is-pinned' : ''}`,
+				cls: `nav-file-title${isActive ? ' is-active' : ''}`,
 			});
 			if (title == null) return;
 			title.addEventListener('click', (event) => {
