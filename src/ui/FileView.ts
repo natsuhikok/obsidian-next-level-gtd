@@ -1,5 +1,4 @@
 import { ItemView, Keymap, TFile, WorkspaceLeaf, setIcon } from 'obsidian';
-import { FilePin } from '../FilePin';
 import { GTDNote } from '../GTDNote';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
@@ -85,9 +84,7 @@ export class FileView extends ItemView {
 	}
 
 	private isExcluded(file: TFile): boolean {
-		return this.plugin.settings.excludedFolders.some((ef) =>
-			file.path.startsWith(ef.folder + '/'),
-		);
+		return !this.plugin.fileParticipatesInFileView(file);
 	}
 
 	private openNote(file: TFile, event: MouseEvent) {
@@ -244,22 +241,12 @@ export class FileView extends ItemView {
 	}
 
 	private async togglePinnedFile(file: TFile) {
-		const pin = new FilePin(file.name);
-		const pinnedFileNames = this.isPinned(file)
-			? this.plugin.settings.pinnedFileNames.filter((fileName) => fileName !== pin.fileName)
-			: [...this.plugin.settings.pinnedFileNames, pin.fileName];
-		this.plugin.settings = {
-			...this.plugin.settings,
-			pinnedFileNames,
-		};
-		await this.plugin.saveSettings();
+		await this.plugin.toggleFilePin(file);
 		this.renderFileList();
 		this.openNoteInNewTab(file);
 	}
 
 	private isPinned(file: TFile): boolean {
-		return this.plugin.settings.pinnedFileNames.some((fileName) =>
-			new FilePin(fileName).matches(file),
-		);
+		return this.plugin.isFilePinned(file);
 	}
 }

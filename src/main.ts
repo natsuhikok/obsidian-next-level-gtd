@@ -9,16 +9,20 @@ import { NoteContent } from './NoteContent';
 import { NextActionPin } from './NextActionPin';
 import { RecentFileHistory } from './RecentFileHistory';
 import { ExcludedFolder } from './types';
+import { FilePin } from './FilePin';
+import { NoteFilePinToggle } from './ui/NoteFilePinToggle';
 
 export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
 	private bannerRenderer: BannerRenderer;
+	private noteFilePinToggle: NoteFilePinToggle | null = null;
 	private editorChangeTimer: ReturnType<typeof setTimeout> | null = null;
 	private editorContentByPath: Record<string, string> = {};
 
 	async onload() {
 		await this.loadSettings();
 		this.bannerRenderer = new BannerRenderer(this.app, () => this.settings.excludedFolders);
+		this.noteFilePinToggle = new NoteFilePinToggle(this);
 		const settingTab = new NextLevelGtdSettingTab(this.app, this);
 
 		this.addSettingTab(settingTab);
@@ -52,12 +56,14 @@ export default class NextLevelGtdPlugin extends Plugin {
 			this.app.workspace.on('active-leaf-change', () => {
 				this.rememberActiveEditorContent();
 				this.bannerRenderer.renderForActiveView();
+				this.noteFilePinToggle?.renderForActiveView();
 			}),
 		);
 
 		this.registerEvent(
 			this.app.workspace.on('file-open', (file) => {
 				this.recordOpenedFileInRecentHistory(file);
+				this.noteFilePinToggle?.renderForActiveView();
 			}),
 		);
 
@@ -65,6 +71,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 			this.app.workspace.on('layout-change', () => {
 				this.rememberActiveEditorContent();
 				this.bannerRenderer.renderForActiveView();
+				this.noteFilePinToggle?.renderForActiveView();
 			}),
 		);
 
@@ -95,6 +102,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 		);
 
 		this.rememberActiveEditorContent();
+		this.noteFilePinToggle?.renderForActiveView();
 
 		this.registerEvent(
 			this.app.vault.on('modify', (abstractFile) => {
@@ -193,6 +201,30 @@ export default class NextLevelGtdPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	fileParticipatesInFileView(file: TFile): boolean {
+		return file.extension === 'md' && !this.isExcludedFromFileView(file);
+	}
+
+	isFilePinned(file: TFile): boolean {
+		return this.settings.pinnedFileNames.some((fileName) =>
+			new FilePin(fileName).matches(file),
+		);
+	}
+
+	async toggleFilePin(file: TFile): Promise<void> {
+		const pin = new FilePin(file.name);
+		const pinnedFileNames = this.isFilePinned(file)
+			? this.settings.pinnedFileNames.filter((fileName) => fileName !== pin.fileName)
+			: [...this.settings.pinnedFileNames, pin.fileName];
+		this.settings = {
+			...this.settings,
+			pinnedFileNames,
+		};
+		await this.saveSettings();
+		this.notifyFileView(file);
+		this.noteFilePinToggle?.refreshForFile(file);
+	}
+
 	private async activateView(viewType: string): Promise<void> {
 		const { workspace } = this.app;
 		const existing = workspace.getLeavesOfType(viewType);
@@ -273,7 +305,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 	}
 
 	private recordOpenedFileInRecentHistory(file: TFile | null): void {
-		if (file == null || file.extension !== 'md' || this.isExcludedFromFileView(file)) return;
+		if (file == null || !this.fileParticipatesInFileView(file)) return;
 		const recentFilePaths = this.settings.recentFilePaths.record(file);
 		if (recentFilePaths.equals(this.settings.recentFilePaths)) return;
 		this.settings = {
