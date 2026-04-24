@@ -4,7 +4,6 @@ import { ContextOrder } from '../ContextOrder';
 import { DateVisibility } from '../DateVisibility';
 import { GTDNote } from '../GTDNote';
 import type { NextAction } from '../NextActionCollection';
-import { NextActionPin } from '../NextActionPin';
 import { NextActionsQuery } from '../NextActionsQuery';
 import { t } from '../i18n';
 import type NextLevelGtdPlugin from '../main';
@@ -13,7 +12,6 @@ export const VIEW_TYPE_NEXT_ACTIONS = 'gtd-next-actions';
 
 export class NextActionsView extends ItemView {
 	private noteCache: Record<string, GTDNote> = {};
-	private pinnedActionPins: readonly NextActionPin[] = [];
 	private dateVisibility: DateVisibility;
 
 	constructor(
@@ -21,7 +19,6 @@ export class NextActionsView extends ItemView {
 		private readonly plugin: NextLevelGtdPlugin,
 	) {
 		super(leaf);
-		this.pinnedActionPins = plugin.settings.pinnedActionPins;
 		this.dateVisibility = DateVisibility.initial();
 	}
 
@@ -324,33 +321,19 @@ export class NextActionsView extends ItemView {
 	}
 
 	private async togglePinnedAction(action: NextAction<TFile>) {
-		const pin = new NextActionPin(action.source.name, action.text);
-		const pinnedActionPins = this.isPinned(action)
-			? this.pinnedActionPins.filter((pinned) => !pinned.matches(action))
-			: [...this.pinnedActionPins, pin];
-		await this.replacePinnedActionPins(pinnedActionPins);
-		this.render();
+		await this.plugin.toggleActionPin(action.source, action.text);
 	}
 
 	private isPinned(action: NextAction<TFile>): boolean {
-		return this.pinnedActionPins.some((pin) => pin.matches(action));
+		return this.plugin.isActionPinned(action);
 	}
 
 	private prunePinnedActionPins(actions: readonly NextAction<TFile>[]) {
-		const pinnedActionPins = this.pinnedActionPins.filter((pin) =>
+		const pinnedActionPins = this.plugin.settings.pinnedActionPins.filter((pin) =>
 			actions.some((action) => pin.matches(action)),
 		);
-		if (pinnedActionPins.length === this.pinnedActionPins.length) return;
-		this.replacePinnedActionPins(pinnedActionPins).catch(console.error);
-	}
-
-	private async replacePinnedActionPins(pinnedActionPins: readonly NextActionPin[]) {
-		this.pinnedActionPins = pinnedActionPins;
-		this.plugin.settings = {
-			...this.plugin.settings,
-			pinnedActionPins,
-		};
-		await this.plugin.saveSettings();
+		if (pinnedActionPins.length === this.plugin.settings.pinnedActionPins.length) return;
+		this.plugin.replacePinnedActionPins(pinnedActionPins).catch(console.error);
 	}
 }
 

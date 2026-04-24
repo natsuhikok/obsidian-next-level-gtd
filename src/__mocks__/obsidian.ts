@@ -99,6 +99,7 @@ export class Plugin {
 	readonly addRibbonIcon = vi.fn(
 		(_icon: string, _title: string, _callback: (event: MouseEvent) => void) => createElement(),
 	);
+	readonly registerEditorExtension = vi.fn((_extension: unknown) => {});
 	readonly registerView = vi.fn(
 		(_viewType: string, _viewCreator: (leaf: WorkspaceLeaf) => unknown) => {},
 	);
@@ -245,6 +246,8 @@ export class Setting {
 }
 
 export const setIcon = vi.fn((_el: HTMLElement, _icon: string) => {});
+export const editorInfoField = Symbol('editorInfoField');
+export const editorLivePreviewField = Symbol('editorLivePreviewField');
 
 export const Keymap = {
 	isModEvent: vi.fn((_event: MouseEvent | KeyboardEvent) => false),
