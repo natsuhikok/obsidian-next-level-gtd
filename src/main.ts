@@ -307,11 +307,16 @@ export default class NextLevelGtdPlugin extends Plugin {
 			return;
 		}
 
-		const updated = current.releaseNextStoppedOrderedAction(new NoteContent(previousValue));
-		if (updated.value !== current.value) {
-			editor.setValue(updated.value);
+		const change = current.releaseNextStoppedOrderedActionChange(
+			new NoteContent(previousValue),
+		);
+		if (change != null) {
+			editor.replaceRange(change.replacement, change.from, change.to);
 		}
-		this.editorContentByPath = { ...this.editorContentByPath, [file.path]: updated.value };
+		this.editorContentByPath = {
+			...this.editorContentByPath,
+			[file.path]: change?.content.value ?? current.value,
+		};
 	}
 
 	private notifyNextActionsView(file: TFile): void {
