@@ -54,21 +54,29 @@
 	width: 100%;
 }
 
+.workspace-leaf-content[data-type='gtd-files'] .nav-files-container {
+	padding: 0;
+}
+
 .workspace-leaf-content[data-type='gtd-files'] .nav-file-title {
 	display: flex;
 	align-items: center;
-	gap: 4px;
-	border-radius: var(--radius-s);
+	gap: 2px;
+	border-bottom: 1px solid var(--background-modifier-border);
 	color: var(--nav-item-color);
 	cursor: var(--cursor);
 	font-size: var(--nav-item-size);
 	line-height: var(--line-height-tight);
-	margin-block: var(--size-2-1);
-	padding: var(--nav-item-padding);
+	margin-block: 0;
+	padding: 0 4px 0 0;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	transition: background var(--anim-duration-fast) var(--anim-motion-smoothing);
+}
+
+.workspace-leaf-content[data-type='gtd-files'] .nav-file:last-child .nav-file-title {
+	border-bottom: none;
 }
 
 .workspace-leaf-content[data-type='gtd-files'] .nav-file-title:hover {
@@ -92,25 +100,27 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	flex: 0 0 20px;
-	width: 20px;
-	height: 20px;
+	flex: 0 0 28px;
+	width: 28px;
+	height: 32px;
 	padding: 0;
 	border: none;
 	box-shadow: none;
 	background: transparent;
 	color: var(--text-faint);
 	cursor: pointer;
+	opacity: 0.25;
 }
 
 .gtd-file-pin:hover,
 .gtd-file-pin.is-pinned {
-	color: var(--interactive-accent);
+	color: var(--color-accent);
+	opacity: 1;
 }
 
 .gtd-file-pin .svg-icon {
-	width: 14px;
-	height: 14px;
+	width: 16px;
+	height: 16px;
 }
 
 .gtd-note-file-pin.is-pinned {
