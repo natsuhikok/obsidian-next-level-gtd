@@ -192,18 +192,18 @@ export class NextActionsView extends ItemView {
 
 		groups.forEach((group) => {
 			const section = container.createDiv({ cls: 'gtd-next-action-group' });
-			section.createDiv({
-				cls: 'gtd-next-action-group-title',
+			const title = section.createDiv({ cls: 'gtd-next-action-group-title' });
+			title.createSpan({
+				cls: 'gtd-next-action-group-label',
 				text: this.groupTitle(group.title),
+			});
+			title.createSpan({
+				cls: 'gtd-next-action-group-count',
+				text: String(group.actions.length),
 			});
 			group.actions.forEach((action) =>
 				this.renderAction(section, action, classifier, today),
 			);
-		});
-
-		contentEl.createDiv({
-			cls: 'gtd-next-action-count',
-			text: `${String(query.groupedActionCount)} actions`,
 		});
 	}
 
