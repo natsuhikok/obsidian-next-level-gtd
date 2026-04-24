@@ -112,6 +112,26 @@ describe('NextActionsQuery', () => {
 
 			expect(result).toEqual(['scheduled', 'due']);
 		});
+
+		it('表示される各グループの件数はそのグループに表示されるタスク数と一致する', () => {
+			const result = query(
+				[
+					action({ text: '重複', due: '2026-04-03', context: ['home'] }),
+					action({ text: '既定' }),
+				],
+				{ pinnedTexts: ['重複'] },
+			).displayGroups.map((group) => ({
+				title: group.title,
+				count: group.actions.length,
+			}));
+
+			expect(result).toEqual([
+				{ title: 'pinned', count: 1 },
+				{ title: 'dated', count: 1 },
+				{ title: 'default', count: 1 },
+				{ title: '#home', count: 1 },
+			]);
+		});
 	});
 
 	describe('コンテキストグループ', () => {

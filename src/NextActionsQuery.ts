@@ -36,10 +36,6 @@ export class NextActionsQuery<T> {
 		);
 	}
 
-	get groupedActionCount(): number {
-		return this.displayGroups.reduce((count, group) => count + group.actions.length, 0);
-	}
-
 	private isEligible(action: NextAction<T>): boolean {
 		return !action.blocked && this.dateVisibility.allows(action.scheduled, this.today);
 	}

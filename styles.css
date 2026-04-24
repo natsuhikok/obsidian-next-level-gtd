@@ -237,6 +237,10 @@
 	position: sticky;
 	top: 0;
 	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
 	padding: 5px 8px;
 	border-top: 1px solid var(--background-modifier-border);
 	border-bottom: 1px solid var(--background-modifier-border);
@@ -244,6 +248,26 @@
 	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
 	font-weight: 600;
+}
+
+.gtd-next-action-group-title-text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.gtd-next-action-group-count-badge {
+	flex: 0 0 auto;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 6px;
+	border-radius: 999px;
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	line-height: 18px;
+	text-align: center;
 }
 
 .gtd-next-action-item {

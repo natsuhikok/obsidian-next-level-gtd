@@ -192,18 +192,10 @@ export class NextActionsView extends ItemView {
 
 		groups.forEach((group) => {
 			const section = container.createDiv({ cls: 'gtd-next-action-group' });
-			section.createDiv({
-				cls: 'gtd-next-action-group-title',
-				text: this.groupTitle(group.title),
-			});
+			this.renderGroupTitle(section, group.title, group.actions.length);
 			group.actions.forEach((action) =>
 				this.renderAction(section, action, classifier, today),
 			);
-		});
-
-		contentEl.createDiv({
-			cls: 'gtd-next-action-count',
-			text: `${String(query.groupedActionCount)} actions`,
 		});
 	}
 
@@ -230,6 +222,18 @@ export class NextActionsView extends ItemView {
 		if (title === 'dated') return t('nextActionGroupDated');
 		if (title === 'default') return t('nextActionGroupDefault');
 		return title;
+	}
+
+	private renderGroupTitle(container: HTMLElement, title: string, actionCount: number) {
+		const titleRow = container.createDiv({ cls: 'gtd-next-action-group-title' });
+		titleRow.createSpan({
+			cls: 'gtd-next-action-group-title-text',
+			text: this.groupTitle(title),
+		});
+		titleRow.createSpan({
+			cls: 'gtd-next-action-group-count-badge',
+			text: String(actionCount),
+		});
 	}
 
 	private renderAction(
