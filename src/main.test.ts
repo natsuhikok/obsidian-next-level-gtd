@@ -14,8 +14,10 @@ import { VIEW_TYPE_NEXT_ACTIONS } from './ui/NextActionsView';
 type PluginRegistrationSpies = {
 	readonly addCommand: Mock;
 	readonly registerView: Mock;
+	readonly registerEditorExtension: Mock;
 	readonly addRibbonIcon: Mock;
 	readonly addSettingTab: Mock;
+	readonly saveData: Mock;
 	readonly app: {
 		readonly workspace: {
 			readonly on: Mock;
@@ -51,6 +53,7 @@ describe('プラグインの起動', () => {
 			VIEW_TYPE_NEXT_ACTIONS,
 			expect.any(Function),
 		);
+		expect(plugin.registerEditorExtension).toHaveBeenCalledWith(expect.anything());
 		expect(plugin.addRibbonIcon).toHaveBeenCalledWith(
 			'folder-open',
 			'Open GTD Files',
@@ -125,5 +128,37 @@ describe('ノート編集時の番号付きタスク更新', () => {
 
 		expect(setValue).toHaveBeenCalledWith('1. [x] 最初\n2. [ ] 次');
 		vi.useRealTimers();
+	});
+
+	it('アクションピンを切り替えると同じ保存状態を更新する', async () => {
+		const manifest: PluginManifest = {
+			id: 'obsidian-next-level-gtd',
+			name: 'Next Level GTD',
+			author: 'test',
+			version: '1.0.0',
+			minAppVersion: '1.0.0',
+			description: 'test',
+		};
+		const plugin = new NextLevelGtdPlugin({} as App, manifest) as NextLevelGtdPlugin &
+			PluginRegistrationSpies;
+		await plugin.loadSettings();
+		const file = new TFile();
+		file.path = 'projects/action.md';
+		file.name = 'action.md';
+		file.extension = 'md';
+
+		await plugin.toggleActionPin(file, '次にやること');
+
+		expect(plugin.settings.pinnedActionPins).toEqual([
+			expect.objectContaining({
+				fileName: 'action.md',
+				actionName: '次にやること',
+			}),
+		]);
+		expect(plugin.saveData).toHaveBeenCalled();
+
+		await plugin.toggleActionPin(file, '次にやること');
+
+		expect(plugin.settings.pinnedActionPins).toEqual([]);
 	});
 });

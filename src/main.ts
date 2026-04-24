@@ -11,11 +11,14 @@ import { RecentFileHistory } from './RecentFileHistory';
 import { ExcludedFolder } from './types';
 import { FilePin } from './FilePin';
 import { NoteFilePinToggle } from './ui/NoteFilePinToggle';
+import { NextAction } from './NextActionCollection';
+import { LiveEditActionPinToggle } from './ui/LiveEditActionPinToggle';
 
 export default class NextLevelGtdPlugin extends Plugin {
 	settings: NextLevelGtdSettings;
 	private bannerRenderer: BannerRenderer;
 	private noteFilePinToggle: NoteFilePinToggle | null = null;
+	private liveEditActionPinToggle: LiveEditActionPinToggle | null = null;
 	private editorChangeTimer: ReturnType<typeof setTimeout> | null = null;
 	private editorContentByPath: Record<string, string> = {};
 
@@ -23,9 +26,11 @@ export default class NextLevelGtdPlugin extends Plugin {
 		await this.loadSettings();
 		this.bannerRenderer = new BannerRenderer(this.app, () => this.settings.excludedFolders);
 		this.noteFilePinToggle = new NoteFilePinToggle(this);
+		this.liveEditActionPinToggle = new LiveEditActionPinToggle(this);
 		const settingTab = new NextLevelGtdSettingTab(this.app, this);
 
 		this.addSettingTab(settingTab);
+		this.registerEditorExtension(this.liveEditActionPinToggle.extension);
 
 		this.registerView(FileView.viewType, (leaf) => new FileView(leaf, this));
 		this.registerView(VIEW_TYPE_NEXT_ACTIONS, (leaf) => new NextActionsView(leaf, this));
@@ -205,10 +210,18 @@ export default class NextLevelGtdPlugin extends Plugin {
 		return file.extension === 'md' && !this.isExcludedFromFileView(file);
 	}
 
+	fileParticipatesInNextActions(file: TFile): boolean {
+		return file.extension === 'md' && !this.isExcludedFromFileView(file);
+	}
+
 	isFilePinned(file: TFile): boolean {
 		return this.settings.pinnedFileNames.some((fileName) =>
 			new FilePin(fileName).matches(file),
 		);
+	}
+
+	isActionPinned(action: NextAction<{ readonly name: string }>): boolean {
+		return this.settings.pinnedActionPins.some((pin) => pin.matches(action));
 	}
 
 	async toggleFilePin(file: TFile): Promise<void> {
@@ -223,6 +236,30 @@ export default class NextLevelGtdPlugin extends Plugin {
 		await this.saveSettings();
 		this.notifyFileView(file);
 		this.noteFilePinToggle?.refreshForFile(file);
+	}
+
+	async toggleActionPin(file: TFile, actionText: string): Promise<void> {
+		const action = new NextAction(file, actionText, false, null, null, []);
+		const pin = new NextActionPin(file.name, actionText);
+		const pinnedActionPins = this.isActionPinned(action)
+			? this.settings.pinnedActionPins.filter((pinned) => !pinned.matches(action))
+			: [...this.settings.pinnedActionPins, pin];
+		await this.replacePinnedActionPins(pinnedActionPins, file);
+	}
+
+	async replacePinnedActionPins(
+		pinnedActionPins: readonly NextActionPin[],
+		fileToRefresh?: TFile,
+	): Promise<void> {
+		this.settings = {
+			...this.settings,
+			pinnedActionPins,
+		};
+		await this.saveSettings();
+		if (fileToRefresh != null) {
+			this.notifyNextActionsView(fileToRefresh);
+		}
+		this.liveEditActionPinToggle?.refresh();
 	}
 
 	private async activateView(viewType: string): Promise<void> {
