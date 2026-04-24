@@ -88,6 +88,7 @@ export class FileView extends ItemView {
 	}
 
 	private openNote(file: TFile, event: MouseEvent) {
+		this.clearFilterForFileOpen();
 		void this.app.workspace.getLeaf(Keymap.isModEvent(event)).openFile(file);
 	}
 
@@ -238,6 +239,12 @@ export class FileView extends ItemView {
 			...filtered.filter((note) => this.isPinned(note.file)),
 			...filtered.filter((note) => !this.isPinned(note.file)),
 		];
+	}
+
+	private clearFilterForFileOpen() {
+		if (this.filterText.trim() === '') return;
+		this.filterText = '';
+		this.render();
 	}
 
 	private async togglePinnedFile(file: TFile) {
