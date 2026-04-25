@@ -7,6 +7,7 @@ const createElement = () => {
 		empty: vi.fn(),
 		createDiv: vi.fn(() => createElement()),
 		createEl: vi.fn(() => createElement()),
+		createSpan: vi.fn(() => createElement()),
 		addClass: vi.fn((className: string) => {
 			classes = classes.includes(className) ? classes : [...classes, className];
 		}),
@@ -21,6 +22,7 @@ const createElement = () => {
 		getAttribute: vi.fn((name: string) => attributes[name] ?? null),
 		setText: vi.fn(),
 		appendChild: vi.fn(),
+		addEventListener: vi.fn(),
 	} as unknown as HTMLElement;
 };
 
