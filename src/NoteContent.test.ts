@@ -136,3 +136,24 @@ describe('NoteContent.releaseNextStoppedOrderedAction', () => {
 		expect(current.releaseNextStoppedOrderedAction(previous).value).toBe(current.value);
 	});
 });
+
+describe('NoteContent.releaseNextStoppedOrderedActionChange', () => {
+	it('解放されるチェックボックスの最小変更範囲を返す', () => {
+		const previous = new NoteContent('1. [ ] 最初\n2. [-] 次');
+		const current = new NoteContent('1. [x] 最初\n2. [-] 次');
+
+		expect(current.releaseNextStoppedOrderedActionChange(previous)).toEqual({
+			content: new NoteContent('1. [x] 最初\n2. [ ] 次'),
+			from: { line: 1, ch: 4 },
+			to: { line: 1, ch: 5 },
+			replacement: ' ',
+		});
+	});
+
+	it('変更がないときは null を返す', () => {
+		const previous = new NoteContent('1. [x] 最初\n2. [-] 次');
+		const current = new NoteContent('1. [x] 最初\n2. [-] 次');
+
+		expect(current.releaseNextStoppedOrderedActionChange(previous)).toBeNull();
+	});
+});
