@@ -21,11 +21,20 @@ export class NoteContent {
 	}
 
 	releaseNextStoppedOrderedAction(previous: NoteContent): NoteContent {
+		return this.releaseNextStoppedOrderedActionChange(previous)?.content ?? this;
+	}
+
+	releaseNextStoppedOrderedActionChange(previous: NoteContent): {
+		readonly content: NoteContent;
+		readonly from: { readonly line: number; readonly ch: number };
+		readonly to: { readonly line: number; readonly ch: number };
+		readonly replacement: string;
+	} | null {
 		const previousSegments = previous.segments;
 		const currentSegments = this.segments;
-		if (previousSegments.length !== currentSegments.length) return this;
+		if (previousSegments.length !== currentSegments.length) return null;
 
-		return new NoteContent(
+		const updated = new NoteContent(
 			currentSegments
 				.map((part, i) =>
 					i % 2 === 0
@@ -34,6 +43,12 @@ export class NoteContent {
 				)
 				.join(''),
 		);
+		if (updated.value === this.value) return null;
+
+		return {
+			content: updated,
+			...this.changeRangeTo(updated),
+		};
 	}
 
 	private releaseNextStoppedOrderedActionInSegment(
@@ -105,6 +120,49 @@ export class NoteContent {
 		return {
 			indent: match[1]!.length,
 			state: match[2]!,
+		};
+	}
+
+	private changeRangeTo(updated: NoteContent) {
+		const prefixLength = this.sharedPrefixLength(updated);
+		const suffixLength = this.sharedSuffixLength(updated, prefixLength);
+		return {
+			from: this.positionAt(prefixLength),
+			to: this.positionAt(this.value.length - suffixLength),
+			replacement: updated.value.slice(prefixLength, updated.value.length - suffixLength),
+		};
+	}
+
+	private sharedPrefixLength(updated: NoteContent): number {
+		let index = 0;
+		while (
+			index < this.value.length &&
+			index < updated.value.length &&
+			this.value[index] === updated.value[index]
+		) {
+			index += 1;
+		}
+		return index;
+	}
+
+	private sharedSuffixLength(updated: NoteContent, prefixLength: number): number {
+		let index = 0;
+		while (
+			index < this.value.length - prefixLength &&
+			index < updated.value.length - prefixLength &&
+			this.value[this.value.length - 1 - index] ===
+				updated.value[updated.value.length - 1 - index]
+		) {
+			index += 1;
+		}
+		return index;
+	}
+
+	private positionAt(offset: number) {
+		const lines = this.value.slice(0, offset).split('\n');
+		return {
+			line: lines.length - 1,
+			ch: lines.at(-1)?.length ?? 0,
 		};
 	}
 }

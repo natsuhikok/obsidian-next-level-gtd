@@ -100,9 +100,23 @@ describe('ノート編集時の番号付きタスク更新', () => {
 		const setValue = vi.fn((value: string) => {
 			editorValue = value;
 		});
+		const replaceRange = vi.fn(
+			(
+				replacement: string,
+				from: { readonly line: number; readonly ch: number },
+				to?: { readonly line: number; readonly ch: number },
+			) => {
+				const lines = editorValue.split('\n');
+				const line = lines[from.line] ?? '';
+				lines[from.line] =
+					line.slice(0, from.ch) + replacement + line.slice(to?.ch ?? from.ch);
+				editorValue = lines.join('\n');
+			},
+		);
 		const editor = {
 			getValue: vi.fn(() => editorValue),
 			setValue,
+			replaceRange,
 		} as unknown as Editor;
 		const view = {
 			file,
@@ -126,7 +140,9 @@ describe('ノート編集時の番号付きタスク更新', () => {
 
 		editorChange?.(editor, view);
 
-		expect(setValue).toHaveBeenCalledWith('1. [x] 最初\n2. [ ] 次');
+		expect(replaceRange).toHaveBeenCalledWith(' ', { line: 1, ch: 4 }, { line: 1, ch: 5 });
+		expect(setValue).not.toHaveBeenCalled();
+		expect(editorValue).toBe('1. [x] 最初\n2. [ ] 次');
 		vi.useRealTimers();
 	});
 
