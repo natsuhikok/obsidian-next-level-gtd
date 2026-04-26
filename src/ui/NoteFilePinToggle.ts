@@ -9,18 +9,24 @@ export class NoteFilePinToggle {
 
 	renderForActiveView(): void {
 		const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
-		if (view?.file == null) return;
-		this.render(view, view.file);
+		if (view == null) return;
+		this.render(view);
 	}
 
 	refreshForFile(file: TFile): void {
 		const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
 		if (view?.file?.path !== file.path) return;
-		this.render(view, file);
+		this.render(view);
 	}
 
-	private render(view: MarkdownView, file: TFile): void {
+	private render(view: MarkdownView): void {
 		const existingAction = this.actionByView.get(view);
+		const file = view.file;
+		if (file == null) {
+			existingAction?.remove();
+			this.actionByView.delete(view);
+			return;
+		}
 		if (!this.plugin.fileParticipatesInFileView(file)) {
 			existingAction?.remove();
 			this.actionByView.delete(view);
@@ -30,9 +36,13 @@ export class NoteFilePinToggle {
 		const action =
 			existingAction ??
 			view.addAction('pin', this.actionLabel(file), () => {
+				const currentFile = view.file;
+				if (currentFile == null || !this.plugin.fileParticipatesInFileView(currentFile)) {
+					return;
+				}
 				this.plugin
-					.toggleFilePin(file)
-					.then(() => this.refreshForFile(file))
+					.toggleFilePin(currentFile)
+					.then(() => this.render(view))
 					.catch(console.error);
 			});
 		this.actionByView.set(view, action);
