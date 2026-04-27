@@ -111,4 +111,50 @@ describe('ノートビューのファイルピン', () => {
 		});
 		expect(action?.getAttribute('aria-label')).toBe('Unpin file');
 	});
+
+	it('同じタブで別ノートへ移動した後は現在のノートだけを切り替える', async () => {
+		const plugin = pluginWithSettings();
+		const firstFile = markdownFile('projects/first.md', 'first.md');
+		const secondFile = markdownFile('projects/second.md', 'second.md');
+		const view = markdownView(firstFile);
+		plugin.app.workspace.getActiveViewOfType.mockReturnValue(view);
+		const toggle = new NoteFilePinToggle(plugin);
+
+		toggle.renderForActiveView();
+		view.file = secondFile;
+		toggle.renderForActiveView();
+
+		const addAction = addActionMock(view);
+		const onClick = addAction.mock.calls[0]?.[2] as (() => void) | undefined;
+		onClick?.();
+
+		await vi.waitFor(() => {
+			expect(plugin.settings.pinnedFileNames).toEqual(['second.md']);
+		});
+		expect(plugin.settings.pinnedFileNames).not.toContain('first.md');
+	});
+
+	it('同じタブで別ノートへ移動した後は現在のノートの表示状態に追従する', () => {
+		const plugin = pluginWithSettings();
+		const firstFile = markdownFile('projects/first.md', 'first.md');
+		const secondFile = markdownFile('projects/second.md', 'second.md');
+		const view = markdownView(firstFile);
+		plugin.settings = { ...plugin.settings, pinnedFileNames: ['first.md'] };
+		plugin.app.workspace.getActiveViewOfType.mockReturnValue(view);
+		const toggle = new NoteFilePinToggle(plugin);
+
+		toggle.renderForActiveView();
+		const addAction = addActionMock(view);
+		const action = addAction.mock.results[0]?.value as HTMLElement | undefined;
+		expect(action?.getAttribute('aria-label')).toBe('Unpin file');
+		expect(action?.getAttribute('aria-pressed')).toBe('true');
+
+		view.file = secondFile;
+		toggle.renderForActiveView();
+
+		expect(addAction).toHaveBeenCalledTimes(1);
+		expect(action?.getAttribute('aria-label')).toBe('Pin file');
+		expect(action?.getAttribute('aria-pressed')).toBe('false');
+		expect(action?.hasClass('is-pinned')).toBe(false);
+	});
 });
