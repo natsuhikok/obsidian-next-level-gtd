@@ -36,6 +36,12 @@ function invokeOpenNote(view: FileView, file: TFile, event: MouseEvent) {
 	openNote?.call(view, file, event);
 }
 
+function renderFileList(view: FileView) {
+	const render = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(view), 'renderFileList')
+		?.value as ((this: FileView) => void) | undefined;
+	render?.call(view);
+}
+
 describe('ファイルビューのファイルオープン', () => {
 	it('フィルター付きの一覧から開くとフィルターを解除してから対象ファイルを開く', () => {
 		const plugin = createPlugin();
@@ -80,5 +86,57 @@ describe('ファイルビューのファイルオープン', () => {
 		expect(getLeaf).toHaveBeenCalledWith(true);
 		expect(isModEvent).toHaveBeenCalled();
 		expect(openFile).toHaveBeenCalledWith(file);
+	});
+});
+
+describe('ファイルビューのファイルピン', () => {
+	it('ピン済みファイルでも同じボタン操作を保ったまま現在状態を表示する', () => {
+		const plugin = createPlugin();
+		plugin.isFilePinned.mockReturnValue(true);
+		const view = new FileView(new WorkspaceLeaf(), plugin as never);
+		const listContainer = view.contentEl.createDiv({ cls: 'nav-files-container' });
+		const file = createFile('projects/pinned.md');
+		(view as unknown as { listContainer: HTMLElement | null }).listContainer = listContainer;
+		(
+			view as unknown as { selectedTabId: 'inbox' | 'all' | 'recent' | 'inProgress' }
+		).selectedTabId = 'all';
+		(
+			view as unknown as {
+				noteCache: Record<
+					string,
+					{
+						readonly file: TFile;
+						readonly isInbox: boolean;
+						readonly alerts: readonly [];
+						readonly hasActionableStatus: Mock;
+					}
+				>;
+			}
+		).noteCache = {
+			[file.path]: {
+				file,
+				isInbox: false,
+				alerts: [],
+				hasActionableStatus: vi.fn(() => false),
+			},
+		};
+
+		renderFileList(view);
+
+		const row = (listContainer.createDiv as Mock).mock.results[0]?.value as
+			| HTMLElement
+			| undefined;
+		const title = (row?.createDiv as Mock | undefined)?.mock.results[0]?.value as
+			| HTMLElement
+			| undefined;
+		const createEl =
+			title == null ? undefined : (Reflect.get(title, 'createEl') as Mock | undefined);
+		const pinButton = createEl?.mock.results[0]?.value as HTMLElement | undefined;
+
+		expect(createEl).toHaveBeenCalledWith('button', {
+			cls: 'gtd-file-pin is-pinned',
+		});
+		expect(pinButton?.getAttribute('aria-label')).toBe('Unpin file');
+		expect(pinButton?.getAttribute('aria-pressed')).toBe('true');
 	});
 });
