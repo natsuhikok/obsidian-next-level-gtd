@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, type Mock } from 'vitest';
 import {
 	TFile,
+	WorkspaceLeaf,
 	type App,
 	type Editor,
 	type MarkdownFileInfo,
@@ -77,6 +78,56 @@ describe('プラグインの起動', () => {
 		expect(plugin.app.vault.on).toHaveBeenCalledWith('modify', expect.any(Function));
 		expect(plugin.app.vault.on).toHaveBeenCalledWith('delete', expect.any(Function));
 		expect(plugin.app.vault.on).toHaveBeenCalledWith('rename', expect.any(Function));
+	});
+
+	it('ファイルオープンイベントだけでは最近開いた履歴を更新しない', async () => {
+		const manifest: PluginManifest = {
+			id: 'obsidian-next-level-gtd',
+			name: 'Next Level GTD',
+			author: 'test',
+			version: '1.0.0',
+			minAppVersion: '1.0.0',
+			description: 'test',
+		};
+		const plugin = new NextLevelGtdPlugin({} as App, manifest) as NextLevelGtdPlugin &
+			PluginRegistrationSpies;
+		const file = new TFile();
+		file.path = 'projects/action.md';
+		file.extension = 'md';
+
+		await plugin.onload();
+		const fileOpenCall = plugin.app.workspace.on.mock.calls.find(
+			(call: readonly unknown[]) => call[0] === 'file-open',
+		);
+		const fileOpen = fileOpenCall?.[1] as ((openedFile: TFile) => void) | undefined;
+		fileOpen?.(file);
+
+		expect(plugin.settings.recentFilePaths.filePaths).toEqual([]);
+		expect(plugin.saveData).not.toHaveBeenCalled();
+		plugin.onunload();
+	});
+
+	it('実際にファイルを開いたときだけ最近開いた履歴を更新する', async () => {
+		const manifest: PluginManifest = {
+			id: 'obsidian-next-level-gtd',
+			name: 'Next Level GTD',
+			author: 'test',
+			version: '1.0.0',
+			minAppVersion: '1.0.0',
+			description: 'test',
+		};
+		const plugin = new NextLevelGtdPlugin({} as App, manifest) as NextLevelGtdPlugin &
+			PluginRegistrationSpies;
+		const file = new TFile();
+		file.path = 'projects/action.md';
+		file.extension = 'md';
+
+		await plugin.onload();
+		await new WorkspaceLeaf().openFile(file);
+
+		expect(plugin.settings.recentFilePaths.filePaths).toEqual(['projects/action.md']);
+		expect(plugin.saveData).toHaveBeenCalled();
+		plugin.onunload();
 	});
 });
 

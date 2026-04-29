@@ -49,6 +49,10 @@ export class WorkspaceLeaf {
 	readonly setViewState = vi.fn((_state: { readonly type: string; readonly active: boolean }) =>
 		Promise.resolve(),
 	);
+
+	openFile(_file: TFile): Promise<void> {
+		return Promise.resolve();
+	}
 }
 
 export class MarkdownView {
@@ -69,6 +73,7 @@ export class App {
 			name: 'vault-event',
 		})),
 		getFiles: vi.fn((): readonly TFile[] => []),
+		getMarkdownFiles: vi.fn((): readonly TFile[] => []),
 		createFolder: vi.fn((_path: string): Promise<void> => Promise.resolve()),
 		create: vi.fn(
 			(_path: string, _content: string): Promise<TFile> => Promise.resolve(new TFile()),
