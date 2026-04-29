@@ -10,6 +10,7 @@ type FileTab = {
 	readonly label: string;
 	readonly notes: readonly GTDNote[];
 	readonly usePinnedOrder: boolean;
+	readonly showBadge: boolean;
 };
 
 export class FileView extends ItemView {
@@ -41,11 +42,6 @@ export class FileView extends ItemView {
 	async onOpen() {
 		await this.fullScan();
 		this.render();
-		this.registerEvent(
-			this.app.workspace.on('active-leaf-change', (leaf) => {
-				if (leaf !== this.leaf) this.renderFileList();
-			}),
-		);
 	}
 
 	async onClose() {
@@ -116,12 +112,14 @@ export class FileView extends ItemView {
 				label: t('fileViewTabInbox'),
 				notes: notes.filter((note) => note.isInbox || note.alerts.length > 0),
 				usePinnedOrder: true,
+				showBadge: true,
 			},
 			{
 				id: 'all',
 				label: t('fileViewTabAll'),
 				notes,
 				usePinnedOrder: true,
+				showBadge: true,
 			},
 			{
 				id: 'recent',
@@ -130,12 +128,14 @@ export class FileView extends ItemView {
 					.map((filePath) => this.noteCache[filePath])
 					.filter((note): note is GTDNote => note != null),
 				usePinnedOrder: false,
+				showBadge: false,
 			},
 			{
 				id: 'inProgress',
 				label: t('fileViewTabInProgress'),
 				notes: notes.filter((note) => note.hasActionableStatus('進行中')),
 				usePinnedOrder: true,
+				showBadge: true,
 			},
 		];
 	}
@@ -168,7 +168,9 @@ export class FileView extends ItemView {
 			});
 			button.setAttribute('aria-pressed', String(active));
 			button.createSpan({ text: tab.label });
-			button.createSpan({ cls: 'gtd-tab-badge', text: String(tab.notes.length) });
+			if (tab.showBadge) {
+				button.createSpan({ cls: 'gtd-tab-badge', text: String(tab.notes.length) });
+			}
 			button.addEventListener('click', () => {
 				this.selectedTabId = tab.id;
 				this.render();

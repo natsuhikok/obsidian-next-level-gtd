@@ -1,4 +1,11 @@
-import { MarkdownView, Plugin, TFile, type Editor, type MarkdownFileInfo } from 'obsidian';
+import {
+	MarkdownView,
+	Plugin,
+	TFile,
+	WorkspaceLeaf,
+	type Editor,
+	type MarkdownFileInfo,
+} from 'obsidian';
 import { DEFAULT_SETTINGS, NextLevelGtdSettings, NextLevelGtdSettingTab } from './settings';
 import { t } from './i18n';
 import { FileView } from './ui/FileView';
@@ -15,6 +22,8 @@ import { NextAction } from './NextActionCollection';
 import { LiveEditActionPinToggle } from './ui/LiveEditActionPinToggle';
 
 export default class NextLevelGtdPlugin extends Plugin {
+	private static originalWorkspaceLeafOpenFile: WorkspaceLeaf['openFile'] | null = null;
+	private static recentFileHistoryOwner: NextLevelGtdPlugin | null = null;
 	settings: NextLevelGtdSettings;
 	private bannerRenderer: BannerRenderer;
 	private noteFilePinToggle: NoteFilePinToggle | null = null;
@@ -27,6 +36,7 @@ export default class NextLevelGtdPlugin extends Plugin {
 		this.bannerRenderer = new BannerRenderer(this.app, () => this.settings.excludedFolders);
 		this.noteFilePinToggle = new NoteFilePinToggle(this);
 		this.liveEditActionPinToggle = new LiveEditActionPinToggle(this);
+		this.installRecentFileOpenRecorder();
 		const settingTab = new NextLevelGtdSettingTab(this.app, this);
 
 		this.addSettingTab(settingTab);
@@ -67,7 +77,6 @@ export default class NextLevelGtdPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on('file-open', (file) => {
-				this.recordOpenedFileInRecentHistory(file);
 				this.noteFilePinToggle?.renderForActiveView();
 			}),
 		);
@@ -140,7 +149,11 @@ export default class NextLevelGtdPlugin extends Plugin {
 		);
 	}
 
-	onunload() {}
+	onunload() {
+		if (NextLevelGtdPlugin.recentFileHistoryOwner === this) {
+			NextLevelGtdPlugin.recentFileHistoryOwner = null;
+		}
+	}
 
 	async loadSettings() {
 		const raw = (await this.loadData()) as Record<string, unknown> | null;
@@ -273,6 +286,33 @@ export default class NextLevelGtdPlugin extends Plugin {
 		if (leaf == null) return;
 		await leaf.setViewState({ type: viewType, active: true });
 		await workspace.revealLeaf(leaf);
+	}
+
+	private installRecentFileOpenRecorder(): void {
+		if (NextLevelGtdPlugin.originalWorkspaceLeafOpenFile == null) {
+			const openFileDescriptor = Object.getOwnPropertyDescriptor(
+				WorkspaceLeaf.prototype,
+				'openFile',
+			);
+			if (openFileDescriptor == null || typeof openFileDescriptor.value !== 'function') {
+				throw new Error('ファイルを開く処理が見つかりません');
+			}
+			const originalOpenFile = openFileDescriptor.value as WorkspaceLeaf['openFile'];
+			NextLevelGtdPlugin.originalWorkspaceLeafOpenFile = originalOpenFile;
+			WorkspaceLeaf.prototype.openFile = function (
+				this: WorkspaceLeaf,
+				...args: Parameters<WorkspaceLeaf['openFile']>
+			) {
+				const [file] = args;
+				return originalOpenFile.apply(this, args).then((result) => {
+					NextLevelGtdPlugin.recentFileHistoryOwner?.recordOpenedFileInRecentHistory(
+						file,
+					);
+					return result;
+				});
+			} as WorkspaceLeaf['openFile'];
+		}
+		NextLevelGtdPlugin.recentFileHistoryOwner = this;
 	}
 
 	private notifyFileView(file: TFile): void {

@@ -42,6 +42,12 @@ function renderFileList(view: FileView) {
 	render?.call(view);
 }
 
+function renderTabs(view: FileView, contentEl: HTMLElement) {
+	const render = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(view), 'renderTabs')
+		?.value as ((this: FileView, targetEl: HTMLElement) => void) | undefined;
+	render?.call(view, contentEl);
+}
+
 describe('ファイルビューのファイルオープン', () => {
 	it('フィルター付きの一覧から開くとフィルターを解除してから対象ファイルを開く', () => {
 		const plugin = createPlugin();
@@ -86,6 +92,42 @@ describe('ファイルビューのファイルオープン', () => {
 		expect(getLeaf).toHaveBeenCalledWith(true);
 		expect(isModEvent).toHaveBeenCalled();
 		expect(openFile).toHaveBeenCalledWith(file);
+	});
+});
+
+describe('ファイルビューの最近タブ', () => {
+	it('既存タブへのフォーカス移動だけでは一覧を再描画しない', async () => {
+		const plugin = createPlugin();
+		const view = new FileView(new WorkspaceLeaf(), plugin as never);
+		const workspaceOn = Reflect.get(view.app.workspace, 'on') as Mock;
+
+		await view.onOpen();
+
+		expect(workspaceOn).not.toHaveBeenCalledWith('active-leaf-change', expect.any(Function));
+	});
+
+	it('最近タブだけ件数バッジを表示しない', () => {
+		const plugin = createPlugin();
+		const view = new FileView(new WorkspaceLeaf(), plugin as never);
+		const contentEl = view.contentEl;
+
+		renderTabs(view, contentEl);
+
+		const tabBar = (contentEl.createDiv as Mock).mock.results[0]?.value as
+			| HTMLElement
+			| undefined;
+		const buttons =
+			(tabBar?.createEl as Mock | undefined)?.mock.results.map(
+				(result) => result.value as HTMLElement,
+			) ?? [];
+		const createSpanCalls = buttons.map((button) => Reflect.get(button, 'createSpan') as Mock);
+
+		expect(createSpanCalls).toHaveLength(4);
+		expect(createSpanCalls[0]).toHaveBeenCalledWith({ cls: 'gtd-tab-badge', text: '0' });
+		expect(createSpanCalls[1]).toHaveBeenCalledWith({ cls: 'gtd-tab-badge', text: '0' });
+		expect(createSpanCalls[2]).toHaveBeenCalledTimes(1);
+		expect(createSpanCalls[2]).toHaveBeenCalledWith({ text: 'Recent' });
+		expect(createSpanCalls[3]).toHaveBeenCalledWith({ cls: 'gtd-tab-badge', text: '0' });
 	});
 });
 

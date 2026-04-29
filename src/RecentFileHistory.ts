@@ -1,6 +1,7 @@
 import { TFile } from 'obsidian';
 
 export class RecentFileHistory {
+	private static readonly maxFileCount = 30;
 	readonly filePaths: readonly string[];
 
 	constructor(filePaths: readonly string[]) {
@@ -11,7 +12,7 @@ export class RecentFileHistory {
 		if (normalizedFilePaths.length !== filePaths.length) {
 			throw new Error('最近開いたファイル履歴が不正です');
 		}
-		this.filePaths = normalizedFilePaths;
+		this.filePaths = normalizedFilePaths.slice(0, RecentFileHistory.maxFileCount);
 	}
 
 	record(file: TFile): RecentFileHistory {
