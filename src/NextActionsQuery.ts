@@ -18,10 +18,12 @@ export class NextActionsQuery<T> {
 		private readonly pinnedAction: (action: NextAction<T>) => boolean,
 	) {}
 
+	get totalActionCount(): number {
+		return this.eligibleActions.length;
+	}
+
 	get displayGroups(): readonly ActionGroup<T>[] {
-		const eligibleActions = this.sortedByDisplayPriority(
-			this.actions.filter((a) => this.isEligible(a)),
-		);
+		const eligibleActions = this.sortedByDisplayPriority(this.eligibleActions);
 		const fixedGroups: readonly ActionGroup<T>[] = [
 			{ title: 'pinned', actions: eligibleActions.filter((a) => this.pinnedAction(a)) },
 			{
@@ -34,6 +36,10 @@ export class NextActionsQuery<T> {
 		return [...fixedGroups, ...this.contextGroups(eligibleActions)].filter(
 			(group) => group.actions.length > 0,
 		);
+	}
+
+	private get eligibleActions(): readonly NextAction<T>[] {
+		return this.actions.filter((action) => this.isEligible(action));
 	}
 
 	private isEligible(action: NextAction<T>): boolean {
