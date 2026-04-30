@@ -69,6 +69,29 @@ describe('NextActionsQuery', () => {
 			}).displayGroups.flatMap((group) => group.actions.map((a) => a.text));
 			expect(result).toContain('未来');
 		});
+
+		it('総数は近い日付で表示できるタスクだけを数える', () => {
+			const result = query([
+				action({ text: '今日', scheduled: '2026-04-01' }),
+				action({ text: '未来', scheduled: '2026-04-02' }),
+				action({ text: '期限', due: '2026-12-31' }),
+				action({ text: '日付なし' }),
+			]).totalActionCount;
+
+			expect(result).toBe(3);
+		});
+
+		it('総数はすべての日付で未来の scheduled を持つタスクも数える', () => {
+			const result = query(
+				[
+					action({ text: '今日', scheduled: '2026-04-01' }),
+					action({ text: '未来', scheduled: '2026-04-02' }),
+				],
+				{ visibility: new DateVisibility('all') },
+			).totalActionCount;
+
+			expect(result).toBe(2);
+		});
 	});
 
 	describe('グループ構成', () => {
@@ -133,6 +156,23 @@ describe('NextActionsQuery', () => {
 				{ title: 'default', count: 3 },
 				{ title: '#home', count: 1 },
 			]);
+		});
+
+		it('総数は複数グループに表示される同じタスクを一度だけ数える', () => {
+			const result = query([action({ text: '重複', due: '2026-04-03', context: ['home'] })], {
+				pinnedTexts: ['重複'],
+			}).totalActionCount;
+
+			expect(result).toBe(1);
+		});
+
+		it('総数は同じ本文を持つ別々のタスクを別件として数える', () => {
+			const result = query([
+				action({ source: 'alpha', text: '同じ本文' }),
+				action({ source: 'beta', text: '同じ本文' }),
+			]).totalActionCount;
+
+			expect(result).toBe(2);
 		});
 	});
 
@@ -219,6 +259,15 @@ describe('NextActionsQuery', () => {
 			]).displayGroups;
 
 			expect(result).toHaveLength(0);
+		});
+
+		it('総数はブロックされたタスクを数えない', () => {
+			const result = query([
+				action({ text: '表示', blocked: false }),
+				action({ text: 'ブロック', blocked: true }),
+			]).totalActionCount;
+
+			expect(result).toBe(1);
 		});
 	});
 });

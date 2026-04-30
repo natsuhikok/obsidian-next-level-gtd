@@ -411,6 +411,28 @@
 	gap: 2px;
 }
 
+.gtd-next-action-total-count {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-right: 6px;
+	padding: 1px 8px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+}
+
+.gtd-next-action-total-count-value {
+	min-width: 16px;
+	height: 16px;
+	padding: 0 4px;
+	border-radius: 8px;
+	background-color: var(--background-modifier-border);
+	color: var(--text-muted);
+	line-height: 16px;
+	text-align: center;
+}
+
 .gtd-context-chip {
 	padding: 1px 8px;
 	border-radius: 100px;

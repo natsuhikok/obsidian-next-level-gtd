@@ -49,7 +49,7 @@ function groupTitleSnapshot(section: HTMLElement) {
 }
 
 describe('NextActionsView', () => {
-	it('表示中の各グループ見出しに件数バッジを表示し総数フッターを出さない', () => {
+	it('表示中の総数と各グループ見出しに件数バッジを表示する', () => {
 		const firstFile = markdownFile('projects/alpha.md', 'alpha.md');
 		const secondFile = markdownFile('projects/beta.md', 'beta.md');
 		const plugin = {
@@ -91,9 +91,15 @@ describe('NextActionsView', () => {
 		const rootCalls = (view.contentEl.createDiv as Mock).mock.calls.map(
 			(call: readonly unknown[]) => call[0] as { readonly cls?: string } | undefined,
 		);
-		expect(rootCalls).not.toContainEqual(
-			expect.objectContaining({ cls: 'gtd-next-action-count' }),
-		);
+		const filterIndex = rootCalls.findIndex((options) => options?.cls === 'gtd-context-filter');
+		const filterBar = (view.contentEl.createDiv as Mock).mock.results[filterIndex]
+			?.value as HTMLElement;
+		const row = (filterBar.createDiv as Mock).mock.results[0]?.value as HTMLElement;
+		const total = (row.createDiv as Mock).mock.results[0]?.value as HTMLElement;
+		expect((total.createSpan as Mock).mock.calls).toEqual([
+			[{ cls: 'gtd-next-action-total-count-label', text: 'Remaining' }],
+			[{ cls: 'gtd-next-action-total-count-value', text: '4' }],
+		]);
 
 		const containerIndex = rootCalls.findIndex(
 			(options) => options?.cls === 'nav-files-container',

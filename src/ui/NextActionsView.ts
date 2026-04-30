@@ -179,7 +179,7 @@ export class NextActionsView extends ItemView {
 		}
 
 		const filterBar = contentEl.createDiv({ cls: 'gtd-context-filter' });
-		this.renderDateBlock(filterBar);
+		this.renderDateBlock(filterBar, query.totalActionCount);
 
 		const groups = query.displayGroups;
 
@@ -207,8 +207,18 @@ export class NextActionsView extends ItemView {
 		});
 	}
 
-	private renderDateBlock(filterBar: HTMLElement) {
+	private renderDateBlock(filterBar: HTMLElement, totalActionCount: number) {
 		const row = filterBar.createDiv({ cls: 'gtd-context-filter-row' });
+		const total = row.createDiv({ cls: 'gtd-next-action-total-count' });
+		total.createSpan({
+			cls: 'gtd-next-action-total-count-label',
+			text: t('nextActionsTotalCountLabel'),
+		});
+		total.createSpan({
+			cls: 'gtd-next-action-total-count-value',
+			text: String(totalActionCount),
+		});
+
 		const addDateChip = (label: string, mode: 'near' | 'all') => {
 			const active = this.dateVisibility.mode === mode;
 			const chip = row.createEl('button', {

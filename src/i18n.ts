@@ -65,6 +65,7 @@ interface PluginStrings {
 	unpinNextAction: string;
 	dateVisibilityNear: string;
 	dateVisibilityAll: string;
+	nextActionsTotalCountLabel: string;
 	nextActionGroupPinned: string;
 	nextActionGroupDated: string;
 	nextActionGroupDefault: string;
@@ -161,6 +162,7 @@ const en: PluginStrings = {
 	unpinNextAction: 'Unpin',
 	dateVisibilityNear: 'Show near dates only',
 	dateVisibilityAll: 'Show all dates',
+	nextActionsTotalCountLabel: 'Remaining',
 	nextActionGroupPinned: 'Pinned',
 	nextActionGroupDated: 'Dated',
 	nextActionGroupDefault: 'Default',
@@ -255,6 +257,7 @@ const ja: PluginStrings = {
 	unpinNextAction: 'ピン留めを解除',
 	dateVisibilityNear: '近い日付のみ表示',
 	dateVisibilityAll: 'すべての日付を表示',
+	nextActionsTotalCountLabel: '残り',
 	nextActionGroupPinned: 'ピン留め',
 	nextActionGroupDated: '日付あり',
 	nextActionGroupDefault: 'デフォルト',
