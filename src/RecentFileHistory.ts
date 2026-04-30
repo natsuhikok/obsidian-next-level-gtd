@@ -1,6 +1,7 @@
 import { TFile } from 'obsidian';
 
 export class RecentFileHistory {
+	static readonly maxFileCount = 30;
 	readonly filePaths: readonly string[];
 
 	constructor(filePaths: readonly string[]) {
@@ -11,14 +12,19 @@ export class RecentFileHistory {
 		if (normalizedFilePaths.length !== filePaths.length) {
 			throw new Error('最近開いたファイル履歴が不正です');
 		}
+		if (normalizedFilePaths.length > RecentFileHistory.maxFileCount) {
+			throw new Error('最近開いたファイル履歴が多すぎます');
+		}
 		this.filePaths = normalizedFilePaths;
 	}
 
 	record(file: TFile): RecentFileHistory {
-		return new RecentFileHistory([
-			file.path,
-			...this.filePaths.filter((filePath) => filePath !== file.path),
-		]);
+		return new RecentFileHistory(
+			[file.path, ...this.filePaths.filter((filePath) => filePath !== file.path)].slice(
+				0,
+				RecentFileHistory.maxFileCount,
+			),
+		);
 	}
 
 	includes(file: TFile): boolean {
@@ -51,7 +57,8 @@ export class RecentFileHistory {
 			filePaths
 				.map((filePath) => filePath.trim())
 				.filter((filePath) => filePath !== '')
-				.filter((filePath, index, paths) => paths.indexOf(filePath) === index),
+				.filter((filePath, index, paths) => paths.indexOf(filePath) === index)
+				.slice(0, RecentFileHistory.maxFileCount),
 		);
 	}
 }
