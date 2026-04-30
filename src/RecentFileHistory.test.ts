@@ -30,6 +30,17 @@ describe('最近開いたファイル履歴', () => {
 		]);
 	});
 
+	it('開いたファイルは最新の30件だけを保持する', () => {
+		const history = new RecentFileHistory(
+			Array.from({ length: 30 }, (_, index) => `projects/${index + 1}.md`),
+		);
+
+		expect(history.record(file('inbox/task.md')).filePaths).toEqual([
+			'inbox/task.md',
+			...Array.from({ length: 29 }, (_, index) => `projects/${index + 1}.md`),
+		]);
+	});
+
 	it('保存値から空文字と重複を除いた履歴を復元する', () => {
 		const history = RecentFileHistory.fromStoredValue([
 			' inbox/task.md ',
@@ -42,9 +53,28 @@ describe('最近開いたファイル履歴', () => {
 		expect(history.filePaths).toEqual(['inbox/task.md', 'projects/next.md']);
 	});
 
+	it('保存値から最新の30件だけを復元する', () => {
+		const history = RecentFileHistory.fromStoredValue(
+			Array.from({ length: 31 }, (_, index) => `projects/${index + 1}.md`),
+		);
+
+		expect(history.filePaths).toEqual(
+			Array.from({ length: 30 }, (_, index) => `projects/${index + 1}.md`),
+		);
+	});
+
 	it('不正な履歴では作成できない', () => {
 		expect(() => new RecentFileHistory(['inbox/task.md', 'inbox/task.md'])).toThrow(
 			'最近開いたファイル履歴が不正です',
 		);
+	});
+
+	it('31件以上の履歴では作成できない', () => {
+		expect(
+			() =>
+				new RecentFileHistory(
+					Array.from({ length: 31 }, (_, index) => `projects/${index + 1}.md`),
+				),
+		).toThrow('最近開いたファイル履歴が多すぎます');
 	});
 });

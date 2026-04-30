@@ -42,6 +42,12 @@ function renderFileList(view: FileView) {
 	render?.call(view);
 }
 
+function renderTabs(view: FileView, contentEl: HTMLElement) {
+	const render = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(view), 'renderTabs')
+		?.value as ((this: FileView, targetElement: HTMLElement) => void) | undefined;
+	render?.call(view, contentEl);
+}
+
 describe('ファイルビューのファイルオープン', () => {
 	it('フィルター付きの一覧から開くとフィルターを解除してから対象ファイルを開く', () => {
 		const plugin = createPlugin();
@@ -86,6 +92,44 @@ describe('ファイルビューのファイルオープン', () => {
 		expect(getLeaf).toHaveBeenCalledWith(true);
 		expect(isModEvent).toHaveBeenCalled();
 		expect(openFile).toHaveBeenCalledWith(file);
+	});
+});
+
+describe('ファイルビューのタブ表示', () => {
+	it('最近タブだけ件数バッジを表示しない', () => {
+		const plugin = createPlugin();
+		const view = new FileView(new WorkspaceLeaf(), plugin as never);
+
+		renderTabs(view, view.contentEl);
+
+		const tabBar = (view.contentEl.createDiv as Mock).mock.results[0]?.value as
+			| HTMLElement
+			| undefined;
+		const buttons = ((tabBar?.createEl as Mock | undefined)?.mock.results ?? []).map(
+			(result) => result.value as HTMLElement,
+		);
+
+		const inboxCreateSpan = Reflect.get(buttons[0] as object, 'createSpan') as Mock;
+		const allCreateSpan = Reflect.get(buttons[1] as object, 'createSpan') as Mock;
+		const recentCreateSpan = Reflect.get(buttons[2] as object, 'createSpan') as Mock;
+		const inProgressCreateSpan = Reflect.get(buttons[3] as object, 'createSpan') as Mock;
+
+		expect(buttons).toHaveLength(4);
+		expect(inboxCreateSpan).toHaveBeenCalledWith({
+			cls: 'gtd-tab-badge',
+			text: '0',
+		});
+		expect(allCreateSpan).toHaveBeenCalledWith({
+			cls: 'gtd-tab-badge',
+			text: '0',
+		});
+		expect(recentCreateSpan).not.toHaveBeenCalledWith(
+			expect.objectContaining({ cls: 'gtd-tab-badge' }),
+		);
+		expect(inProgressCreateSpan).toHaveBeenCalledWith({
+			cls: 'gtd-tab-badge',
+			text: '0',
+		});
 	});
 });
 
